@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+      "module": "commonjs",
+      "target": "es6",
+      "baseUrl": "./",
+      "paths": {
+          "@config/*": ["src/config/*"],
+          "@utils/*": ["src/utils/*"],
+          "@models/*": ["src/models/*"],
+          "@routes/*": ["src/routes/*"],
+          "@middlewares/*": ["src/routes/middlewares/*"],
+          "@services/*": ["src/services/*"],
+          "@queue/*": ["src/queue/*"],
+          "@email/*": ["src/email/*"]
+      }
+  },
+  "exclude": ["node_modules", "**/node_modules/*"]
+}
