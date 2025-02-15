@@ -1,5 +1,26 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
+const path = require("path");
+
+const config = require("@config/index.config");
+
+const directory = path.join(__dirname, "../../uploads");
+
+export const clearUploads = () => {
+  if (config.env === "production") {
+    return;
+  } else {
+    fs.readdir(directory, (err, files) => {
+      if (err) throw err;
+      for (const file of files) {
+        fs.unlink(path.join(directory, file), (err) => {
+          if (err) throw err;
+        });
+      }
+    });
+    next();
+  }
+};
 
 const yamlToJson = (ymlFile) => {
   let doc;

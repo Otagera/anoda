@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { StoreImageProps } from "../interface";
+import type { StoreImageProps } from "../interface";
 
 const StoreImage: React.FC<StoreImageProps> = ({
 	sendToParent,
@@ -31,7 +31,7 @@ const StoreImage: React.FC<StoreImageProps> = ({
 		console.log("formData", formData.getAll("uploadedImages"));
 		try {
 			const response = await axios.post(
-				"http://localhost:5001/api/upload",
+				"http://localhost:5001/api/v1/upload",
 				formData
 			);
 			console.log("Success:", response);

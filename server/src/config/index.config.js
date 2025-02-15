@@ -1,5 +1,6 @@
 "use strict";
 const dotenv = require("dotenv");
+const path = require("path");
 
 dotenv.config();
 const config = {
@@ -32,6 +33,17 @@ const config = {
       process.env.CHATTERBOX_API_URL || "http://localhost:3005",
     chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
     chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
+
+    // python
+    python_interpreter_path: path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "venv",
+      "bin",
+      "python"
+    ),
   },
   test: {
     db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,

@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 const validateSpec = (spec, data = {}, optionalConfig = {}) => {
   const { error, value } = spec.validate(data, {
     allowUnknown: true,
@@ -31,12 +29,7 @@ const aliaserSpec = (spec, data) => {
   return mappedObj;
 };
 
-const isValidObjectId = (id) => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
-
 module.exports = {
   validateSpec,
   aliaserSpec,
-  isValidObjectId,
 };

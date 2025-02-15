@@ -1,30 +1,23 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors"); // PostgreSQL client
-const path = require("path"); // Node.js path module
-const { spawn } = require("child_process"); // To execute Python script
+const cors = require("cors");
+const path = require("path");
+const { spawn } = require("child_process");
 const dotenv = require("dotenv");
-const sharp = require("sharp");
 
 const logger = require("@utils/logger.util");
 const router = require("@routes/index.route");
 const upload = require("@routes/middleware/multer.middleware");
 const limiter = require("@utils/rateLimiter.util");
+const config = require("@config/index.config");
+const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 dotenv.config();
 const app = express();
 
-const pythonInterpreterPath = path.join(
-  __dirname,
-  "..",
-  "venv",
-  "bin",
-  "python"
-);
-
 app.use(cors());
 app.use(logger.httpLoggerInstance);
-app.use(bodyParser.json()); // for parsing application/json
+app.use(bodyParser.json());
 app.use((req, res, next) => {
   if (config.env === "test") {
     next();
@@ -32,126 +25,14 @@ app.use((req, res, next) => {
     limiter(req, res, next);
   }
 });
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 app.set("base", "/api/v1");
 app.use("/api/v1", router);
 
-app.use(function (err, req, res, next) {
-  logger.error(
-    {
-      msg: err.stack,
-    },
-    "INTERNAL_SERVER_ERROR"
-  );
-  return res.status(HTTP_STATUS_CODES.SERVER_ERROR).send({
-    status: "error",
-    message: "Internal server error",
-    data: null,
-  });
-});
-
-app.use(function (req, res, next) {
-  return res.status(HTTP_STATUS_CODES.NOTFOUND).send({
-    status: "error",
-    message: "Resource not found",
-    data: null,
-  });
-});
-
-const getImageSize = async (imagePath) => {
-  const metadata = await sharp(imagePath).metadata();
-  return { width: metadata.width, height: metadata.height };
-};
-
 app.get("/", (req, res) => {
   res.send("Face Search Backend is running!");
-});
-
-const storeImage = async (filename) => {
-  const imagePath = path.join("uploads", filename);
-  const imageSize = await getImageSize(imagePath);
-
-  try {
-    // 1. Store image metadata in database
-    const insertImageQuery =
-      "INSERT INTO images (image_path, original_size) VALUES ($1, $2) RETURNING image_id";
-    const imageResult = await pool.query(insertImageQuery, [
-      imagePath,
-      imageSize,
-    ]);
-    const imageId = imageResult.rows[0].image_id;
-
-    return { imagePath, imageId: imageId.toString() };
-  } catch (dbError) {
-    console.error("Database error:", dbError);
-    throw dbError;
-  }
-};
-
-// API endpoint for image upload (to be implemented)
-app.post("/api/upload", upload.array("uploadedImages", 2), async (req, res) => {
-  if (!req?.files.length) {
-    return res.status(400).json({ error: "No image file uploaded" });
-  }
-
-  const imagesToProcess = [];
-  try {
-    for (const file of req.files) {
-      imagesToProcess.push(await storeImage(file.filename));
-    }
-
-    const pythonScriptArgs = [
-      path.join("scripts", "face_processing_script.py"),
-    ];
-
-    for (const imageInfo of imagesToProcess) {
-      pythonScriptArgs.push(imageInfo.imagePath); // Add image path
-      pythonScriptArgs.push(imageInfo.imageId.toString()); // Add image ID as string
-    }
-
-    const pythonProcess = spawn(pythonInterpreterPath, pythonScriptArgs);
-
-    pythonProcess.stdout.on("data", (data) => {
-      console.log(`Python script stdout: ${data}`);
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(`Python script stderr: ${data}`);
-    });
-
-    pythonProcess.on("close", async (code) => {
-      console.log(`Python script exited with code ${code}`);
-      if (code === 0) {
-        // Technically not needed just for me for now for visuals
-        // const queryResult = await pool.query(
-        // 	"SELECT bounding_box FROM faces WHERE image_id = $1",
-        // 	[imageId]
-        // );
-        // console.log("queryResult.rows", queryResult.rows);
-        // const boundingBox = queryResult.rows.length
-        // 	? queryResult.rows.map((row) => {
-        // 			return row.bounding_box;
-        // 	  })
-        // 	: [];
-
-        res.json({
-          message: "Image uploaded and face processing initiated",
-          // imageId: imageId,
-          // boundingBox,
-          // imageSize,
-        });
-      } else {
-        res
-          .status(500)
-          .json({ error: "Face processing failed", imagesToProcess });
-      }
-    });
-  } catch (dbError) {
-    console.error("Database error:", dbError);
-    res.status(500).json({ error: "Database error during image upload" });
-  }
 });
 
 // API endpoint for face search (to be implemented)
@@ -254,5 +135,27 @@ function calculateEuclideanDistance(arr1, arr2) {
   }
   return Math.sqrt(sum);
 }
+
+app.use(function (err, req, res, next) {
+  logger.error(
+    {
+      msg: err.stack,
+    },
+    "INTERNAL_SERVER_ERROR"
+  );
+  return res.status(HTTP_STATUS_CODES.SERVER_ERROR).send({
+    status: "error",
+    message: "Internal server error",
+    data: null,
+  });
+});
+
+app.use(function (req, res, next) {
+  return res.status(HTTP_STATUS_CODES.NOTFOUND).send({
+    status: "error",
+    message: "Resource not found",
+    data: null,
+  });
+});
 
 module.exports = { app };
