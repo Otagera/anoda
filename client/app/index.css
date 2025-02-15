@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -25,7 +27,9 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
+  /* display: flex;
+  flex-direction: column;
+  align-items: center; */
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
@@ -69,5 +73,19 @@ button:focus-visible {
 
   button {
     background-color: #f9f9f9;
+  }
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
   }
 }

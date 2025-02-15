@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import StoreImage from "./StoreImage";
 import SearchImage from "./SearchImage";
-import { BoundingBox, CanvasBox, ImageSize } from "./interface";
+import { BoundingBox, CanvasBox, ImageSize } from "../interface";
 
 const UploadImages = () => {
 	const [imgSrc, setImgSrc] = useState<string | undefined>("");

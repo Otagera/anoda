@@ -1,5 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
+import {
+	useQuery,
+	useMutation,
+	useQueryClient,
+	QueryClient,
+	QueryClientProvider,
+} from "@tanstack/react-query";
 
 const SearchImage: React.FC = () => {
 	const [file, setFile] = useState<File | null>(null);

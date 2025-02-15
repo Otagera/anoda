@@ -25,3 +25,8 @@ dist-ssr
 
 .env
 uploads
+
+
+# React Router
+/.react-router/
+/build/
