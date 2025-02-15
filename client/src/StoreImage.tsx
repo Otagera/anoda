@@ -6,12 +6,13 @@ const StoreImage: React.FC<StoreImageProps> = ({
 	sendToParent,
 }: StoreImageProps) => {
 	const { imageUrl, imageSize, boundingBox } = sendToParent;
-	const [file, setFile] = useState<File | null>(null);
+	const [files, setFiles] = useState<FileList | null>(null);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		console.log("event.target.files", event.target.files);
 		if (event.target.files) {
 			const file = event.target.files?.[0]; // Get the selected file
-			setFile(event.target.files[0]);
+			setFiles(event.target.files);
 
 			const tempImageUrl = URL.createObjectURL(file);
 			imageUrl(tempImageUrl);
@@ -22,10 +23,12 @@ const StoreImage: React.FC<StoreImageProps> = ({
 		event.preventDefault();
 
 		const formData = new FormData();
-		if (file) {
-			formData.append("image", file);
+		if (files?.length) {
+			for (const file of files) {
+				formData.append(`uploadedImages`, file);
+			}
 		}
-
+		console.log("formData", formData.getAll("uploadedImages"));
 		try {
 			const response = await axios.post(
 				"http://localhost:5001/api/upload",
@@ -42,7 +45,13 @@ const StoreImage: React.FC<StoreImageProps> = ({
 	return (
 		<form onSubmit={handleSubmit}>
 			<label htmlFor="fileToUpload">Upload File</label>
-			<input id="fileToUpload" type="file" onChange={handleFileChange} />
+			<input
+				id="fileToUpload"
+				type="file"
+				multiple
+				name="files[]"
+				onChange={handleFileChange}
+			/>
 			<button type="submit">Upload</button>
 		</form>
 	);

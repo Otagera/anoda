@@ -14,7 +14,8 @@ const app = express();
 const port = process.env.PORT || 5001;
 const pythonInterpreterPath = path.join(
 	__dirname,
-	"venv_python3",
+	"..",
+	"venv",
 	"bin",
 	"python"
 );
@@ -42,14 +43,8 @@ app.get("/", (req, res) => {
 	res.send("Face Search Backend is running!");
 });
 
-// API endpoint for image upload (to be implemented)
-app.post("/api/upload", upload.single("image"), async (req, res) => {
-	// 'image' is the field name for the file in the form
-	if (!req.file) {
-		return res.status(400).json({ error: "No image file uploaded" });
-	}
-
-	const imagePath = path.join("uploads", req.file.filename);
+const storeImage = async (filename) => {
+	const imagePath = path.join("uploads", filename);
 	const imageSize = await getImageSize(imagePath);
 
 	try {
@@ -62,12 +57,35 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
 		]);
 		const imageId = imageResult.rows[0].image_id;
 
-		// 2. Trigger Python face processing script (simple script execution for now)
-		const pythonProcess = spawn(pythonInterpreterPath, [
-			"face_processing_script.py", // Name of your Python script (create this in the next step)
-			imagePath, // Pass the image path as an argument to the script
-			imageId.toString(), // Pass the imageId as well, so Python script knows which image to link faces to
-		]);
+		return { imagePath, imageId: imageId.toString() };
+	} catch (dbError) {
+		console.error("Database error:", dbError);
+		throw dbError;
+	}
+};
+
+// API endpoint for image upload (to be implemented)
+app.post("/api/upload", upload.array("uploadedImages", 2), async (req, res) => {
+	if (!req?.files.length) {
+		return res.status(400).json({ error: "No image file uploaded" });
+	}
+
+	const imagesToProcess = [];
+	try {
+		for (const file of req.files) {
+			imagesToProcess.push(await storeImage(file.filename));
+		}
+
+		const pythonScriptArgs = [
+			path.join("scripts", "face_processing_script.py"),
+		];
+
+		for (const imageInfo of imagesToProcess) {
+			pythonScriptArgs.push(imageInfo.imagePath); // Add image path
+			pythonScriptArgs.push(imageInfo.imageId.toString()); // Add image ID as string
+		}
+
+		const pythonProcess = spawn(pythonInterpreterPath, pythonScriptArgs);
 
 		pythonProcess.stdout.on("data", (data) => {
 			console.log(`Python script stdout: ${data}`);
@@ -80,24 +98,28 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
 		pythonProcess.on("close", async (code) => {
 			console.log(`Python script exited with code ${code}`);
 			if (code === 0) {
-				const queryResult = await pool.query(
-					"SELECT bounding_box FROM faces WHERE image_id = $1",
-					[imageId]
-				);
-				const boundingBox = queryResult.rows.length
-					? queryResult.rows[0]?.bounding_box
-					: [];
+				// Technically not needed just for me for now for visuals
+				// const queryResult = await pool.query(
+				// 	"SELECT bounding_box FROM faces WHERE image_id = $1",
+				// 	[imageId]
+				// );
+				// console.log("queryResult.rows", queryResult.rows);
+				// const boundingBox = queryResult.rows.length
+				// 	? queryResult.rows.map((row) => {
+				// 			return row.bounding_box;
+				// 	  })
+				// 	: [];
 
 				res.json({
 					message: "Image uploaded and face processing initiated",
-					imageId: imageId,
-					boundingBox,
-					imageSize,
+					// imageId: imageId,
+					// boundingBox,
+					// imageSize,
 				});
 			} else {
 				res
 					.status(500)
-					.json({ error: "Face processing failed", imageId: imageId });
+					.json({ error: "Face processing failed", imagesToProcess });
 			}
 		});
 	} catch (dbError) {
@@ -117,7 +139,7 @@ app.post("/api/search", upload.single("searchFaceImage"), async (req, res) => {
 	try {
 		// 1. Generate face embedding for the search face using Python script (similar to background processing)
 		const pythonProcess = spawn("python", [
-			"generate_search_embedding.py", // Create a separate Python script for generating search embedding
+			"./scripts/generate_search_embedding.py", // Create a separate Python script for generating search embedding
 			searchFaceImagePath,
 		]);
 

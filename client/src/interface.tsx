@@ -21,6 +21,6 @@ export interface StoreImageProps {
 	sendToParent: {
 		imageUrl: (data: string) => void;
 		imageSize: (imageSize: ImageSize) => void;
-		boundingBox: (boundingBox: BoundingBox) => void;
+		boundingBox: (boundingBox: BoundingBox[]) => void;
 	};
 }
