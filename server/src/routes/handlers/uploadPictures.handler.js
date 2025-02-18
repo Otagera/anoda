@@ -11,8 +11,8 @@ const handler = {
         files: req.files,
       });
       return res.status(HTTP_STATUS_CODES.OK).send({
-        status: "Image uploaded and face processing initiated",
-        message: "",
+        status: "completed",
+        message: "Image uploaded and face processing initiated",
         data,
       });
     } catch (error) {

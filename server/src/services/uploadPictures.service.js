@@ -6,6 +6,7 @@ const { spawn } = require("child_process");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const config = require("@config/index.config");
 const pool = require("@config/db.config");
+const { fetchImagesQuery } = require("@models/images.models");
 
 const fileSchema = Joi.object({
   fieldname: Joi.string().valid("uploadedImages").required(),
@@ -117,37 +118,7 @@ const service = async (data) => {
     return img.imageId;
   });
 
-  const queryResult = await pool.query(
-    `
-      SELECT 
-          images.image_id,
-          COALESCE(
-              JSON_AGG(
-                  CASE 
-                      WHEN faces.face_id IS NOT NULL THEN 
-                          JSON_BUILD_OBJECT(
-                              'face_id', faces.face_id,
-                              'bounding_box', faces.bounding_box::JSONB
-                          )
-                      ELSE NULL
-                  END
-              ) FILTER (WHERE faces.face_id IS NOT NULL), 
-              '[]'::JSON -- Ensure empty array if no faces exist
-          ) AS faces,
-          images.image_path,
-          images.upload_time,
-          images.original_size::JSONB AS original_size
-      FROM images
-      LEFT JOIN faces ON faces.image_id = images.image_id
-      WHERE images.image_id = ANY($1)
-      GROUP BY 
-          images.image_id, 
-          images.image_path, 
-          images.upload_time, 
-          images.original_size::JSONB;
-    `,
-    [imageIds]
-  );
+  const queryResult = await fetchImagesQuery(imageIds);
 
   const aliasRes = aliaserSpec(aliasSpec.response, queryResult.rows);
   return aliasRes;
