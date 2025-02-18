@@ -26,10 +26,11 @@ app.use((req, res, next) => {
   }
 });
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use("/uploads", express.static("uploads"));
 
 app.set("base", "/api/v1");
 app.use("/api/v1", router);
+
+app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   res.send("Face Search Backend is running!");

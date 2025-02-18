@@ -38,7 +38,7 @@ const getImageSize = async (imagePath) => {
   return { width: metadata.width, height: metadata.height };
 };
 const storeImage = async (filename) => {
-  const imagePath = path.join("uploads", filename);
+  const imagePath = path.join(__dirname, "..", "uploads", filename);
   const imageSize = await getImageSize(imagePath);
 
   try {
