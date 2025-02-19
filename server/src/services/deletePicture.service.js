@@ -18,8 +18,8 @@ const service = async (data) => {
   const { pictureId } = validateSpec(spec, aliasReq);
 
   const { rows } = await deleteImagesByIdsQuery([pictureId]);
-
-  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(rows));
+  console.log("rows", rows);
+  const aliasRes = aliaserSpec(aliasSpec.response, rows);
   return aliasRes;
 };
 

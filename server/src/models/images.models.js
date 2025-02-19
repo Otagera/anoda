@@ -71,11 +71,10 @@ const deleteImagesByIdsQuery = async (imageIds) => {
   try {
     await pool.query("BEGIN");
     const queryText = `DELETE FROM "faces" WHERE image_id = ANY($1) RETURNING *;`;
-    const res = await pool.query(queryText, [imageIds]);
-    console.log("res", res);
-    const insertPhotoText = `DELETE FROM "images" WHERE image_id = ANY($1) RETURNING *;`;
-    const insertPhotoValues = [imageIds];
-    await pool.query(insertPhotoText, insertPhotoValues);
+    await pool.query(queryText, [imageIds]);
+    const deletePhotoText = `DELETE FROM "images" WHERE image_id = ANY($1) RETURNING *;`;
+    const deletePhotoValues = [imageIds];
+    await pool.query(deletePhotoText, deletePhotoValues);
     return pool.query("COMMIT");
   } catch (e) {
     await pool.query("ROLLBACK");
