@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Create an Axios instance
-const api = axios.create({
+const axiosAPI = axios.create({
 	// baseURL: process.env.REACT_APP_API_BASE_URL || "http://localhost:5001/api/v1",
 	baseURL: "http://localhost:5001/api/v1",
 	timeout: 10000, // 10 seconds timeout
@@ -11,7 +11,7 @@ const api = axios.create({
 });
 
 // Add a request interceptor (optional: for auth tokens)
-api.interceptors.request.use(
+axiosAPI.interceptors.request.use(
 	(config) => {
 		const token = localStorage.getItem("token"); // Example: JWT token
 		if (token) {
@@ -23,7 +23,7 @@ api.interceptors.request.use(
 );
 
 // Add a response interceptor (optional: to handle errors globally)
-api.interceptors.response.use(
+axiosAPI.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		console.error("API Error:", error.response?.data || error.message);
@@ -31,4 +31,4 @@ api.interceptors.response.use(
 	}
 );
 
-export default api;
+export default axiosAPI;

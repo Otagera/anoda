@@ -1,7 +1,8 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
+import { uploadImages } from "~/utils/api";
 // import type { ActionFunctionArgs } from "react-router";
 // import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
-import type { UploadImagesProps } from "../interface";
 import api from "~/utils/axios";
 
 // export const action = async ({ request }: ActionFunctionArgs) => {
@@ -17,19 +18,13 @@ import api from "~/utils/axios";
 // 	const file = formData.get("avatar");
 // };
 
-const UploadImages: React.FC<UploadImagesProps> = ({}: // sendToParent,
-UploadImagesProps) => {
-	// const { imageUrl, imageSize, boundingBox } = sendToParent;
+const UploadImages: React.FC = () => {
 	const [files, setFiles] = useState<FileList | null>(null);
+	const queryClient = useQueryClient();
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		console.log("event.target.files", event.target.files);
 		if (event.target.files) {
-			const file = event.target.files?.[0]; // Get the selected file
 			setFiles(event.target.files);
-
-			const tempImageUrl = URL.createObjectURL(file);
-			// imageUrl(tempImageUrl);
 		}
 	};
 
@@ -42,18 +37,20 @@ UploadImagesProps) => {
 				formData.append(`uploadedImages`, file);
 			}
 		}
-		console.log("formData", formData.getAll("uploadedImages"));
-		try {
-			const response = await api.post("/upload", formData, {
-				headers: { "Content-Type": "multipart/form-data" },
-			});
-			console.log("Success:", response);
-			// imageSize(response.data?.imageSize);
-			// boundingBox(response.data?.boundingBox);
-		} catch (error) {
-			console.error("Error uploading file:", error);
-		}
+		mutation.mutate(formData);
 	};
+
+	const mutation = useMutation({
+		mutationFn: uploadImages,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["images"] }); // Invalidate cache after upload
+		},
+	});
+
+	if (mutation.isPending) return <div>Uploading Image...</div>;
+	if (mutation.isError)
+		return <div>An error occurred: {mutation.error.message}</div>;
+	if (mutation.isSuccess) return <div>Image Uploaded Successfully!</div>;
 
 	return (
 		<form onSubmit={handleSubmit}>

@@ -1,3 +1,5 @@
+import type { HTMLAttributes } from "react";
+
 export interface CanvasBox {
 	x: number;
 	y: number;
@@ -10,6 +12,11 @@ export interface BoundingBox {
 	left: number;
 	right: number;
 	top: number;
+}
+
+export interface Face {
+	face_id: number;
+	bounding_box: BoundingBox;
 }
 
 export interface ImageSize {
@@ -25,8 +32,15 @@ export interface UploadImagesProps {
 	};
 }
 
+export interface DisplayImageProps extends HTMLAttributes<HTMLImageElement> {
+	imgSrcFP: string;
+	imageSizeFP: ImageSize;
+	facesFP?: Face[];
+	alt: string;
+}
+
 export interface ImagesFromDB {
-	faces: { face_id: number; bounding_box: BoundingBox }[];
+	faces: Face[];
 	image_id: number;
 	image_path: string;
 	original_size: { width: number; height: number };

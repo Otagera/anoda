@@ -49,7 +49,7 @@ const storeImage = async (filename) => {
 
     return { imagePath, imageId: imageId.toString() };
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[storeImage] Error:", error);
     throw error;
   }
 };

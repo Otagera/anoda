@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import ImagesList from "../Images/Images";
+import ImagesList from "../Images/ImageGallery";
 import UploadImages from "~/Images/UploadImages";
 
 export function meta({}: Route.MetaArgs) {

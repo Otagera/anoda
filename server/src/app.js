@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const { spawn } = require("child_process");
 const dotenv = require("dotenv");
+const { MulterError } = require("multer");
 
 const logger = require("@utils/logger.util");
 const router = require("@routes/index.route");
@@ -138,6 +139,13 @@ function calculateEuclideanDistance(arr1, arr2) {
 }
 
 app.use(function (err, req, res, next) {
+  if (err instanceof MulterError) {
+    return res.status(HTTP_STATUS_CODES.FILE_SIZE_TOO_LARGE).send({
+      status: "error",
+      message: "File size too large max 5MB",
+      data: err,
+    });
+  }
   logger.error(
     {
       msg: err.stack,
