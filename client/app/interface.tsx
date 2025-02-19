@@ -39,7 +39,7 @@ export interface DisplayImageProps extends HTMLAttributes<HTMLImageElement> {
 	alt: string;
 }
 
-export interface ImagesFromDB {
+export interface ImageFromDB {
 	faces: Face[];
 	image_id: number;
 	image_path: string;

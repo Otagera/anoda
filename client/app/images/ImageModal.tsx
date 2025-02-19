@@ -1,17 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FC } from "react";
-import type { ImagesFromDB } from "~/interface";
+import type { ImageFromDB } from "~/interface";
 import { deleteImage } from "~/utils/api";
 import DisplayImage from "./DisplayImage";
 
-const ImageModal = ({ image }: { image: ImagesFromDB | null }) => {
-	const [selectedImage, setSelectedImage] = useState<ImagesFromDB | null>(null);
+const ImageModal = ({
+	image,
+	unSelectImage,
+}: {
+	image: ImageFromDB | null;
+	unSelectImage: () => void;
+}) => {
+	const [selectedImage, setSelectedImage] = useState<ImageFromDB | null>(null);
 	const queryClient = useQueryClient();
 
 	const {
 		isPending,
 		isError,
 		isSuccess,
+		reset,
 		mutate: deleteMutate,
 	} = useMutation({
 		mutationFn: deleteImage,
@@ -22,16 +29,19 @@ const ImageModal = ({ image }: { image: ImagesFromDB | null }) => {
 
 	const handleCloseModal = () => {
 		setSelectedImage(null);
+		unSelectImage();
+		reset();
 	};
 
 	const handleDeleteImage = () => {
-		console.log("Deleting image:", selectedImage?.image_path);
-		if (selectedImage && selectedImage.image_id)
+		if (selectedImage && selectedImage.image_id) {
 			deleteMutate(selectedImage?.image_id);
-		setSelectedImage(null);
+			setSelectedImage(null);
+			unSelectImage();
+		}
 	};
 	useEffect(() => {
-		if (image) setSelectedImage(image);
+		setSelectedImage(image);
 	}, [image]);
 
 	return (

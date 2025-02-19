@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
 import type { FC } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "~/utils/axios";
-import type { ImagesFromDB } from "~/interface";
+import type { ImageFromDB } from "~/interface";
 import ImageModal from "./ImageModal";
 import ImageGridItem from "./ImageGridItem";
 import { fetchImages } from "~/utils/api";
 
 const ImagesList: FC = () => {
-	const [images, setImages] = useState<ImagesFromDB[] | null>(null);
-	const [selectedImage, setSelectedImage] = useState<ImagesFromDB | null>(null);
+	const [images, setImages] = useState<ImageFromDB[] | null>(null);
+	const [selectedImage, setSelectedImage] = useState<ImageFromDB | null>(null);
 
-	const handleImageClick = (image: ImagesFromDB) => {
+	const handleImageClick = (image: ImageFromDB) => {
 		setSelectedImage(image);
+	};
+
+	const unSelectImage = () => {
+		setSelectedImage(null);
 	};
 
 	// Access the client
@@ -26,7 +29,6 @@ const ImagesList: FC = () => {
 
 	useEffect(() => {
 		if (__images) {
-			console.log("__images.data", __images.data);
 			setImages(__images?.data);
 		}
 	}, [__images]);
@@ -53,7 +55,7 @@ const ImagesList: FC = () => {
 						</div>
 					);
 				})}
-				<ImageModal image={selectedImage} />
+				<ImageModal image={selectedImage} unSelectImage={unSelectImage} />
 			</div>
 		</>
 	);
