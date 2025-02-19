@@ -1,22 +1,17 @@
-const upload = require("@routes/middleware/multer.middleware");
-const uploadPicturesService = require("@services/uploadPictures.service");
+const fetchPicturesService = require("@services/fetchPictures.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 const handler = {
-  method: "post",
+  method: "get",
   handler: async (req, res) => {
     try {
-      const data = await uploadPicturesService({
-        ...req.body,
-        files: req.files,
-      });
+      const data = await fetchPicturesService();
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
-        message: "Image uploaded and face processing initiated",
+        message: "Fetch Images successfully.",
         data,
       });
     } catch (error) {
-      console.log("error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({
@@ -26,8 +21,8 @@ const handler = {
         });
     }
   },
-  path: "/upload",
-  middlewares: [upload.array("uploadedImages", 10)],
+  path: "/pictures",
+  middlewares: [],
 };
 
 module.exports = handler;

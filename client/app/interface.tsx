@@ -17,10 +17,18 @@ export interface ImageSize {
 	height: number;
 }
 
-export interface StoreImageProps {
+export interface UploadImagesProps {
 	sendToParent: {
 		imageUrl: (data: string) => void;
 		imageSize: (imageSize: ImageSize) => void;
 		boundingBox: (boundingBox: BoundingBox[]) => void;
 	};
+}
+
+export interface ImagesFromDB {
+	faces: { face_id: number; bounding_box: BoundingBox }[];
+	image_id: number;
+	image_path: string;
+	original_size: { width: number; height: number };
+	upload_time: Date;
 }

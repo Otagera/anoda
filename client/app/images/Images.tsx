@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "~/utils/axios";
+import type { ImagesFromDB } from "~/interface";
 
 const Images: React.FC = () => {
-	const [images, setImages] = useState<string[] | null>(null);
+	const [images, setImages] = useState<ImagesFromDB[] | null>(null);
 
 	// Access the client
 	const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ const Images: React.FC = () => {
 		queryKey: ["images"],
 		queryFn: async () => {
 			try {
-				const response = await axios.get("http://localhost:5001/api/images");
+				const response = await api.get("/pictures");
 				console.log("Success:", response);
 				return response.data;
 			} catch (error) {
@@ -23,13 +24,18 @@ const Images: React.FC = () => {
 	});
 
 	useEffect(() => {
-		setImages(query.data);
+		if (query.data) {
+			console.log("query.data.data", query.data.data);
+			setImages(query.data?.data);
+		}
 	}, [query.data]);
 
 	return (
 		<>
 			{images?.map((image, index) => {
-				return <img src={image} alt={image} key={index} />;
+				return (
+					<img src={`${image.image_path}`} alt={image.image_path} key={index} />
+				);
 			})}
 		</>
 	);

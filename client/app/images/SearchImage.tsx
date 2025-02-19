@@ -1,16 +1,13 @@
 import type { Route } from "./+types/project";
 import React, { useState } from "react";
 import { Form } from "react-router";
-import axios from "axios";
+import api from "~/utils/axios";
 
 export async function action({ request }: Route.ActionArgs) {
 	let formData = await request.formData();
 
 	try {
-		const response = await axios.post(
-			"http://localhost:5001/api/v1/search",
-			formData
-		);
+		const response = await api.post("search", formData);
 		console.log("Success:", response);
 	} catch (error) {
 		console.error("Error uploading file:", error);

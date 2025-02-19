@@ -19,7 +19,7 @@ app.use(cors());
 app.use(logger.httpLoggerInstance);
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-  if (config.env === "test") {
+  if (config.env === "test" || "development") {
     next();
   } else {
     limiter(req, res, next);

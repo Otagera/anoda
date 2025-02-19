@@ -1,11 +1,25 @@
 import React, { useState } from "react";
-import axios from "axios";
-import type { StoreImageProps } from "../interface";
+// import type { ActionFunctionArgs } from "react-router";
+// import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
+import type { UploadImagesProps } from "../interface";
+import api from "~/utils/axios";
 
-const StoreImage: React.FC<StoreImageProps> = ({
-	sendToParent,
-}: StoreImageProps) => {
-	const { imageUrl, imageSize, boundingBox } = sendToParent;
+// export const action = async ({ request }: ActionFunctionArgs) => {
+// 	const uploadHandler = async (fileUpload: FileUpload) => {
+// 		console.log("fileUpload", fileUpload);
+// 		if (fileUpload.fieldName === "files") {
+// 			// process the upload and return a File
+// 		}
+// 	};
+
+// 	const formData = await parseFormData(request, uploadHandler);
+// 	// 'avatar' has already been processed at this point
+// 	const file = formData.get("avatar");
+// };
+
+const UploadImages: React.FC<UploadImagesProps> = ({}: // sendToParent,
+UploadImagesProps) => {
+	// const { imageUrl, imageSize, boundingBox } = sendToParent;
 	const [files, setFiles] = useState<FileList | null>(null);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,7 +29,7 @@ const StoreImage: React.FC<StoreImageProps> = ({
 			setFiles(event.target.files);
 
 			const tempImageUrl = URL.createObjectURL(file);
-			imageUrl(tempImageUrl);
+			// imageUrl(tempImageUrl);
 		}
 	};
 
@@ -30,13 +44,12 @@ const StoreImage: React.FC<StoreImageProps> = ({
 		}
 		console.log("formData", formData.getAll("uploadedImages"));
 		try {
-			const response = await axios.post(
-				"http://localhost:5001/api/v1/upload",
-				formData
-			);
+			const response = await api.post("/upload", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			});
 			console.log("Success:", response);
-			imageSize(response.data?.imageSize);
-			boundingBox(response.data?.boundingBox);
+			// imageSize(response.data?.imageSize);
+			// boundingBox(response.data?.boundingBox);
 		} catch (error) {
 			console.error("Error uploading file:", error);
 		}
@@ -57,4 +70,4 @@ const StoreImage: React.FC<StoreImageProps> = ({
 	);
 };
 
-export default StoreImage;
+export default UploadImages;

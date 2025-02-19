@@ -1,12 +1,12 @@
 const Joi = require("joi");
-const sharp = require("sharp");
 const path = require("path");
 const { spawn } = require("child_process");
 
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const config = require("@config/index.config");
 const pool = require("@config/db.config");
-const { fetchImagesQuery } = require("@models/images.models");
+const { fetchImagesByIdsQuery } = require("@models/images.models");
+const { getImageSize, normalizeImagePath } = require("@utils/image.util");
 
 const fileSchema = Joi.object({
   fieldname: Joi.string().valid("uploadedImages").required(),
@@ -34,10 +34,6 @@ const aliasSpec = {
   response: {},
 };
 
-const getImageSize = async (imagePath) => {
-  const metadata = await sharp(imagePath).metadata();
-  return { width: metadata.width, height: metadata.height };
-};
 const storeImage = async (filename) => {
   const imagePath = path.join(__dirname, "..", "uploads", filename);
   const imageSize = await getImageSize(imagePath);
@@ -118,9 +114,9 @@ const service = async (data) => {
     return img.imageId;
   });
 
-  const queryResult = await fetchImagesQuery(imageIds);
+  const { rows } = await fetchImagesByIdsQuery(imageIds);
 
-  const aliasRes = aliaserSpec(aliasSpec.response, queryResult.rows);
+  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(rows));
   return aliasRes;
 };
 

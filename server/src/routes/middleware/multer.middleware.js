@@ -4,12 +4,20 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
-// const cloudinaryV2 = cloudinary.v2;
-// cloudinaryV2.config({
-// 	cloud_name: '',
-// 	api_key: '',
-// 	api_secret: ''
-// });
+/* const cloudinaryV2 = cloudinary.v2;
+cloudinaryV2.config({
+	cloud_name: '',
+	api_key: '',
+	api_secret: ''
+}); */
+
+// Define the uploads directory
+const uploadsDir = path.join(__dirname, "..", "..", "uploads");
+
+// Create the uploads directory if it doesn't exist
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 let storage = null;
 /*
@@ -28,18 +36,14 @@ let storage = null;
 */
 storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, "..", "..", "uploads");
-    if (!fs.existsSync(dir)) {
-      fs.mkdir(dir, (err) => {
-        console.log("[mkdir] err", err);
-        cb(null, dir);
-      });
-    } else {
-      cb(null, dir);
-    }
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, new Date().toISOString().replace(/:/g, "-") + file.originalname);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const fileExtension = path.extname(file.originalname);
+    const relativeFilePath = `uploads/${file.fieldname}-${uniqueSuffix}${fileExtension}`;
+    cb(null, path.basename(relativeFilePath));
+    // cb(null, new Date().toISOString().replace(/:/g, "-") + file.originalname);
   },
 });
 //}

@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 
-import StoreImage from "./StoreImage";
-import SearchImage from "./SearchImage";
 import type { BoundingBox, CanvasBox, ImageSize } from "../interface";
 
-const UploadImages = () => {
+const DisplayImage = () => {
 	const [imgSrc, setImgSrc] = useState<string | undefined>("");
 	const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>();
 	const [canvasWidth, setCanvasWidth] = useState<number | undefined>();
@@ -81,14 +79,6 @@ const UploadImages = () => {
 
 	return (
 		<>
-			<StoreImage
-				sendToParent={{
-					imageUrl: handleImageUrlFromChild,
-					imageSize: handleImageSizeFromChild,
-					boundingBox: handleBoundingBoxFromChild,
-				}}
-			/>
-			<SearchImage />
 			<div className="image-container">
 				<img
 					id="uploadedImage"
@@ -108,4 +98,4 @@ const UploadImages = () => {
 	);
 };
 
-export default UploadImages;
+export default DisplayImage;

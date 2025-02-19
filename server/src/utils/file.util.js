@@ -6,7 +6,7 @@ const config = require("@config/index.config");
 
 const directory = path.join(__dirname, "../../uploads");
 
-export const clearUploads = () => {
+const clearUploads = () => {
   if (config.env === "production") {
     return;
   } else {
@@ -35,5 +35,6 @@ const yamlToJson = (ymlFile) => {
 };
 
 module.exports = {
+  clearUploads,
   yamlToJson,
 };
