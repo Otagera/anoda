@@ -1,14 +1,14 @@
-const fetchPictureService = require("@services/fetchPicture.service");
+const deletePicturesService = require("@services/deletePictures.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 const handler = {
-  method: "get",
+  method: "delete",
   handler: async (req, res) => {
     try {
-      const data = await fetchPictureService(req.params.pictureId);
+      const data = await deletePicturesService();
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
-        message: `Successfully fetched picture: ${req.params.pictureId}`,
+        message: `Successfully deleted pictures`,
         data,
       });
     } catch (error) {
@@ -21,7 +21,7 @@ const handler = {
         });
     }
   },
-  path: "/pictures/:pictureId",
+  path: "/pictures",
   middlewares: [],
 };
 

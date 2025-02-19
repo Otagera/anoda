@@ -67,4 +67,43 @@ const fetchAllImagesQuery = async () => {
   );
 };
 
-module.exports = { fetchImagesByIdsQuery, fetchAllImagesQuery };
+const deleteImagesByIdsQuery = async (imageIds) => {
+  try {
+    await pool.query("BEGIN");
+    const queryText = `DELETE FROM "faces" WHERE image_id = ANY($1) RETURNING *;`;
+    const res = await pool.query(queryText, [imageIds]);
+    console.log("res", res);
+    const insertPhotoText = `DELETE FROM "images" WHERE image_id = ANY($1) RETURNING *;`;
+    const insertPhotoValues = [imageIds];
+    await pool.query(insertPhotoText, insertPhotoValues);
+    return pool.query("COMMIT");
+  } catch (e) {
+    await pool.query("ROLLBACK");
+    throw e;
+  } finally {
+  }
+};
+
+const deleteAllImagesQuery = async () => {
+  try {
+    await pool.query("BEGIN");
+    const queryText = `DELETE FROM "faces" RETURNING *;`;
+    const res = await pool.query(queryText, [imageIds]);
+    console.log("res", res);
+    const insertPhotoText = `DELETE FROM "images" RETURNING *;`;
+    const insertPhotoValues = [imageIds];
+    await pool.query(insertPhotoText, insertPhotoValues);
+    return pool.query("COMMIT");
+  } catch (e) {
+    await pool.query("ROLLBACK");
+    throw e;
+  } finally {
+  }
+};
+
+module.exports = {
+  fetchImagesByIdsQuery,
+  fetchAllImagesQuery,
+  deleteImagesByIdsQuery,
+  deleteAllImagesQuery,
+};
