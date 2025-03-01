@@ -66,8 +66,9 @@
   /* Overlay the canvas on the image */
   top: 0;
   left: 0;
+  /* z-index: 1; */
   /* Ensure canvas is on top of the image visually */
-  pointer-events: none;
+  /* pointer-events: none; */
   /* Make canvas ignore mouse events so you can interact with image underneath */
 }
 

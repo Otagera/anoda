@@ -1,0 +1,60 @@
+**Anoda Facematch**
+
+### Overview
+
+The essence of ths application is to have someone be able to have users sign up upload pictures with albums and the feature I mostly care about is the facematching.
+So what would happen is when a picture is opened up we can then select the faces it recognize to search for other pictures with that face in that album.
+That is the high level overview
+
+### UI Design
+
+- **Primary Icon:** Headphone icon
+- **Battery Percentage:** Centered text below the icon
+- **Charging Indicator:** Lightning emoji (⚡) next to the percentage if charging
+
+### Data Source
+
+I am using PostgreSQL for storing reference to the images and in development I store the images locally, and in production in either AWS or cloudinary
+
+### Plugin Functionality
+
+- **Polling Interval:** Default 30 seconds (configurable via settings)
+- **Battery Fetching Method:** Reverse-engineered using USB HID or existing Windows APIs
+- **Stream Deck Integration:**
+  - Uses the [Stream Deck SDK](https://docs.elgato.com/streamdeck/sdk/introduction/getting-started)
+  - Follows the [Key Plugin Guide](https://docs.elgato.com/streamdeck/sdk/guides/keys)
+
+### Implementation Details
+
+- **SDK Documentation:**
+
+  - [Getting Started](https://docs.elgato.com/streamdeck/sdk/introduction/getting-started)
+  - [Your First Changes](https://docs.elgato.com/streamdeck/sdk/introduction/your-first-changes)
+  - [Plugin Environment](https://docs.elgato.com/streamdeck/sdk/introduction/plugin-environment)
+  - [Key Plugin Guide](https://docs.elgato.com/streamdeck/sdk/guides/keys)
+  - [Manifest Reference](https://docs.elgato.com/streamdeck/sdk/references/manifest)
+
+- **Tech Stack:**
+- Server - JavaScript (Node.js)
+- CLient - TypeScript ReactJS with React router dom and tailwind
+
+* **Configuration:**
+  I would like to use Docker to deploy both applications with python initialized to be used
+
+### Supported Headset
+
+- **User's Headset:** Arctis 7 (2017 Edition)
+  - The headset ID for this model is [0x1038, 0x1260]
+
+### Project Milestones
+
+(Agent should check in with the user at each milestone for feedback and progress confirmation.)
+
+### Expected Deliverables
+
+- Upload image successfully
+- Proccess Image
+- Be able to search Images
+- Proper error handling and logging
+
+This spec provides all necessary details for the AI-code editor to build the plugin effectively.

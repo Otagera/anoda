@@ -6,6 +6,7 @@ import type {
 	DisplayImageProps,
 	ImageSize,
 } from "../interface";
+import Tooltip from "~/components/tooltip";
 
 const DisplayImage = ({
 	imgSrcFP,
@@ -23,17 +24,28 @@ const DisplayImage = ({
 		BoundingBox[] | undefined
 	>();
 	const [canvasBox, setCanvasBox] = useState<CanvasBox[] | undefined>();
+	const [faceImgSrc, setFaceImgSrc] = useState<string[]>([]);
+	const [smallCtx, setSmallCtx] = useState<CanvasRenderingContext2D | null>();
+
 	const imgRef = useRef<HTMLImageElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const smallCanvasRef = useRef<HTMLCanvasElement>(null);
 
 	useEffect(() => {
-		setCtx(canvasRef.current?.getContext("2d"));
+		const canvas = canvasRef.current;
+		setCtx(canvas?.getContext("2d"));
 	}, [canvasRef.current]);
+
+	useEffect(() => {
+		const canvas = smallCanvasRef.current;
+		setSmallCtx(canvas?.getContext("2d"));
+	}, [smallCanvasRef.current]);
 
 	//
 	useEffect(() => {
 		if (imgSrcFP) {
 			setImgSrc(imgSrcFP);
+			setFaceImgSrc([]);
 		}
 	}, [imgSrcFP]);
 	useEffect(() => {
@@ -52,7 +64,8 @@ const DisplayImage = ({
 	}, [facesFP]);
 
 	useEffect(() => {
-		if (ctx && canvasBox) drawBoundingBoxes(ctx, canvasBox);
+		if (ctx && smallCtx && canvasBox)
+			drawBoundingBoxes(ctx, smallCtx, canvasBox);
 	}, [canvasBox]);
 	useEffect(() => {
 		const scaleX =
@@ -75,6 +88,7 @@ const DisplayImage = ({
 
 	const drawBoundingBoxes = (
 		context: CanvasRenderingContext2D,
+		smallCtx: CanvasRenderingContext2D,
 		boxes: CanvasBox[]
 	) => {
 		if (canvasWidth && canvasHeight)
@@ -82,6 +96,8 @@ const DisplayImage = ({
 
 		context.strokeStyle = "red"; // Style for bounding boxes (you can customize)
 		context.lineWidth = 3;
+
+		const locaImgs: string[] = [];
 
 		boxes.forEach((box) => {
 			// For rectangle
@@ -115,7 +131,46 @@ const DisplayImage = ({
 			context.beginPath();
 			context.arc(centerX, centerY, radius, startAngle, endAngle);
 			context.stroke();
+
+			console.log("imgSrc", imgSrc);
+			console.log("smallCtx", smallCtx);
+
+			if (imgSrc && smallCtx) {
+				const image = new Image();
+				image.crossOrigin = "anonymous"; // Add this line
+				image.src = imgSrc;
+
+				image.onload = () => {
+					const canvas = smallCanvasRef.current;
+					if (canvas) {
+						const cutWidth = 665;
+						const cutHeight = 665;
+						const cutX = 872;
+						const cutY = 1390;
+						canvas.width = cutWidth;
+						canvas.height = cutHeight;
+
+						smallCtx?.drawImage(
+							image,
+							cutX,
+							cutY,
+							cutWidth,
+							cutHeight,
+							0,
+							0,
+							cutWidth,
+							cutHeight
+						);
+						locaImgs.push(canvas.toDataURL());
+						console.log("[inside onload] locaImgs", locaImgs);
+						smallCtx?.clearRect(0, 0, canvas.width, canvas.height);
+					}
+				};
+			}
+			console.log("[inside map] locaImgs", locaImgs);
 		});
+		console.log("locaImgs", locaImgs);
+		setFaceImgSrc(locaImgs);
 	};
 	const handleImageLoad = () => {
 		setCanvasWidth(imgRef.current?.width);
@@ -127,6 +182,7 @@ const DisplayImage = ({
 			<div className="image-container">
 				{imgSrc ? (
 					<img
+						aria-describedby="tooltip-id"
 						id="uploadedImage"
 						src={imgSrc}
 						alt={alt}
@@ -143,6 +199,24 @@ const DisplayImage = ({
 					width={canvasWidth}
 					height={canvasHeight}
 				></canvas>
+				{faceImgSrc.length ? (
+					faceImgSrc?.map((src, index) => {
+						return (
+							<img
+								// aria-describedby="tooltip-id"
+								// id="uploadedImage"
+								src={src}
+								alt={alt}
+								key={index}
+								// onLoad={handleImageLoad}
+								// ref={imgRef}
+							/>
+						);
+					})
+				) : (
+					<></>
+				)}
+				<canvas ref={smallCanvasRef} style={{ display: "none" }} />
 			</div>
 		</>
 	);

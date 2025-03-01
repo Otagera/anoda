@@ -71,7 +71,12 @@ const ImageModal = ({
 							/>
 							<h2>Name: {selectedImage.image_path}</h2>
 							<p>Description: {selectedImage.image_path}</p>
-							<button onClick={handleDeleteImage}>Delete Image</button>
+							<button
+								onClick={handleDeleteImage}
+								className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+							>
+								Delete Image
+							</button>
 							<button
 								className="absolute top-2.5 right-2.5"
 								onClick={handleCloseModal}
