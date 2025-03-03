@@ -1,60 +1,249 @@
-**Anoda Facematch**
+# Anoda Facematch
 
 ### Overview
 
-The essence of ths application is to have someone be able to have users sign up upload pictures with albums and the feature I mostly care about is the facematching.
-So what would happen is when a picture is opened up we can then select the faces it recognize to search for other pictures with that face in that album.
-That is the high level overview
+This application, Anoda Facematch, allows users to upload photos and organize them into albums. The primary feature is face-matching. When viewing a photo, a user can select a recognized face and search for other photos within the same album containing that face.  Users will also be able to share their albums by generating a link that will allow others to view the album's photos and perform face searches.
+
+For this demo application, a simplified authentication will be used. This allows users to quickly start uploading pictures and using the app. Only the uploader and those they share album links with will be able to view the content.
+
+The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. In the future, this image processing will be moved to a background worker for better performance.
+
+This is a high-level overview of the application.
+
+### Scalability Considerations
+
+As this application grows, it will be important to address the following scalability concerns:
+
+*   **Database:** The PostgreSQL database will need to efficiently handle an increasing number of photos and recognized faces. Database query optimization and potential schema adjustments may be needed.
+*   **Image Processing:** The Python image processing script (or the future background worker) will need to scale to handle many image uploads concurrently. We will need to make sure that it has enough resources.
+*   **Face Matching:** The face-matching algorithm may need to be optimized to maintain fast search times as the number of stored faces increases.
+*   **Storage:** The storage solution (local in development, Cloudinary/AWS in production) must be able to accommodate a growing volume of image data.
+* **Authentication**: The authentication will need to handle an increasing number of users.
+
+These are initial considerations and will be revisited as development progresses.
 
 ### UI Design
 
-- **Primary Icon:** Headphone icon
-- **Battery Percentage:** Centered text below the icon
-- **Charging Indicator:** Lightning emoji (⚡) next to the percentage if charging
+The application will have a clean and modern design, similar to the UI found on [playbook.com](https://playbook.com). The UI should be intuitive and easy to navigate.  Tailwind CSS will be used as the primary styling framework, leveraging its utility classes to create a consistent visual style.
+
+The UI will consist of the following key components:
+
+-   **Welcome Page:** The initial page users see when opening the application.
+-   **Albums Page:** This page will display all of the user's albums and provide a way to create new ones.
+-   **Album Page:** Displays all the photos within a selected album.
+-   **Image Modal:** A modal that appears when a user clicks on a photo in an album. It will display more information about the photo and show the faces that have been recognized in the image.
+- **Search Page:** After a face is clicked on in the Image Modal a search will be initiated and the result will be displayed in the Search page.
+
+The following framework will be used:
+
+-   React
+-   React Router DOM
+-   TypeScript
+-   Tailwind CSS
+-   `tanstack/react-query`
+
+The color schemes and fonts will be based on what tailwind provides, and will be revisited at a later date.
 
 ### Data Source
 
-I am using PostgreSQL for storing reference to the images and in development I store the images locally, and in production in either AWS or cloudinary
+PostgreSQL will be used as the database for the application. The database will store paths that reference the images. In development, the images will be stored locally on the filesystem, while in production, images will be stored in either AWS S3 or Cloudinary.
 
-### Plugin Functionality
+The `pg` library will be used for interacting with the PostgreSQL database, and raw SQL queries will be used. ORMs may be revisited in the future if raw queries become too difficult to manage.
 
-- **Polling Interval:** Default 30 seconds (configurable via settings)
-- **Battery Fetching Method:** Reverse-engineered using USB HID or existing Windows APIs
-- **Stream Deck Integration:**
-  - Uses the [Stream Deck SDK](https://docs.elgato.com/streamdeck/sdk/introduction/getting-started)
-  - Follows the [Key Plugin Guide](https://docs.elgato.com/streamdeck/sdk/guides/keys)
+Redis will be used as a caching layer to improve query performance.
+
+#### Database Schema
+
+**Table: `images`**
+
+| Column Name   | Data Type       | Description                                                                     |
+| ------------- | --------------- | ------------------------------------------------------------------------------- |
+| image\_id     | UUID (Primary)  | Unique identifier for the image              |
+| image\_path   | TEXT            | Path to the image (local or cloud)                                               |
+| upload\_time | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)              |
+| original_size | JSON | contains the image original size |
+
+**Table: `faces`**
+
+| Column Name    | Data Type       | Description                                                                          |
+| -------------- | --------------- | ------------------------------------------------------------------------------------ |
+| face\_id       | UUID (Primary)  | Unique identifier for the face                  |
+| image\_id      | UUID (Foreign)  | ID of the image containing this face (references `images.image_id`)                 |
+| embedding      | \_FLOAT4        | Vector representation of the face                                                  |
+| bounding\_box  | JSONB           | JSON object containing bounding box coordinates for the face                        |
+| processed\_time | TIMESTAMPTZ     | Date and time the face was processed (default: `CURRENT_TIMESTAMP`)              |
+
+**Table: `albums`**
+
+| Column Name | Data Type       | Description                                    |
+| ----------- | --------------- | ---------------------------------------------- |
+| album\_id   | UUID (Primary)  | Unique identifier for the album                |
+| album\_name | TEXT            | Name of the album |
+| created\_by | user_id (Foreign) | The user that created the album |
+| creation\_date | TIMESTAMPTZ       | Date and time the album was created          |
+| shared\_link | TEXT       | The generated link to share the album |
+
+**Table: `album_images`**
+
+| Column Name    | Data Type       | Description                                                                          |
+| -------------- | --------------- | ------------------------------------------------------------------------------------ |
+| image\_id      | UUID (Foreign)  | ID of the image (references `images.image_id`)                 |
+| album\_id      | UUID (Foreign)  | ID of the album (references `albums.album_id`)                 |
+
+**Table: `users`**
+
+| Column Name | Data Type       | Description                                     |
+| ----------- | --------------- | ----------------------------------------------- |
+| user\_id    | UUID (Primary)  | Unique identifier for the user                 |
+
+#### SQL Queries to Create Tables
+
+CREATE TABLE images ( image_id UUID PRIMARY KEY, image_path TEXT NOT NULL, upload_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, original_size JSON );
+
+CREATE TABLE faces ( face_id UUID PRIMARY KEY, image_id UUID REFERENCES images(image_id), embedding _FLOAT4, bounding_box JSONB, processed_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );
+
+CREATE TABLE albums ( album_id UUID PRIMARY KEY, album_name TEXT, created_by UUID REFERENCES users(user_id), creation_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, shared_link TEXT );
+
+CREATE TABLE album_images ( image_id UUID REFERENCES images(image_id), album_id UUID REFERENCES albums(album_id) );
+
+CREATE TABLE users ( user_id UUID PRIMARY KEY );
+
 
 ### Implementation Details
 
-- **SDK Documentation:**
-
-  - [Getting Started](https://docs.elgato.com/streamdeck/sdk/introduction/getting-started)
-  - [Your First Changes](https://docs.elgato.com/streamdeck/sdk/introduction/your-first-changes)
-  - [Plugin Environment](https://docs.elgato.com/streamdeck/sdk/introduction/plugin-environment)
-  - [Key Plugin Guide](https://docs.elgato.com/streamdeck/sdk/guides/keys)
-  - [Manifest Reference](https://docs.elgato.com/streamdeck/sdk/references/manifest)
-
-- **Tech Stack:**
-- Server - JavaScript (Node.js)
-- CLient - TypeScript ReactJS with React router dom and tailwind
-
-* **Configuration:**
-  I would like to use Docker to deploy both applications with python initialized to be used
-
-### Supported Headset
-
-- **User's Headset:** Arctis 7 (2017 Edition)
-  - The headset ID for this model is [0x1038, 0x1260]
+-   **Tech Stack:**
+    -   Server: JavaScript (Node.js, Express.js)
+    -   Client: TypeScript, ReactJS, React Router DOM, Tailwind CSS
+- **Python**:
+    - Python will be used for the face recognition script.
+-   **Configuration:**
+    -   Docker will be used to deploy the application. There will be two main containers: one for the server application (Node.js with Express.js) and one for the client application (React). Both containers will be initialized when the docker application is deployed. The python application will be available in the server container, so the face recognition script can be used.
 
 ### Project Milestones
 
-(Agent should check in with the user at each milestone for feedback and progress confirmation.)
+(Agent will check in with the user weekly for feedback and progress confirmation. Check-in will also occur after each milestone.)
+
+**Milestone 1: Prepare this Document (PRD.mdx)**
+
+*   Tasks:
+    *   Complete the review and refinement of all sections in the `PRD.mdx` file.
+* Status: In progress
+
+**Milestone 2: Define and Implement API Endpoints**
+
+*   Tasks:
+    *   2.1. User Authentication Endpoints:
+        *   Create endpoints for user creation.
+        *   Create endpoints for user login.
+    *   2.2. Album Management Endpoints:
+        *   Create endpoints to list albums.
+        *   Create endpoints to create new albums.
+        *   Create endpoints to view an album.
+        *   Create endpoints to delete an album.
+        *   Create endpoints to edit an album.
+    * 2.3. Image Management Endpoints:
+        *   Create endpoints to upload images.
+        *   Create endpoints to view images.
+    *   2.4. Face Management Endpoints:
+        *   Create endpoints to process faces.
+        *   Create endpoints to search for faces.
+*   Expected Timeframe: 3 weeks.
+
+**Milestone 3: Create Basic Page Outlines**
+
+*   Tasks:
+    *   3.1. Welcome Page: Create a basic layout for the Welcome Page.
+    *   3.2. Albums Page: Create a basic layout for the Albums Page (listing existing albums and a "create new album" button).
+    *   3.3. Album Page: Create a basic layout for an Album Page (displaying the photos in an album).
+    *   3.4. Image Modal: Create a basic structure for the Image Modal.
+    * 3.5 Search page: Create a basic structure for the search page.
+*   Expected Timeframe: 2 weeks.
+
+**Milestone 4: Implement User Authentication**
+
+* Tasks:
+    * 4.1 User Auth Backend: Implement user authentication and session logic on the server.
+    * 4.2 User Auth Frontend: Implement user login/registration on the frontend.
+    * 4.3 User Auth Endpoints: Test all User auth endpoints.
+    * 4.4 User Auth UI: test all user auth views.
+* Expected Timeframe: 2 weeks
+
+**Milestone 5: Implement Album Management**
+
+* Tasks:
+    * 5.1 Album Management Backend: Implement album creation, listing, deletion and edition logic on the server.
+    * 5.2 Album Management Frontend: Implement album views, album creation on the frontend.
+    * 5.3 Album Management Endpoints: Test all album management endpoints.
+    * 5.4 Album Management UI: test all album management views.
+* Expected Timeframe: 2 weeks
+
+**Milestone 6: Implement Image Upload**
+
+* Tasks:
+    * 6.1 Image Upload Backend: Implement image uploading logic on the server.
+    * 6.2 Image Upload Frontend: Implement image upload on the frontend.
+    * 6.3 Image Upload Endpoints: Test all image upload endpoints.
+    * 6.4 Image Upload UI: test all image upload views.
+* Expected Timeframe: 2 weeks
+
+**Milestone 7: Implement Image View**
+
+* Tasks:
+    * 7.1 Image View Backend: Implement image viewing logic on the server.
+    * 7.2 Image View Frontend: Implement image viewing on the frontend.
+    * 7.3 Image View Endpoints: Test all image view endpoints.
+    * 7.4 Image View UI: test all image view views.
+* Expected Timeframe: 2 weeks
+
+**Milestone 8: Implement Face Recognition**
+
+*   Tasks:
+    *   8.1. Integrate Python Script: Integrate the existing Python face recognition script with the server.
+    *   8.2. Process Faces: Create logic for processing faces on image upload.
+    *   8.3. Store Face Embeddings: Store the face embedding information in the `faces` table.
+    * 8.4 Test: test that faces are processed correctly.
+*   Expected Timeframe: 2 weeks.
+
+**Milestone 9: Implement Face Search**
+
+* Tasks:
+    * 9.1 Face search Backend: Implement face search on the server.
+    * 9.2 Face search Frontend: Implement face search on the frontend.
+    * 9.3 Face search Endpoints: Test all face search endpoints.
+    * 9.4 Face search UI: test all face search views.
+* Expected Timeframe: 2 weeks
 
 ### Expected Deliverables
 
-- Upload image successfully
-- Proccess Image
-- Be able to search Images
-- Proper error handling and logging
+The Anoda Facematch application is expected to deliver the following core features and capabilities:
 
-This spec provides all necessary details for the AI-code editor to build the plugin effectively.
+*   **User Authentication:**
+    *   Users can create accounts.
+    *   Users can log in to their accounts.
+    *   Only logged-in users can use the application features.
+*   **Album Management:**
+    *   Users can create new albums.
+    *   Users can view a list of their existing albums.
+    *   Users can open an album to view its contents.
+    *   Users can delete albums.
+    * Users can edit albums.
+*   **Image Management:**
+    *   Users can upload images to their albums.
+    *   Users can view uploaded images.
+    * The original size of the image is saved.
+*   **Face Recognition:**
+    *   The application automatically processes uploaded images to recognize faces.
+    *   The application stores data about the recognized faces (embedding and bounding box).
+*   **Face Search:**
+    *   Users can select a recognized face in an image.
+    *   Users can search for other images within the same album containing that face.
+*   **Album Sharing:**
+    *  Users can generate a link to an album.
+    * Users can share the generated link with other users.
+    *  Users can view the shared album.
+    * Users can use face search in shared album.
+*   **Error Handling and Logging:**
+    *   The application handles errors gracefully.
+    *   The application logs important events and errors.
+* **Caching**:
+    * The application will use caching to speed up the loading time.
