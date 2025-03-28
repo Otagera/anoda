@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model album_images {
+  album_images_id String  @id @db.Uuid
+  image_id        String? @db.Uuid
+  album_id        String? @db.Uuid
+  albums          albums? @relation(fields: [album_id], references: [album_id], onDelete: NoAction, onUpdate: NoAction)
+  images          images? @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model albums {
+  album_id      String         @id @db.Uuid
+  album_name    String?
+  created_by    String?        @db.Uuid
+  creation_date DateTime?      @default(now()) @db.Timestamptz(6)
+  shared_link   String?
+  album_images  album_images[]
+  users         users?         @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model faces {
+  face_id        Int       @id @default(autoincrement())
+  image_id       String?   @db.Uuid
+  embedding      Float[]   @db.Real
+  bounding_box   Json?
+  processed_time DateTime? @default(now()) @db.Timestamptz(6)
+  images         images?   @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model images {
+  image_id      String         @id @db.Uuid
+  image_path    String
+  upload_time   DateTime?      @default(now()) @db.Timestamptz(6)
+  creation_date DateTime?      @default(now()) @db.Timestamptz(6)
+  update_date   DateTime?      @default(now()) @db.Timestamptz(6)
+  album_images  album_images[]
+  faces         faces[]
+}
+
+model users {
+  user_id  String   @id @db.Uuid
+  email    String
+  password String
+  albums   albums[]
+}

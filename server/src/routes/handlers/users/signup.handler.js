@@ -1,14 +1,14 @@
-const fetchPicturesService = require("@services/fetchPictures.service");
+const signupService = require("@services/users/signup.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 const handler = {
-  method: "get",
+  method: "post",
   handler: async (req, res) => {
     try {
-      const data = await fetchPicturesService();
+      const data = await signupService(req.body);
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
-        message: "Fetch Images successfully.",
+        message: "User signed up successfully.",
         data,
       });
     } catch (error) {
@@ -21,7 +21,7 @@ const handler = {
         });
     }
   },
-  path: "/pictures",
+  path: "/auth/signup",
   middlewares: [],
 };
 

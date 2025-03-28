@@ -85,28 +85,30 @@ Redis will be used as a caching layer to improve query performance.
 
 **Table: `album_images`**
 
-| Column Name    | Data Type       | Description                                                                          |
-| -------------- | --------------- | ------------------------------------------------------------------------------------ |
+| Column Name    | Data Type       | Description                                                    |
+| -------------- | --------------- | -------------------------------------------------------------- |
 | image\_id      | UUID (Foreign)  | ID of the image (references `images.image_id`)                 |
 | album\_id      | UUID (Foreign)  | ID of the album (references `albums.album_id`)                 |
 
 **Table: `users`**
 
-| Column Name | Data Type       | Description                                     |
-| ----------- | --------------- | ----------------------------------------------- |
+| Column Name | Data Type       | Description                                    |
+| ----------- | --------------- | ---------------------------------------------- |
 | user\_id    | UUID (Primary)  | Unique identifier for the user                 |
 
 #### SQL Queries to Create Tables
 
-CREATE TABLE images ( image_id UUID PRIMARY KEY, image_path TEXT NOT NULL, upload_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, original_size JSON );
+CREATE TABLE images(image_id UUID PRIMARY KEY,image_path TEXT NOT NULL,upload_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,creation_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,update_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
 
-CREATE TABLE faces ( face_id UUID PRIMARY KEY, image_id UUID REFERENCES images(image_id), embedding _FLOAT4, bounding_box JSONB, processed_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );
+CREATE TABLE faces(face_id SERIAL PRIMARY KEY,image_id UUID REFERENCES images(image_id),embedding REAL[],-- Store face embedding as a real array (adjust type based on embedding vector length)
+ bounding_box JSONB,-- Store bounding box coordinates as JSON [top, right, bottom, left]
+ processed_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE albums ( album_id UUID PRIMARY KEY, album_name TEXT, created_by UUID REFERENCES users(user_id), creation_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, shared_link TEXT );
 
 CREATE TABLE album_images ( image_id UUID REFERENCES images(image_id), album_id UUID REFERENCES albums(album_id) );
 
-CREATE TABLE users ( user_id UUID PRIMARY KEY );
+CREATE TABLE users(user_id UUID PRIMARY KEY,email TEXT NOT NULL,password TEXT NOT NULL);
 
 
 ### Implementation Details
