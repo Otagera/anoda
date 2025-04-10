@@ -35,18 +35,19 @@ model faces {
 }
 
 model images {
-  image_id      String         @id @db.Uuid
-  image_path    String
-  upload_time   DateTime?      @default(now()) @db.Timestamptz(6)
-  creation_date DateTime?      @default(now()) @db.Timestamptz(6)
-  update_date   DateTime?      @default(now()) @db.Timestamptz(6)
-  album_images  album_images[]
-  faces         faces[]
+  image_id        String         @id @db.Uuid
+  image_path      String
+  upload_date     DateTime?      @default(now()) @db.Timestamptz(6)
+  update_date     DateTime?      @default(now()) @db.Timestamptz(6)
+  album_images    album_images[]
+  faces           faces[]
+  original_width  Int
+  original_height Int
 }
 
 model users {
   user_id  String   @id @db.Uuid
-  email    String
+  email    String   @unique
   password String
   albums   albums[]
 }
