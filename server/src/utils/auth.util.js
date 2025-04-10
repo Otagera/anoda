@@ -1,10 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("../config/index.config");
-const {
-  createOrUpdateUserToken,
-  createOrUpdateCompanyToken,
-} = require("@services/auth/token.lib");
 
 const encryptPassword = async (password) => {
   const hash = await bcrypt.hash(password, 10);
@@ -37,22 +33,7 @@ const createUserAuthToken = async (userId) => {
     { expiresIn: "720h" }
   );
 
-  try {
-    const hashedToken = await hashToken(refreshToken);
-    await createOrUpdateUserToken(userId, hashedToken);
-  } catch (error) {
-    throw new Error(error);
-  }
   return { accessToken, refreshToken };
-};
-
-const createUserActivationToken = (email, userId) => {
-  const token = jwt.sign(
-    { userId, email, type: "activate" },
-    config[config.env].secret,
-    { expiresIn: "24h" }
-  );
-  return token;
 };
 
 const createUserResetPasswordToken = (email, userId) => {
@@ -75,12 +56,6 @@ const createCompanyAuthToken = async (companyId) => {
     config[config.env].secret,
     { expiresIn: "720h" }
   );
-  try {
-    const hashedToken = await hashToken(refreshToken);
-    await createOrUpdateCompanyToken(companyId, hashedToken);
-  } catch (error) {
-    throw new Error(error);
-  }
   return { accessToken, refreshToken };
 };
 
@@ -112,7 +87,6 @@ module.exports = {
   comparePasswords,
   createAdminToken,
   createUserAuthToken,
-  createUserActivationToken,
   createUserResetPasswordToken,
   createCompanyAuthToken,
   createCompanyActivationToken,

@@ -6,7 +6,7 @@ const handler = {
   handler: async (req, res) => {
     try {
       const data = await signupService(req.body);
-      return res.status(HTTP_STATUS_CODES.OK).send({
+      return res.status(HTTP_STATUS_CODES.CREATED).send({
         status: "completed",
         message: "User signed up successfully.",
         data,

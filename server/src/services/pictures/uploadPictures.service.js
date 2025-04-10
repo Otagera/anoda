@@ -5,7 +5,7 @@ const { spawn } = require("child_process");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const config = require("@config/index.config");
 const pool = require("@config/db.config");
-const { fetchImagesByIdsQuery } = require("@models/images.models");
+const { fetchImagesByIdsQuery } = require("@models/images.model");
 const { getImageSize, normalizeImagePath } = require("@utils/image.util");
 
 const fileSchema = Joi.object({

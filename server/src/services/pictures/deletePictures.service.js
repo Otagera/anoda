@@ -1,6 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { deleteAllImagesQuery } = require("@models/images.models");
+const { deleteAllImagesQuery } = require("@models/images.model");
 
 const spec = joi.object({});
 

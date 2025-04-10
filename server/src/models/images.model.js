@@ -1,4 +1,85 @@
-const pool = require("@config/db.config");
+const prisma = require("@config/db.config");
+
+const fetchImagesByIds = async (imageIds) => {
+  const images = await prisma.images.findMany({
+    where: {
+      image_id: {
+        in: imageIds,
+      },
+    },
+    include: {
+      faces: true,
+    },
+  });
+
+  return images.map((image) => ({
+    image_id: image.image_id,
+    faces: image.faces.map((face) => ({
+      face_id: face.face_id,
+      bounding_box: face.bounding_box,
+    })),
+    image_path: image.image_path,
+    upload_time: image.upload_date,
+    original_size: {
+      width: image.original_width,
+      height: image.original_height,
+    },
+  }));
+};
+const fetchAllImages = async () => {
+  const images = await prisma.images.findMany({
+    include: {
+      faces: true,
+    },
+  });
+
+  return images.map((image) => ({
+    image_id: image.image_id,
+    faces:
+      image.faces.length > 0
+        ? image.faces.map((face) => ({
+            face_id: face.face_id,
+            bounding_box: face.bounding_box,
+          }))
+        : [],
+    image_path: image.image_path,
+    upload_time: image.upload_date,
+    original_size: {
+      width: image.original_width,
+      height: image.original_height,
+    },
+  }));
+};
+const deleteImagesByIds = async (imageIds) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    await prisma.faces.deleteMany({
+      where: {
+        image_id: {
+          in: imageIds,
+        },
+      },
+    });
+
+    await prisma.images.deleteMany({
+      where: {
+        image_id: {
+          in: imageIds,
+        },
+      },
+    });
+  });
+
+  return transaction;
+};
+const deleteAllImages = async () => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    await prisma.faces.deleteMany({});
+
+    await prisma.images.deleteMany({});
+  });
+
+  return transaction;
+};
 
 const fetchImagesByIdsQuery = async (imageIds) => {
   return pool.query(
@@ -101,6 +182,10 @@ const deleteAllImagesQuery = async () => {
 };
 
 module.exports = {
+  fetchImagesByIds,
+  fetchAllImages,
+  deleteImagesByIds,
+  deleteAllImages,
   fetchImagesByIdsQuery,
   fetchAllImagesQuery,
   deleteImagesByIdsQuery,

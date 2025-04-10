@@ -1,5 +1,8 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
+const { ResourceInUseError } = require("@utils/error.util");
+const { encryptPassword, createUserAuthToken } = require("@utils/auth.util");
+const { getUser, createUser } = require("./users.lib");
 
 const spec = joi.object({
   email: joi.string().email().required(),
@@ -33,7 +36,7 @@ const aliasSpec = {
   },
 };
 
-const service = async (data, dependencies) => {
+const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
   const { email, password } = validateSpec(spec, aliasReq);
 
@@ -45,25 +48,13 @@ const service = async (data, dependencies) => {
 
   const encryptedPassword = await encryptPassword(password);
   const user = await createUser({ email, password: encryptedPassword });
-  await createUserProfile({ firstName, lastName, userId: user.id });
 
   const { accessToken, refreshToken } = await createUserAuthToken(user.id);
-  const activationToken = createUserActivationToken(email, user.id);
-
-  queueServices.emailQueueLib.addJob("sendActivationEmail", {
-    meta: {
-      email,
-      token: activationToken,
-      entity: "user",
-    },
-    worker: "sendActivationEmail",
-  });
 
   const aliasRes = aliaserSpec(aliasSpec.response, {
-    ...user.toJSON(),
+    ...user,
     accessToken,
     refreshToken,
-    activationToken,
   });
   return aliasRes;
 };

@@ -1,6 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { fetchAllImagesQuery } = require("@models/images.models");
+const { fetchAllImagesQuery } = require("@models/images.model");
 const { normalizeImagePath } = require("@utils/image.util");
 
 const spec = joi.object({

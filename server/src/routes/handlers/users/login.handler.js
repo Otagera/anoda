@@ -8,7 +8,7 @@ const handler = {
       const data = await loginService(req.body);
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
-        message: "User logged in successfully",
+        message: "User logged in successfully.",
         data,
       });
     } catch (error) {
