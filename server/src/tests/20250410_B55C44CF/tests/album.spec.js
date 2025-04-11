@@ -62,25 +62,11 @@ beforeAll(async () => {
   }
 });
 
-/* afterAll(async (done) => {
-  if (testUserId) {
-    await Albums.deleteAlbumsByUserid(testUserId);
-    await Users.deleteUserById(testUserId);
-  } else {
-    const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
-    await Users.deleteUserById(fetchedTestUser.user_id);
-  }
-  server.close(done);
-}); */
-// Updated afterAll using only async/await
 afterAll(async () => {
-  // Remove the 'done' parameter
   try {
-    let userIdToDelete = testUserId; // Use the ID captured in beforeAll if available
+    let userIdToDelete = testUserId;
 
-    // If testUserId wasn't captured (e.g., beforeAll failed early), try fetching
     if (!userIdToDelete && Users.fetchUserByEmail) {
-      // Check if fetchUserByEmail exists
       console.warn(
         "testUserId not set in afterAll, attempting to fetch by email..."
       );
@@ -88,7 +74,6 @@ afterAll(async () => {
         const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
         if (fetchedTestUser && fetchedTestUser.user_id) {
           userIdToDelete = fetchedTestUser.user_id;
-          console.log(`Found user ID ${userIdToDelete} via email for cleanup.`);
         } else {
           console.warn(
             `User with email ${testUser.email} not found for cleanup.`
@@ -98,23 +83,17 @@ afterAll(async () => {
         console.error(
           `Error fetching user by email during cleanup: ${fetchError.message}`
         );
-        // Decide if you want to proceed or stop cleanup
       }
     }
 
-    // Perform cleanup only if we have a user ID
     if (userIdToDelete) {
-      console.log(`Cleaning up resources for user ID: ${userIdToDelete}`);
-      // Delete dependent records first (albums) before the user record
       if (Albums.deleteAlbumsByUserId) {
         // Check if deleteAlbumsByUserId exists
         await Albums.deleteAlbumsByUserId(userIdToDelete);
-        console.log(`Albums cleaned up for user ${userIdToDelete}.`);
       }
       if (Users.deleteUserById) {
         // Check if deleteUserById exists
         await Users.deleteUserById(userIdToDelete);
-        console.log(`User ${userIdToDelete} cleaned up.`);
       }
     } else {
       console.warn("No testUserId found, skipping user/album cleanup.");
@@ -123,9 +102,6 @@ afterAll(async () => {
     // Log any errors during cleanup, but don't necessarily fail the test suite
     console.error("Error during afterAll cleanup:", error);
   } finally {
-    // Ensure server close is always attempted
-    console.log("Attempting to close server...");
-    // Use the promisified version with await
     await closeServerAsync(server);
   }
 });
