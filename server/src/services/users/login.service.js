@@ -50,7 +50,7 @@ const service = async (data) => {
     throw new AuthError("Incorrect email or password");
   }
 
-  const { accessToken, refreshToken } = await createUserAuthToken(user.id);
+  const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
 
   const aliasRes = aliaserSpec(aliasSpec.response, {
     ...user,

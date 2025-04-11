@@ -31,8 +31,6 @@ const aliasSpec = {
     email: "email",
     accessToken: "accessToken",
     refreshToken: "refreshToken",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
   },
 };
 
@@ -49,7 +47,7 @@ const service = async (data) => {
   const encryptedPassword = await encryptPassword(password);
   const user = await createUser({ email, password: encryptedPassword });
 
-  const { accessToken, refreshToken } = await createUserAuthToken(user.id);
+  const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
 
   const aliasRes = aliaserSpec(aliasSpec.response, {
     ...user,

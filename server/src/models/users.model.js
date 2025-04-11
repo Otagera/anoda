@@ -32,6 +32,22 @@ const fetchUser = async (where) => {
   });
 };
 
+const fetchUserById = async (userId) => {
+  return await prisma.users.findFirst({
+    where: {
+      user_id: userId,
+    },
+  });
+};
+
+const fetchUserByEmail = async (email) => {
+  return await prisma.users.findFirst({
+    where: {
+      email,
+    },
+  });
+};
+
 const fetchUsersByIds = async (userIds) => {
   return await prisma.users.findMany({
     where: {
@@ -44,6 +60,23 @@ const fetchUsersByIds = async (userIds) => {
 
 const fetchAllUsers = async () => {
   return await prisma.users.findMany();
+};
+
+const deleteUserById = async (userId) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    await prisma.albums.deleteMany({
+      where: {
+        created_by: userId,
+      },
+    });
+    await prisma.users.delete({
+      where: {
+        user_id: userId,
+      },
+    });
+  });
+
+  return transaction;
 };
 
 const deleteUsersByIds = async (userIds) => {
@@ -72,8 +105,11 @@ module.exports = {
   createNewUser,
   updateExistingUser,
   fetchUser,
+  fetchUserById,
+  fetchUserByEmail,
   fetchUsersByIds,
   fetchAllUsers,
+  deleteUserById,
   deleteUsersByIds,
   deleteAllUsers,
 };

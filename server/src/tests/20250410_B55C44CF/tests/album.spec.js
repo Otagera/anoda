@@ -1,177 +1,458 @@
-const createAlbumService = require("@services/albums/createAlbum.service");
-const createAlbumHandler = require("@routes/handlers/albums/createAlbum.handler");
+const {
+  request,
+  baseURL,
+  Users,
+  Albums,
+  closeServerAsync,
+  HTTP_STATUS_CODES,
+} = require("../../common");
 
-const updateAlbumService = require("@services/albums/updateAlbum.service");
-const updateAlbumHandler = require("@routes/handlers/albums/updateAlbum.handler");
+const testUser = {
+  email: "album.prisma.user@email.com",
+  password: "aA1.ValidPassword!@",
+};
+// Note: 'description' is not in the schema, so removed. 'album_name' is optional per schema,
+// but we often require it at the application level. Test assumes application enforces presence.
+const albumData1 = {
+  albumName: "Summer Vacation 2025",
+};
+const albumData2 = {
+  albumName: "Project Phoenix Docs",
+};
+const updatedAlbumData = {
+  albumName: "Summer Vacation 2025 - Updated Pics",
+};
 
-const fetchAlbumService = require("@services/albums/fetchAlbum.service");
-const fetchAlbumHandler = require("@routes/handlers/albums/fetchAlbum.handler");
+const invalidAlbumData = {
+  some_other_field: "irrelevant",
+};
 
-const fetchAlbumsService = require("@services/albums/fetchAlbums.service");
-const fetchAlbumsHandler = require("@routes/handlers/albums/fetchAlbums.handler");
+let agent;
+let server;
+let authToken;
+let testUserId;
 
-const deleteAlbumService = require("@services/albums/deleteAlbum.service");
-const deleteAlbumHandler = require("@routes/handlers/albums/deleteAlbum.handler");
+beforeAll(async () => {
+  const common = require("../../common");
+  server = common.server;
+  agent = request.agent(server);
 
-const { HTTP_STATUS_CODES } = require("@utils/constants.util");
+  const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
+  if (fetchedTestUser) {
+    await Users.deleteUserById(fetchedTestUser.user_id);
+  }
 
-jest.mock("@services/albums/createAlbum.service");
-jest.mock("@services/albums/updateAlbum.service");
-jest.mock("@services/albums/fetchAlbum.service");
-jest.mock("@services/albums/fetchAlbums.service");
-jest.mock("@services/albums/deleteAlbum.service");
+  await agent.post(`${baseURL}/auth/signup`).send(testUser);
 
-afterEach(() => {
-  jest.restoreAllMocks();
+  const loginRes = await agent.post(`${baseURL}/auth/login`).send(testUser);
+  authToken = loginRes.body.data.accessToken;
+
+  const userDetails = await Users.fetchUserByEmail(testUser.email);
+  if (!userDetails) {
+    throw new Error(
+      `Failed to find user ${testUser.email} after signup/login.`
+    );
+  }
+  testUserId = userDetails.user_id;
+
+  if (!authToken || !testUserId) {
+    throw new Error(
+      "Authentication/User setup failed, cannot retrieve token or user ID for tests."
+    );
+  }
+});
+
+/* afterAll(async (done) => {
+  if (testUserId) {
+    await Albums.deleteAlbumsByUserid(testUserId);
+    await Users.deleteUserById(testUserId);
+  } else {
+    const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
+    await Users.deleteUserById(fetchedTestUser.user_id);
+  }
+  server.close(done);
+}); */
+// Updated afterAll using only async/await
+afterAll(async () => {
+  // Remove the 'done' parameter
+  try {
+    let userIdToDelete = testUserId; // Use the ID captured in beforeAll if available
+
+    // If testUserId wasn't captured (e.g., beforeAll failed early), try fetching
+    if (!userIdToDelete && Users.fetchUserByEmail) {
+      // Check if fetchUserByEmail exists
+      console.warn(
+        "testUserId not set in afterAll, attempting to fetch by email..."
+      );
+      try {
+        const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
+        if (fetchedTestUser && fetchedTestUser.user_id) {
+          userIdToDelete = fetchedTestUser.user_id;
+          console.log(`Found user ID ${userIdToDelete} via email for cleanup.`);
+        } else {
+          console.warn(
+            `User with email ${testUser.email} not found for cleanup.`
+          );
+        }
+      } catch (fetchError) {
+        console.error(
+          `Error fetching user by email during cleanup: ${fetchError.message}`
+        );
+        // Decide if you want to proceed or stop cleanup
+      }
+    }
+
+    // Perform cleanup only if we have a user ID
+    if (userIdToDelete) {
+      console.log(`Cleaning up resources for user ID: ${userIdToDelete}`);
+      // Delete dependent records first (albums) before the user record
+      if (Albums.deleteAlbumsByUserId) {
+        // Check if deleteAlbumsByUserId exists
+        await Albums.deleteAlbumsByUserId(userIdToDelete);
+        console.log(`Albums cleaned up for user ${userIdToDelete}.`);
+      }
+      if (Users.deleteUserById) {
+        // Check if deleteUserById exists
+        await Users.deleteUserById(userIdToDelete);
+        console.log(`User ${userIdToDelete} cleaned up.`);
+      }
+    } else {
+      console.warn("No testUserId found, skipping user/album cleanup.");
+    }
+  } catch (error) {
+    // Log any errors during cleanup, but don't necessarily fail the test suite
+    console.error("Error during afterAll cleanup:", error);
+  } finally {
+    // Ensure server close is always attempted
+    console.log("Attempting to close server...");
+    // Use the promisified version with await
+    await closeServerAsync(server);
+  }
 });
 
 describe("/albums", () => {
-  describe("POST /", () => {
-    test("should throw an error when album creation fails", async () => {
-      // Arrange
-      const mockError = new Error();
-      createAlbumService.mockRejectedValue(mockError);
+  beforeEach(async () => {
+    if (testUserId) {
+      await Albums.deleteAlbumsByUserid(testUserId);
+    }
+  });
 
-      const req = {
-        body: { albumName: "Test Album", createdBy: "userId123" },
-      };
-      const res = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-      };
+  describe("POST /albums", () => {
+    test("should create a new album successfully", async () => {
+      const res = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
 
-      // Act
-      await createAlbumHandler.handler(req, res);
+      expect(res.status).toBe(HTTP_STATUS_CODES.CREATED);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe("Album created successfully.");
+      expect(res.body.data).toHaveProperty("id");
+      expect(res.body.data).toHaveProperty("albumName", albumData1.albumName);
+      expect(res.body.data).toHaveProperty("userId", testUserId);
+      expect(res.body.data).toHaveProperty("createdAt");
+      // might be null
+      expect(res.body.data).toHaveProperty("sharedLink");
+    });
 
-      // Assert
-      expect(createAlbumService).toHaveBeenCalledWith({
-        albumName: "Test Album",
-        createdBy: "userId123",
-      });
-      expect(res.status).toHaveBeenCalledWith(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Internal server error",
-        data: null,
-      });
+    test("should fail to create an album without authentication", async () => {
+      const res = await agent.post(`${baseURL}/albums`).send(albumData1);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+      expect(res.body.status).toBe("error");
+      expect(res.body.message).toMatch("Unauthorized request, please login");
+      expect(res.body.data).toBe(null);
+    });
+
+    test("should fail to create an album without proper authentication", async () => {
+      const res = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer authToken`)
+        .send(albumData1);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+      expect(res.body.status).toBe("error");
+      expect(res.body.data).toBe(null);
+    });
+
+    test("should fail to create an album with missing album_name", async () => {
+      const res = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(invalidAlbumData);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
+      expect(res.body.status).toBe("error");
+      expect(res.body.message).toMatch(
+        /validation failed|album_name is required/i
+      );
+      //Album name: album_name is required
+      expect(res.body.data).toBe(null);
     });
   });
 
-  describe("PUT /:albumId", () => {
-    test("should throw an error when album update fails", async () => {
-      // Arrange
-      const mockError = new Error();
-      updateAlbumService.mockRejectedValue(mockError);
+  describe("GET /albums", () => {
+    beforeEach(async () => {
+      await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
+      await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData2);
+    });
 
-      const req = {
-        params: { albumId: "albumId123" },
-        body: { albumName: "Updated Album Name" },
-      };
-      const res = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-      };
+    test("should list all albums for the authenticated user", async () => {
+      const res = await agent
+        .get(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`);
 
-      // Act
-      await updateAlbumHandler.handler(req, res);
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe("Albums retrieved successfully.");
+      expect(Array.isArray(res.body.data.albums)).toBe(true);
+      expect(res.body.data.albums.length).toBe(2);
 
-      // Assert
-      expect(updateAlbumService).toHaveBeenCalledWith({
-        albumId: "albumId123",
-        albumName: "Updated Album Name",
-      });
-      expect(res.status).toHaveBeenCalledWith(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Internal server error",
-        data: null,
-      });
+      const firstAlbum = res.body.data.albums.find(
+        (a) => a.albumName === albumData1.albumName
+      );
+      expect(firstAlbum).toBeDefined();
+      expect(firstAlbum).toHaveProperty("id");
+      expect(firstAlbum).toHaveProperty("userId", testUserId);
+      expect(firstAlbum).toHaveProperty("createdAt");
+      expect(firstAlbum).toHaveProperty("sharedLink");
+
+      const names = res.body.data.albums.map((album) => album.albumName);
+      expect(names).toContain(albumData1.albumName);
+      expect(names).toContain(albumData2.albumName);
+    });
+
+    test("should return an empty array if the user has no albums", async () => {
+      // Clear albums created by the nested beforeEach
+      await Albums.deleteAlbumsByUserid(testUserId);
+
+      const res = await agent
+        .get(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(Array.isArray(res.body.data.albums)).toBe(true);
+      expect(res.body.data.albums.length).toBe(0);
+    });
+
+    test("should fail to list albums without authentication", async () => {
+      const res = await agent.get(`${baseURL}/albums`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
     });
   });
 
-  describe("GET /:albumId", () => {
-    test("should throw an error when fetching a single album fails", async () => {
-      // Arrange
-      const mockError = new Error();
-      fetchAlbumService.mockRejectedValue(mockError);
+  describe("GET /albums/:albumId", () => {
+    let testAlbumId;
 
-      const req = { params: { albumId: "albumId123" } };
-      const res = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-      };
+    beforeEach(async () => {
+      const createRes = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
+      testAlbumId = createRes.body.data.id;
+      if (!testAlbumId)
+        throw new Error("Failed to create album for GET /albums/:albumId test");
+    });
 
-      // Act
-      await fetchAlbumHandler.handler(req, res);
+    test("should view a specific album successfully", async () => {
+      const res = await agent
+        .get(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`);
 
-      // Assert
-      expect(fetchAlbumService).toHaveBeenCalledWith({
-        albumId: "albumId123",
-      });
-      expect(res.status).toHaveBeenCalledWith(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Internal server error",
-        data: null,
-      });
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe(
+        `Album: ${testAlbumId} retrieved successfully.`
+      );
+      expect(res.body.data).toHaveProperty("id", testAlbumId);
+      expect(res.body.data).toHaveProperty("albumName", albumData1.albumName);
+      expect(res.body.data).toHaveProperty("userId", testUserId);
+      expect(res.body.data).toHaveProperty("createdAt");
+    });
+
+    test("should fail to view an album without authentication", async () => {
+      const res = await agent.get(`${baseURL}/albums/${testAlbumId}`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+    });
+
+    test("should return 404 if the album ID does not exist", async () => {
+      // Generate a valid UUID format that likely doesn't exist
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
+      const res = await agent
+        .get(`${baseURL}/albums/${nonExistentId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+      expect(res.body.message).toBe("Album not found.");
     });
   });
 
-  describe("GET /", () => {
-    test("should throw an error when fetching albums fails", async () => {
-      // Arrange
-      const mockError = new Error();
-      fetchAlbumsService.mockRejectedValue(mockError);
+  describe("PUT /albums/:albumId", () => {
+    let testAlbumId;
 
-      const req = { query: { createdBy: "userId123", page: 1, limit: 10 } };
-      const res = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-      };
+    beforeEach(async () => {
+      const createRes = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
 
-      // Act
-      await fetchAlbumsHandler.handler(req, res);
+      testAlbumId = createRes.body.data.id;
+      if (!testAlbumId) throw new Error("Failed to create album for PUT test");
+    });
 
-      // Assert
-      expect(fetchAlbumsService).toHaveBeenCalledWith({
-        createdBy: "userId123",
-        page: 1,
-        limit: 10,
-      });
-      expect(res.status).toHaveBeenCalledWith(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Internal server error",
-        data: null,
-      });
+    test("should edit an album successfully", async () => {
+      const res = await agent
+        .put(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(updatedAlbumData);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe(
+        `Album: ${testAlbumId} updated successfully.`
+      );
+      expect(res.body.data).toHaveProperty("id", testAlbumId);
+      expect(res.body.data).toHaveProperty(
+        "albumName",
+        updatedAlbumData.albumName
+      );
+      expect(res.body.data).toHaveProperty("userId", testUserId);
+
+      // Verify update
+      const getRes = await agent
+        .get(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(getRes.body.data.albumName).toBe(updatedAlbumData.albumName);
+    });
+
+    test("should fail to edit an album without authentication", async () => {
+      const res = await agent
+        .put(`${baseURL}/albums/${testAlbumId}`)
+        .send(updatedAlbumData);
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+    });
+
+    test("should return 404 if trying to edit an album ID that does not exist", async () => {
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
+      const res = await agent
+        .put(`${baseURL}/albums/${nonExistentId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(updatedAlbumData);
+      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+      expect(res.body.status).toBe("error");
+      expect(res.body.message).toBe("Album not found.");
+    });
+
+    test("should fail to edit an album with invalid data (e.g., empty albumName)", async () => {
+      const res = await agent
+        .put(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ albumName: "" });
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
+      expect(res.body.status).toBe("error");
+      expect(res.body.message).toMatch("album_name is not allowed to be empty");
+      // ... rest of error checks
     });
   });
 
-  describe("DELETE /:albumId", () => {
-    test("should throw an error when album deletion fails", async () => {
-      // Arrange
-      const mockError = new Error();
-      deleteAlbumService.mockRejectedValue(mockError);
+  describe("DELETE /albums/:albumId", () => {
+    let testAlbumId;
 
-      const req = { params: { albumId: "albumId123" } };
-      const res = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-      };
+    beforeEach(async () => {
+      const createRes = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
 
-      // Act
-      await deleteAlbumHandler.handler(req, res);
+      testAlbumId = createRes.body.data.id;
+      if (!testAlbumId)
+        throw new Error("Failed to create album for DELETE test");
+    });
 
-      // Assert
-      expect(deleteAlbumService).toHaveBeenCalledWith({
-        albumId: "albumId123",
-      });
-      expect(res.status).toHaveBeenCalledWith(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.send).toHaveBeenCalledWith({
-        status: "error",
-        message: "Internal server error",
-        data: null,
-      });
+    test("should delete an album successfully", async () => {
+      const res = await agent
+        .delete(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe(
+        `Album: ${testAlbumId} deleted successfully.`
+      );
+
+      // Verify deletion
+      const getRes = await agent
+        .get(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(getRes.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+    });
+
+    test("should fail to delete an album without authentication", async () => {
+      const res = await agent.delete(`${baseURL}/albums/${testAlbumId}`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+    });
+
+    test("should return 404 if trying to delete an album ID that does not exist", async () => {
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
+      const res = await agent
+        .delete(`${baseURL}/albums/${nonExistentId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+      expect(res.body.message).toBe("Album not found.");
+    });
+  });
+
+  describe("DELETE /albums/", () => {
+    let testAlbumId;
+
+    beforeEach(async () => {
+      const createRes = await agent
+        .post(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(albumData1);
+      testAlbumId = createRes.body.data.id;
+      if (!testAlbumId)
+        throw new Error("Failed to create album for DELETE test");
+    });
+
+    test("should delete an album successfully", async () => {
+      const res = await agent
+        .delete(`${baseURL}/albums`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+      expect(res.body.status).toBe("completed");
+      expect(res.body.message).toBe(`Albums deleted successfully.`);
+      expect(res.body.data).toHaveProperty("count", 1);
+
+      // Verify deletion
+      const getRes = await agent
+        .get(`${baseURL}/albums/${testAlbumId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(getRes.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+    });
+
+    test("should fail to delete an album without authentication", async () => {
+      const res = await agent.delete(`${baseURL}/albums`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
+      // ... rest of error checks
+    });
+
+    test("should return 404 if trying to delete an album ID that does not exist", async () => {
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
+      const res = await agent
+        .delete(`${baseURL}/albums/${nonExistentId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+      // ... rest of error checks
+      expect(res.body.message).toBe("Album not found.");
     });
   });
 });
