@@ -1,5 +1,27 @@
 const prisma = require("@config/db.config");
 
+const uploadImage = async (imageData) => {
+  const { image_path, original_size } = imageData;
+  const { width, height } = original_size;
+
+  return await prisma.images.create({
+    data: {
+      image_path,
+      original_width: width,
+      original_height: height,
+    },
+  });
+};
+const fetchImageById = async (image_id) => {
+  return await prisma.images.findMany({
+    where: {
+      image_id,
+    },
+    include: {
+      faces: true,
+    },
+  });
+};
 const fetchImagesByIds = async (imageIds) => {
   const images = await prisma.images.findMany({
     where: {
@@ -19,7 +41,7 @@ const fetchImagesByIds = async (imageIds) => {
       bounding_box: face.bounding_box,
     })),
     image_path: image.image_path,
-    upload_time: image.upload_date,
+    upload_date: image.upload_date,
     original_size: {
       width: image.original_width,
       height: image.original_height,
@@ -50,6 +72,23 @@ const fetchAllImages = async () => {
     },
   }));
 };
+const deleteImageById = async (image_id) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    await prisma.faces.deleteMany({
+      where: {
+        image_id,
+      },
+    });
+
+    await prisma.images.deleteMany({
+      where: {
+        image_id,
+      },
+    });
+  });
+
+  return transaction;
+};
 const deleteImagesByIds = async (imageIds) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     await prisma.faces.deleteMany({
@@ -64,6 +103,34 @@ const deleteImagesByIds = async (imageIds) => {
       where: {
         image_id: {
           in: imageIds,
+        },
+      },
+    });
+  });
+
+  return transaction;
+};
+const deleteImagesByUserId = async (uploaded_by) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    const imagesToDelete = await prisma.images.findMany({
+      where: {
+        uploaded_by,
+      },
+    });
+
+    const imageIdsToDelete = imagesToDelete.map((image) => image.image_id);
+    await prisma.faces.deleteMany({
+      where: {
+        image_id: {
+          in: imageIdsToDelete,
+        },
+      },
+    });
+
+    await prisma.images.deleteMany({
+      where: {
+        image_id: {
+          in: imageIdsToDelete,
         },
       },
     });
@@ -182,9 +249,13 @@ const deleteAllImagesQuery = async () => {
 };
 
 module.exports = {
+  uploadImage,
+  fetchImageById,
   fetchImagesByIds,
   fetchAllImages,
+  deleteImageById,
   deleteImagesByIds,
+  deleteImagesByUserId,
   deleteAllImages,
   fetchImagesByIdsQuery,
   fetchAllImagesQuery,

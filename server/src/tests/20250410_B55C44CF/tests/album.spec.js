@@ -11,7 +11,7 @@ const testUser = {
   email: "album.prisma.user@email.com",
   password: "aA1.ValidPassword!@",
 };
-// Note: 'description' is not in the schema, so removed. 'album_name' is optional per schema,
+// 'album_name' is optional per schema,
 // but we often require it at the application level. Test assumes application enforces presence.
 const albumData1 = {
   albumName: "Summer Vacation 2025",

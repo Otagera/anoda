@@ -100,7 +100,8 @@ class PinoLogger {
 
     if (this._config.enableConsoleLogs) {
       streams.push({
-        level: "trace",
+        // level: "trace",
+        level: "debug",
         stream: pinoPretty({
           colorize: true,
           colorizeObjects: true,
@@ -208,7 +209,7 @@ const defaultLogger = new PinoLogger({
   level: "debug",
   messageKey: "key",
   dbURI: config[config.env].db_url,
-  enableConsoleLogs: config.env === "development",
+  // enableConsoleLogs: config.env === "development",
   enableConsoleLogs: true,
 });
 

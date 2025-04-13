@@ -1,10 +1,8 @@
 const prisma = require("@config/db.config");
 
-const createNewAlbum = async (userData) => {
+const createNewAlbum = async (data) => {
   return await prisma.albums.create({
-    data: {
-      ...userData,
-    },
+    data,
   });
 };
 
@@ -71,12 +69,62 @@ const deleteAlbumsByIds = async (albumIds) => {
   return transaction;
 };
 
-const deleteAlbumsByUserid = async (created_by) => {
-  return await prisma.albums.deleteMany({
-    where: {
-      created_by,
-    },
+const deleteAlbumsByUserId = async (userId) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    // Find all albums created by the user
+    const albumsToDelete = await prisma.albums.findMany({
+      where: {
+        created_by: userId,
+      },
+    });
+
+    // Extract album IDs from the albums to delete
+    const albumIdsToDelete = albumsToDelete.map((album) => album.album_id);
+    // Find all album_images associated with the albums
+    const albumImagesToDelete = await prisma.album_images.findMany({
+      where: {
+        album_id: { in: albumIdsToDelete },
+      },
+    });
+
+    // Extract image IDs from the album_images to delete
+    const imageIdsToDelete = albumImagesToDelete.map(
+      (albumImage) => albumImage.image_id
+    );
+
+    await prisma.faces.deleteMany({
+      where: {
+        image_id: {
+          in: imageIdsToDelete,
+        },
+      },
+    });
+
+    await prisma.images.deleteMany({
+      where: {
+        image_id: {
+          in: imageIdsToDelete,
+        },
+      },
+    });
+
+    await prisma.album_images.deleteMany({
+      where: {
+        image_id: {
+          in: imageIdsToDelete,
+        },
+      },
+    });
+    await prisma.albums.deleteMany({
+      where: {
+        album_id: {
+          in: albumIdsToDelete,
+        },
+      },
+    });
   });
+
+  return transaction;
 };
 
 const deleteAllAlbums = async () => {
@@ -96,6 +144,6 @@ module.exports = {
   fetchAllAlbums,
   deleteAlbumById,
   deleteAlbumsByIds,
-  deleteAlbumsByUserid,
+  deleteAlbumsByUserId,
   deleteAllAlbums,
 };

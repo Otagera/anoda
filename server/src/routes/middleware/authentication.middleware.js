@@ -2,6 +2,7 @@ const { verify } = require("jsonwebtoken");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 const config = require("@config/index.config");
 const { getUser } = require("@services/users/users.lib");
+const { AuthError } = require("@utils/error.util");
 
 const authentication = async (req, res, next) => {
   let token = req.headers.authorization;

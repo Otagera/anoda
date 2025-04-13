@@ -4,9 +4,12 @@ const { spawn } = require("child_process");
 
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const config = require("@config/index.config");
-const pool = require("@config/db.config");
-const { fetchImagesByIdsQuery } = require("@models/images.model");
-const { getImageSize, normalizeImagePath } = require("@utils/image.util");
+const {
+  getImageSize,
+  normalizeImagePath,
+  isImageCorrupted,
+} = require("@utils/image.util");
+const { createImages, getImagesByIds } = require("./pictures.lib");
 
 const fileSchema = Joi.object({
   fieldname: Joi.string().valid("uploadedImages").required(),
@@ -31,25 +34,34 @@ const aliasSpec = {
   request: {
     files: "files",
   },
-  response: {},
+  response: {
+    images: "images",
+  },
+  image: {
+    image_id: "imageId",
+    faces: "faces",
+    image_path: "imagePath",
+    upload_date: "uploadDate",
+    original_size: "originalSize",
+  },
 };
 
 const storeImage = async (filename) => {
-  const imagePath = path.join(__dirname, "..", "uploads", filename);
+  const imagePath = path.join(__dirname, "..", "..", "uploads", filename);
   const imageSize = await getImageSize(imagePath);
-
+  const isCorrupted = await isImageCorrupted(imagePath);
+  if (isCorrupted) {
+    throw new Error(`Image: ${filename} is corrupted`);
+  }
   try {
-    const insertImageQuery =
-      "INSERT INTO images (image_path, original_size) VALUES ($1, $2) RETURNING image_id";
-    const imageResult = await pool.query(insertImageQuery, [
-      imagePath,
-      imageSize,
-    ]);
-    const imageId = imageResult.rows[0].image_id;
+    const imageResult = await createImages({
+      image_path: imagePath,
+      original_size: imageSize,
+    });
+    const imageId = imageResult.image_id;
 
     return { imagePath, imageId: imageId.toString() };
   } catch (error) {
-    console.error("[storeImage] Error:", error);
     throw error;
   }
 };
@@ -85,7 +97,7 @@ const runPythonScript = async (scriptArgs) => {
     });
 
     pythonProcess.on("error", (err) => {
-      reject(err); // Handle process spawn errors
+      reject(err);
     });
   });
 };
@@ -95,7 +107,6 @@ const service = async (data) => {
   const params = validateSpec(spec, aliasReq);
 
   const imagesToProcess = [];
-
   for (const file of params.files) {
     imagesToProcess.push(await storeImage(file.filename));
   }
@@ -114,9 +125,15 @@ const service = async (data) => {
     return img.imageId;
   });
 
-  const { rows } = await fetchImagesByIdsQuery(imageIds);
-
-  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(rows));
+  const images = await getImagesByIds(imageIds);
+  const aliasRes = aliaserSpec(aliasSpec.response, {
+    images: images.map((image) => {
+      return aliaserSpec(aliasSpec.image, {
+        ...image,
+        image_path: normalizeImagePath(image.image_path),
+      });
+    }),
+  });
   return aliasRes;
 };
 

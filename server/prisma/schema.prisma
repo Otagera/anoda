@@ -11,8 +11,8 @@ model album_images {
   album_images_id String  @id @default(uuid()) @db.Uuid
   image_id        String? @db.Uuid
   album_id        String? @db.Uuid
-  albums          albums? @relation(fields: [album_id], references: [album_id], onDelete: NoAction, onUpdate: NoAction)
-  images          images? @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction)
+  albums          albums? @relation(fields: [album_id], references: [album_id], onDelete: SetNull)
+  images          images? @relation(fields: [image_id], references: [image_id], onDelete: SetNull)
 }
 
 model albums {
@@ -22,7 +22,7 @@ model albums {
   creation_date DateTime?      @default(now()) @db.Timestamptz(6)
   shared_link   String?
   album_images  album_images[]
-  users         users?         @relation(fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?         @relation(fields: [created_by], references: [user_id], onDelete: SetNull)
 }
 
 model faces {
@@ -31,7 +31,7 @@ model faces {
   embedding      Float[]   @db.Real
   bounding_box   Json?
   processed_time DateTime? @default(now()) @db.Timestamptz(6)
-  images         images?   @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction)
+  images         images?   @relation(fields: [image_id], references: [image_id], onDelete: SetNull)
 }
 
 model images {
@@ -43,6 +43,8 @@ model images {
   faces           faces[]
   original_width  Int
   original_height Int
+  uploaded_by     String?        @db.Uuid
+  users           users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
 }
 
 model users {
@@ -50,4 +52,5 @@ model users {
   email    String   @unique
   password String
   albums   albums[]
+  images   images[]
 }

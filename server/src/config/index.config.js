@@ -55,6 +55,17 @@ const config = {
     redis_username: process.env.TEST_REDIS_USERNAME || "default", // needs Redis >= 6
     redis_password: process.env.TEST_REDIS_PASSWORD || "",
     redis_url: process.env.TEST_REDIS_URL,
+
+    // python
+    python_interpreter_path: path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "venv",
+      "bin",
+      "python"
+    ),
   },
   production: {
     db_url: process.env.DB_URL,

@@ -1,6 +1,10 @@
+const authentication = require("@routes/middleware/authentication.middleware");
 const upload = require("@routes/middleware/multer.middleware");
 const uploadPicturesService = require("@services/pictures/uploadPictures.service");
-const { HTTP_STATUS_CODES } = require("@utils/constants.util");
+const {
+  HTTP_STATUS_CODES,
+  MAXIMUM_IMAGES_CAN_UPLOAD,
+} = require("@utils/constants.util");
 
 const handler = {
   method: "post",
@@ -10,13 +14,13 @@ const handler = {
         ...req.body,
         files: req.files,
       });
-      return res.status(HTTP_STATUS_CODES.OK).send({
+      return res.status(HTTP_STATUS_CODES.CREATED).send({
         status: "completed",
-        message: "Image uploaded and face processing initiated",
+        message: "Image uploaded and face processing initiated.",
         data,
       });
     } catch (error) {
-      console.log("error", error);
+      console.log("[uploadPictures] error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({
@@ -26,8 +30,11 @@ const handler = {
         });
     }
   },
-  path: "/upload",
-  middlewares: [upload.array("uploadedImages", 10)],
+  path: "/images",
+  middlewares: [
+    authentication,
+    upload.array("uploadedImages", MAXIMUM_IMAGES_CAN_UPLOAD),
+  ],
 };
 
 module.exports = handler;

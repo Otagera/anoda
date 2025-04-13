@@ -1,7 +1,13 @@
 const request = require("supertest");
 const url = require("url");
 const { app } = require("../app");
-const { Albums, Images, Users } = require("@models/index.model");
+const {
+  Albums,
+  Images,
+  Users,
+  Faces,
+  AlbumImages,
+} = require("@models/index.model");
 const loggerUtil = require("@utils/logger.util");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
@@ -52,6 +58,8 @@ module.exports = {
   Albums,
   Images,
   Users,
+  Faces,
+  AlbumImages,
   closeServerAsync,
   HTTP_STATUS_CODES,
 };

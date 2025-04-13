@@ -140,9 +140,9 @@ function calculateEuclideanDistance(arr1, arr2) {
 
 app.use(function (err, req, res, next) {
   if (err instanceof MulterError) {
-    return res.status(HTTP_STATUS_CODES.FILE_SIZE_TOO_LARGE).send({
+    return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
       status: "error",
-      message: "File size too large max 5MB",
+      message: err?.message ? err.message : "File size too large max 5MB",
       data: err,
     });
   }
@@ -152,7 +152,7 @@ app.use(function (err, req, res, next) {
     },
     "INTERNAL_SERVER_ERROR"
   );
-  return res.status(HTTP_STATUS_CODES.SERVER_ERROR).send({
+  return res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).send({
     status: "error",
     message: "Internal server error",
     data: null,
