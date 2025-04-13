@@ -9,7 +9,7 @@ const {
   normalizeImagePath,
   isImageCorrupted,
 } = require("@utils/image.util");
-const { createImages, getImagesByIds } = require("./pictures.lib");
+const { createImages, getImagesByIds, createImage } = require("./pictures.lib");
 
 const fileSchema = Joi.object({
   fieldname: Joi.string().valid("uploadedImages").required(),
@@ -27,12 +27,14 @@ const fileSchema = Joi.object({
 });
 
 const spec = Joi.object({
+  uploaded_by: Joi.string().required(),
   files: Joi.array().items(fileSchema).min(1).max(10).required(),
 });
 
 const aliasSpec = {
   request: {
     files: "files",
+    userId: "uploaded_by",
   },
   response: {
     images: "images",
@@ -43,10 +45,11 @@ const aliasSpec = {
     image_path: "imagePath",
     upload_date: "uploadDate",
     original_size: "originalSize",
+    uploaded_by: "userId",
   },
 };
 
-const storeImage = async (filename) => {
+const storeImage = async (filename, uploaded_by) => {
   const imagePath = path.join(__dirname, "..", "..", "uploads", filename);
   const imageSize = await getImageSize(imagePath);
   const isCorrupted = await isImageCorrupted(imagePath);
@@ -54,10 +57,13 @@ const storeImage = async (filename) => {
     throw new Error(`Image: ${filename} is corrupted`);
   }
   try {
-    const imageResult = await createImages({
+    const imageResult = await createImage({
       image_path: imagePath,
-      original_size: imageSize,
+      original_height: imageSize.height,
+      original_width: imageSize.width,
+      uploaded_by,
     });
+
     const imageId = imageResult.image_id;
 
     return { imagePath, imageId: imageId.toString() };
@@ -108,7 +114,8 @@ const service = async (data) => {
 
   const imagesToProcess = [];
   for (const file of params.files) {
-    imagesToProcess.push(await storeImage(file.filename));
+    // figure out how to use createImages inside storeImage
+    imagesToProcess.push(await storeImage(file.filename, params.uploaded_by));
   }
 
   const pythonScriptArgs = [

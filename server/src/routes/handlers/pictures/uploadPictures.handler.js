@@ -12,6 +12,7 @@ const handler = {
     try {
       const data = await uploadPicturesService({
         ...req.body,
+        userId: req.userId,
         files: req.files,
       });
       return res.status(HTTP_STATUS_CODES.CREATED).send({
@@ -20,7 +21,6 @@ const handler = {
         data,
       });
     } catch (error) {
-      console.log("[uploadPictures] error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({

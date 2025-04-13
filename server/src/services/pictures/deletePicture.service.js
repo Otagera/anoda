@@ -1,25 +1,37 @@
 const Joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { deleteImagesByIdsQuery } = require("@models/images.model");
+const { removeImage } = require("./pictures.lib");
 
 const spec = Joi.object({
-  pictureId: Joi.string().required(),
+  image_id: Joi.string().required(),
+  uploaded_by: Joi.string().required(),
 });
 
 const aliasSpec = {
   request: {
-    pictureId: "pictureId",
+    imageId: "image_id",
+    userId: "uploaded_by",
   },
-  response: {},
+  response: {
+    image_id: "imageId",
+    faces: "faces",
+    image_path: "imagePath",
+    upload_date: "uploadDate",
+    original_size: "originalSize",
+    uploaded_by: "userId",
+  },
 };
 
 const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
-  const { pictureId } = validateSpec(spec, aliasReq);
+  const params = validateSpec(spec, aliasReq);
 
-  const { rows } = await deleteImagesByIdsQuery([pictureId]);
-  console.log("rows", rows);
-  const aliasRes = aliaserSpec(aliasSpec.response, rows);
+  await removeImage(params);
+
+  const aliasRes = aliaserSpec(aliasSpec.response, {
+    image_id: params.image_id,
+    uploaded_by: params.uploaded_by,
+  });
   return aliasRes;
 };
 

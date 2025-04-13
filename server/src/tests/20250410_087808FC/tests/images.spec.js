@@ -109,6 +109,7 @@ afterAll(async () => {
   }
 });
 
+// TODO - add tests for delete images & fetch images
 describe("/images", () => {
   // Cleanup images potentially created by the user before each test in this block
   beforeEach(async () => {
@@ -157,7 +158,7 @@ describe("/images", () => {
     test("should fail to upload without authentication", async () => {
       const res = await agent
         .post(`${baseURL}/images`)
-        .attach("imageFile", sampleImagePath);
+        .attach("uploadedImages", sampleImagePath);
 
       expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
     });
@@ -176,41 +177,47 @@ describe("/images", () => {
       const res = await agent
         .post(`${baseURL}/images`)
         .set("Authorization", `Bearer invalidToken`)
-        .attach("imageFile", sampleImagePath);
+        .attach("uploadedImages", sampleImagePath);
 
       expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
     });
   });
-  /* 
+
   describe("GET /images/:imageId", () => {
     let testImageId;
 
     beforeEach(async () => {
-      // Create an image for testing GET and DELETE specific
       const createRes = await agent
         .post(`${baseURL}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .attach("imageFile", sampleImagePath);
-      if (createRes.status !== HTTP_STATUS_CODES.CREATED || !createRes.body.data.image_id) {
-          throw new Error("Failed to create image in beforeEach for GET/DELETE tests");
+        .attach("uploadedImages", sampleImagePath);
+
+      if (
+        createRes.status !== HTTP_STATUS_CODES.CREATED ||
+        !createRes.body.data.images[0].imageId
+      ) {
+        throw new Error(
+          "Failed to create image in beforeEach for GET/DELETE tests"
+        );
       }
-      testImageId = createRes.body.data.image_id;
-    });
+      testImageId = createRes.body.data.images[0].imageId;
+    }, 20000);
 
     afterEach(async () => {
-        // Ensure cleanup even if a test fails mid-way
-        if (testImageId && Images && Images.deleteImageById) {
-             try {
-                // Attempt to delete via API first to ensure test isolation
-                await agent.delete(`${baseURL}/images/${testImageId}`).set("Authorization", `Bearer ${authToken}`);
-            } catch (apiError) {
-                 // Fallback to direct DB deletion if API fails or ID is known
-                await Images.deleteImageById(testImageId);
-            }
+      // Ensure cleanup even if a test fails mid-way
+      if (testImageId && Images && Images.deleteImageById) {
+        try {
+          // Attempt to delete via API first to ensure test isolation
+          await agent
+            .delete(`${baseURL}/images/${testImageId}`)
+            .set("Authorization", `Bearer ${authToken}`);
+        } catch (apiError) {
+          // Fallback to direct DB deletion if API fails or ID is known
+          await Images.deleteImageById(testImageId);
         }
-        testImageId = null; // Reset ID
+      }
+      testImageId = null; // Reset ID
     });
-
 
     test("should view a specific image successfully", async () => {
       const res = await agent
@@ -219,10 +226,17 @@ describe("/images", () => {
 
       expect(res.status).toBe(HTTP_STATUS_CODES.OK);
       expect(res.body.status).toBe("completed");
-      expect(res.body.data).toHaveProperty("image_id", testImageId);
-      expect(res.body.data).toHaveProperty("image_path");
-       expect(res.body.data).toHaveProperty("original_width");
-       expect(res.body.data).toHaveProperty("original_height");
+      expect(res.body.message).toBe(
+        `Image: ${testImageId} retrieved successfully.`
+      );
+      expect(res.body.data).toHaveProperty("imageId", testImageId);
+      expect(res.body.data).toHaveProperty("userId", testUserId);
+      expect(res.body.data).toHaveProperty("faces");
+      expect(res.body.data).toHaveProperty("uploadDate");
+      expect(res.body.data).toHaveProperty("imagePath");
+      expect(res.body.data).toHaveProperty("originalSize");
+      expect(res.body.data.originalSize).toHaveProperty("width");
+      expect(res.body.data.originalSize).toHaveProperty("height");
     });
 
     test("should fail to view image without authentication", async () => {
@@ -237,34 +251,39 @@ describe("/images", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
-       expect(res.body.message).toBe("Image not found.");
+      expect(res.body.message).toBe("Image not found.");
     });
   });
 
   describe("DELETE /images/:imageId", () => {
-     let testImageId; // Use a separate ID for delete tests
+    let testImageId;
 
     beforeEach(async () => {
       const createRes = await agent
         .post(`${baseURL}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .attach("imageFile", sampleImagePath);
-      if (createRes.status !== HTTP_STATUS_CODES.CREATED || !createRes.body.data.image_id) {
-          throw new Error("Failed to create image in beforeEach for DELETE tests");
+        .attach("uploadedImages", sampleImagePath);
+      if (
+        createRes.status !== HTTP_STATUS_CODES.CREATED ||
+        !createRes.body.data.images[0].imageId
+      ) {
+        throw new Error(
+          "Failed to create image in beforeEach for DELETE tests"
+        );
       }
-      testImageId = createRes.body.data.image_id;
-    });
-
-    // No afterEach needed here as the successful test deletes the resource
+      testImageId = createRes.body.data.images[0].imageId;
+    }, 20000);
 
     test("should delete an image successfully", async () => {
       const res = await agent
         .delete(`${baseURL}/images/${testImageId}`)
         .set("Authorization", `Bearer ${authToken}`);
 
-      expect(res.status).toBe(HTTP_STATUS_CODES.OK); // Or 204 No Content
+      expect(res.status).toBe(HTTP_STATUS_CODES.OK);
       expect(res.body.status).toBe("completed");
-      expect(res.body.message).toBe(`Image: ${testImageId} deleted successfully.`);
+      expect(res.body.message).toBe(
+        `Image: ${testImageId} deleted successfully.`
+      );
 
       // Verify deletion
       const getRes = await agent
@@ -279,10 +298,10 @@ describe("/images", () => {
       const res = await agent.delete(`${baseURL}/images/${testImageId}`);
       expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
 
-       // Cleanup required here as the test failed before deleting
-       if (testImageId && Images && Images.deleteImageById) {
-           await Images.deleteImageById(testImageId);
-       }
+      // Cleanup required here as the test failed before deleting
+      if (testImageId && Images && Images.deleteImageById) {
+        await Images.deleteImageById(testImageId);
+      }
     });
 
     test("should return 404 if trying to delete image ID that does not exist", async () => {
@@ -291,14 +310,14 @@ describe("/images", () => {
         .delete(`${baseURL}/images/${nonExistentId}`)
         .set("Authorization", `Bearer ${authToken}`);
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
-       expect(res.body.message).toBe("Image not found.");
+      expect(res.body.message).toBe("Image not found.");
 
-       // Cleanup required here as the test failed before deleting the *correct* image
-       if (testImageId && Images && Images.deleteImageById) {
-           await Images.deleteImageById(testImageId);
-       }
+      // Cleanup required here as the test failed before deleting the *correct* image
+      if (testImageId && Images && Images.deleteImageById) {
+        await Images.deleteImageById(testImageId);
+      }
     });
-  }); */
+  });
 });
 
 // --- Album-Image Linking Endpoint Tests ---
@@ -311,15 +330,14 @@ describe("/images", () => {
       // Ensure testAlbumId is set from the main beforeAll
       if (!testAlbumId) throw new Error ("Test album ID not available for album-image tests");
 
-       // Create a couple of images to link
        const createRes1 = await agent
            .post(`${baseURL}/images`)
            .set("Authorization", `Bearer ${authToken}`)
-           .attach("imageFile", sampleImagePath);
+           .attach("uploadedImages", sampleImagePath);
        const createRes2 = await agent
            .post(`${baseURL}/images`)
            .set("Authorization", `Bearer ${authToken}`)
-           .attach("imageFile", sampleImagePath); // Use same file for simplicity
+           .attach("uploadedImages", sampleImagePath);
 
        if (createRes1.status !== HTTP_STATUS_CODES.CREATED || !createRes1.body.data.image_id ||
            createRes2.status !== HTTP_STATUS_CODES.CREATED || !createRes2.body.data.image_id) {
@@ -330,7 +348,6 @@ describe("/images", () => {
   });
 
    afterAll(async () => {
-      // Clean up the images created specifically for these tests
       if (testImageId1 && Images && Images.deleteImageById) await Images.deleteImageById(testImageId1);
       if (testImageId2 && Images && Images.deleteImageById) await Images.deleteImageById(testImageId2);
    });
@@ -528,7 +545,7 @@ describe("/images", () => {
         const createRes = await agent
             .post(`${baseURL}/images`)
             .set("Authorization", `Bearer ${authToken}`)
-            .attach("imageFile", sampleImagePath);
+            .attach("uploadedImages", sampleImagePath);
         if (createRes.status !== HTTP_STATUS_CODES.CREATED || !createRes.body.data.image_id) {
             throw new Error("Failed to create image in beforeAll for faces tests");
         }
@@ -590,7 +607,7 @@ describe("/images", () => {
 
          test("should return empty array if image has no detected faces", async () => {
              // Create a new image *without* manually adding faces
-             const createRes = await agent.post(`${baseURL}/images`).set("Authorization", `Bearer ${authToken}`).attach("imageFile", sampleImagePath);
+             const createRes = await agent.post(`${baseURL}/images`).set("Authorization", `Bearer ${authToken}`).attach("uploadedImages", sampleImagePath);
              const noFaceImageId = createRes.body.data.image_id;
 
              const res = await agent

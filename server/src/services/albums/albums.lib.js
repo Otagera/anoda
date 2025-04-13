@@ -47,7 +47,13 @@ const getAlbum = async (where) => {
   if (!where.created_by && !where.album_id) {
     throw new Error("No created_by or album_id provided");
   }
-  return fetchAlbum(where);
+
+  const album = fetchAlbum(where);
+
+  if (!album) {
+    throw new NotFoundError("Album not found.");
+  }
+  return album;
 };
 
 const deleteAlbum = async (album_id, created_by) => {

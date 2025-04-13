@@ -1,27 +1,26 @@
 const prisma = require("@config/db.config");
 
 const uploadImage = async (imageData) => {
-  const { image_path, original_size } = imageData;
-  const { width, height } = original_size;
-
   return await prisma.images.create({
-    data: {
-      image_path,
-      original_width: width,
-      original_height: height,
-    },
+    data: imageData,
   });
 };
-const fetchImageById = async (image_id) => {
-  return await prisma.images.findMany({
-    where: {
-      image_id,
-    },
+
+const uploadImages = async (imagesData) => {
+  return await prisma.images.createManyAndReturn({
+    data: imagesData,
+  });
+};
+
+const fetchImage = async (where) => {
+  return await prisma.images.findFirst({
+    where,
     include: {
       faces: true,
     },
   });
 };
+
 const fetchImagesByIds = async (imageIds) => {
   const images = await prisma.images.findMany({
     where: {
@@ -35,13 +34,7 @@ const fetchImagesByIds = async (imageIds) => {
   });
 
   return images.map((image) => ({
-    image_id: image.image_id,
-    faces: image.faces.map((face) => ({
-      face_id: face.face_id,
-      bounding_box: face.bounding_box,
-    })),
-    image_path: image.image_path,
-    upload_date: image.upload_date,
+    ...image,
     original_size: {
       width: image.original_width,
       height: image.original_height,
@@ -71,6 +64,20 @@ const fetchAllImages = async () => {
       height: image.original_height,
     },
   }));
+};
+const deleteImage = async (where) => {
+  const transaction = await prisma.$transaction(async (prisma) => {
+    await prisma.faces.deleteMany({
+      where: {
+        image_id: where.image_id,
+      },
+    });
+
+    await prisma.images.delete({
+      where,
+    });
+  });
+  return transaction;
 };
 const deleteImageById = async (image_id) => {
   const transaction = await prisma.$transaction(async (prisma) => {
@@ -236,7 +243,7 @@ const deleteAllImagesQuery = async () => {
     await pool.query("BEGIN");
     const queryText = `DELETE FROM "faces" RETURNING *;`;
     const res = await pool.query(queryText, [imageIds]);
-    console.log("res", res);
+
     const insertPhotoText = `DELETE FROM "images" RETURNING *;`;
     const insertPhotoValues = [imageIds];
     await pool.query(insertPhotoText, insertPhotoValues);
@@ -250,9 +257,11 @@ const deleteAllImagesQuery = async () => {
 
 module.exports = {
   uploadImage,
-  fetchImageById,
+  uploadImages,
+  fetchImage,
   fetchImagesByIds,
   fetchAllImages,
+  deleteImage,
   deleteImageById,
   deleteImagesByIds,
   deleteImagesByUserId,

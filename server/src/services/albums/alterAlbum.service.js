@@ -28,10 +28,7 @@ const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
   const { album_id, created_by, album_name } = validateSpec(spec, aliasReq);
 
-  const album = await getAlbum({ album_id, created_by });
-  if (!album) {
-    throw new NotFoundError("Album not found.");
-  }
+  await getAlbum({ album_id, created_by });
   const alteredAlbum = await updateAlbum(album_id, created_by, { album_name });
 
   const aliasRes = aliaserSpec(aliasSpec.response, alteredAlbum);

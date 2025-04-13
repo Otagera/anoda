@@ -27,9 +27,6 @@ const service = async (data) => {
   const params = validateSpec(spec, aliasReq);
 
   const album = await getAlbum(params);
-  if (!album) {
-    throw new NotFoundError("Album not found.");
-  }
 
   const deletedAlbum = await deleteAlbum(params.album_id, params.created_by);
 

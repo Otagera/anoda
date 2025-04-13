@@ -1,25 +1,42 @@
 const Joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { fetchImagesByIdsQuery } = require("@models/images.model");
+const { normalizeImagePath } = require("@utils/image.util");
+const { getImage } = require("./pictures.lib");
 
 const spec = Joi.object({
-  pictureId: Joi.string().required(),
+  image_id: Joi.string().required(),
+  uploaded_by: Joi.string().required(),
 });
 
 const aliasSpec = {
   request: {
-    pictureId: "pictureId",
+    imageId: "image_id",
+    userId: "uploaded_by",
   },
-  response: {},
+  response: {
+    image_id: "imageId",
+    faces: "faces",
+    image_path: "imagePath",
+    upload_date: "uploadDate",
+    original_size: "originalSize",
+    uploaded_by: "userId",
+  },
 };
 
 const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
-  const { pictureId } = validateSpec(spec, aliasReq);
+  const params = validateSpec(spec, aliasReq);
 
-  const { rows } = await fetchImagesByIdsQuery([pictureId]);
+  const image = await getImage(params);
 
-  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(rows));
+  const aliasRes = aliaserSpec(aliasSpec.response, {
+    ...image,
+    original_size: {
+      height: image.original_height,
+      width: image.original_width,
+    },
+    image_path: normalizeImagePath(image.image_path),
+  });
   return aliasRes;
 };
 
