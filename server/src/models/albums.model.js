@@ -88,33 +88,35 @@ const deleteAlbumsByUserId = async (userId) => {
     });
 
     // Extract image IDs from the album_images to delete
-    const imageIdsToDelete = albumImagesToDelete.map(
-      (albumImage) => albumImage.image_id
-    );
+    const imageIdsToDelete = albumImagesToDelete
+      .map((albumImage) => albumImage.image_id)
+      .filter((imageId) => imageId !== null);
 
-    await prisma.faces.deleteMany({
-      where: {
-        image_id: {
-          in: imageIdsToDelete,
+    if (imageIdsToDelete && Array.isArray(imageIdsToDelete)) {
+      await prisma.faces.deleteMany({
+        where: {
+          image_id: {
+            in: imageIdsToDelete,
+          },
         },
-      },
-    });
+      });
 
-    await prisma.images.deleteMany({
-      where: {
-        image_id: {
-          in: imageIdsToDelete,
+      await prisma.images.deleteMany({
+        where: {
+          image_id: {
+            in: imageIdsToDelete,
+          },
         },
-      },
-    });
+      });
 
-    await prisma.album_images.deleteMany({
-      where: {
-        image_id: {
-          in: imageIdsToDelete,
+      await prisma.album_images.deleteMany({
+        where: {
+          image_id: {
+            in: imageIdsToDelete,
+          },
         },
-      },
-    });
+      });
+    }
     await prisma.albums.deleteMany({
       where: {
         album_id: {
