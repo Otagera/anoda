@@ -3,6 +3,9 @@ const prisma = require("@config/db.config");
 const createAlbumImageLink = async (data) => {
   return await prisma.album_images.create({ data });
 };
+const createAlbumImageLinks = async (data) => {
+  return await prisma.album_images.createManyAndReturn({ data });
+};
 
 const fetchAlbumImage = async (where) => {
   return await prisma.album_images.findFirst({
@@ -40,6 +43,7 @@ const deleteLinksByAlbumId = async (albumId) => {
 
 module.exports = {
   createAlbumImageLink,
+  createAlbumImageLinks,
   fetchAlbumImage,
   fetchAlbumImages,
   deleteLinksByAlbumId,

@@ -1,5 +1,5 @@
 const authentication = require("@routes/middleware/authentication.middleware");
-const addImageToAlbumService = require("@services/albums/addImageToAlbum.service");
+const addImagesToAlbumService = require("@services/albums/addImagesToAlbum.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 const handler = {
@@ -8,7 +8,7 @@ const handler = {
     try {
       const userId = req.userId;
       const albumId = req.params.albumId;
-      const data = await addImageToAlbumService({
+      const data = await addImagesToAlbumService({
         ...req.body,
         userId,
         albumId,

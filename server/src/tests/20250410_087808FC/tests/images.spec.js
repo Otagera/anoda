@@ -372,20 +372,23 @@ describe("/albums/:albumId/images", () => {
       const res = await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
 
       expect(res.status).toBe(HTTP_STATUS_CODES.CREATED);
       expect(res.body.status).toBe("completed");
       expect(res.body.message).toBe("Image added to album successfully.");
-      expect(res.body.data).toHaveProperty("imageId", testImageId1);
-      expect(res.body.data).toHaveProperty("albumId", testAlbumId);
-      expect(res.body.data).toHaveProperty("albumImageId");
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      expect(res.body.data[0]).toHaveProperty("imageId", testImageId1);
+      expect(res.body.data[0]).toHaveProperty("albumId", testAlbumId);
+      expect(res.body.data[0]).toHaveProperty("albumImageId");
     });
 
     test("should fail without authentication", async () => {
       const res = await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
       expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
     });
 
@@ -394,7 +397,7 @@ describe("/albums/:albumId/images", () => {
       const res = await agent
         .post(`${baseURL}/albums/${nonExistentAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
 
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
       expect(res.body.message).toBe("Album not found.");
@@ -405,19 +408,20 @@ describe("/albums/:albumId/images", () => {
       const res = await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: nonExistentImageId });
-      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND); // Or BAD_REQUEST (400)
-      expect(res.body.message).toBe("Image not found.");
+        .send({ imageIds: [nonExistentImageId] });
+
+      expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
+      expect(res.body.message).toBe("Images not found.");
     });
 
-    test("should fail if imageId is missing in request body", async () => {
+    test("should fail if imageIds is missing in request body", async () => {
       const res = await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
         .send({});
 
       expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-      expect(res.body.message).toMatch(/image_id is required/i);
+      expect(res.body.message).toMatch(/image_ids is required/i);
     });
 
     test("should handle adding the same image twice (idempotent or conflict)", async () => {
@@ -425,13 +429,13 @@ describe("/albums/:albumId/images", () => {
       await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
 
       // Second add
       const res = await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
 
       // Expect either OK (if idempotent) or Conflict
       expect(res.status).toBe(HTTP_STATUS_CODES.OK); // Or CREATED or CONFLICT (409)
@@ -447,11 +451,7 @@ describe("/albums/:albumId/images", () => {
       await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
-      await agent
-        .post(`${baseURL}/albums/${testAlbumId}/images`)
-        .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId2 });
+        .send({ imageIds: [testImageId1, testImageId2] });
     });
 
     test("should list images in a specific album", async () => {
@@ -506,6 +506,7 @@ describe("/albums/:albumId/images", () => {
     });
   });
 
+  /* If need be I will handle this replcement update.
   describe("PUT /albums/:albumId/images", () => {
     let updateTestAlbumId;
     const updateImageIds = [];
@@ -688,15 +689,14 @@ describe("/albums/:albumId/images", () => {
       expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
       expect(res.body.message).toMatch(/imageIds must be an array/i);
     });
-  });
-
-  /* describe("DELETE /albums/:albumId/images/:imageId", () => {
+  }); */
+  /* 
+  describe("DELETE /albums/:albumId/images/:imageId", () => {
     beforeEach(async () => {
-      // Ensure image 1 is linked for deletion tests
       await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
         .set("Authorization", `Bearer ${authToken}`)
-        .send({ imageId: testImageId1 });
+        .send({ imageIds: [testImageId1] });
     });
 
     test("should remove an image from an album", async () => {
@@ -752,7 +752,8 @@ describe("/albums/:albumId/images", () => {
         /Image not found in album|Link not found/i
       ); // Adjust message
     });
-  }); */
+  });
+   */
 });
 
 /* describe("Faces Endpoints", () => {

@@ -2,6 +2,7 @@ const {
   createAlbumImageLink,
   fetchAlbumImages,
   fetchAlbumImage,
+  createAlbumImageLinks,
 } = require("@models/albumImages.model");
 const {
   createNewAlbum,
@@ -11,33 +12,46 @@ const {
   deleteAlbumById,
   deleteAlbumsByUserid,
 } = require("@models/albums.model");
-const { fetchImage } = require("@models/images.model");
+const { fetchImage, fetchImagesByIds } = require("@models/images.model");
 const { NotFoundError } = require("@utils/error.util");
 
 const albumLinkValidation = async (
   albumLinkData,
-  options = { check_image_id: true }
+  options = { check_image_id: true, check_image_ids: true }
 ) => {
-  const { check_image_id } = options;
+  const { check_image_id, check_image_ids } = options;
   if (!albumLinkData.album_id) {
     throw new Error("Album Id: album_id is required");
   }
   if (check_image_id && !albumLinkData.image_id) {
     throw new Error("Image Id: image_id is required");
   }
+  if (
+    check_image_ids &&
+    (!albumLinkData.image_ids || albumLinkData.image_ids.length === 0)
+  ) {
+    throw new Error("Image Ids: image_ids is required");
+  }
   if (!albumLinkData.user_id) {
     throw new Error("Creator: user_id is required");
   }
-  const { image_id, album_id, user_id } = albumLinkData;
+  const { image_id, image_ids, album_id, user_id } = albumLinkData;
 
-  const image = await fetchImage({ image_id, uploaded_by: user_id });
-  if (!image) {
-    throw new NotFoundError("Image not found.");
+  if (check_image_id) {
+    const image = await fetchImage({ image_id, uploaded_by: user_id });
+    if (!image) {
+      throw new NotFoundError("Image not found.");
+    }
+  }
+  if (check_image_ids) {
+    const images = await fetchImagesByIds(image_ids);
+    if (!images || images.length === 0) {
+      throw new NotFoundError("Images not found.");
+    }
   }
 
   const album = await getAlbum({ album_id, created_by: user_id });
   if (!album) {
-    console.log("[album]", album);
     throw new NotFoundError("Album not found.");
   }
 };
@@ -53,10 +67,20 @@ const createAlbum = async (albumData) => {
 };
 
 const createAlbumLink = async (albumLinkData) => {
-  await albumLinkValidation(albumLinkData);
+  await albumLinkValidation(albumLinkData, { check_image_id: false });
   const { image_id, album_id } = albumLinkData;
 
   return await createAlbumImageLink({ image_id, album_id });
+};
+
+const createAlbumLinks = async (albumLinkData) => {
+  await albumLinkValidation(albumLinkData, { check_image_id: false });
+  const { image_ids, album_id } = albumLinkData;
+  const data = image_ids.map((image_id) => ({
+    image_id,
+    album_id,
+  }));
+  return await createAlbumImageLinks(data);
 };
 
 const updateAlbum = async (album_id, created_by, albumData) => {
@@ -120,10 +144,18 @@ const getAlbumLink = async (where) => {
 };
 
 const getAlbumLinksNoError = async (where) => {
-  await albumLinkValidation(where);
+  await albumLinkValidation(where, {
+    check_image_id: false,
+    check_image_ids: true,
+  });
 
-  const { image_id, album_id } = where;
-  const album = fetchAlbumImages({ album_id, image_id });
+  const { image_ids, album_id } = where;
+  const album = fetchAlbumImages({
+    album_id,
+    image_id: {
+      in: image_ids,
+    },
+  });
 
   return album;
 };
@@ -160,6 +192,7 @@ const deleteAlbums = async (created_by) => {
 module.exports = {
   createAlbum,
   createAlbumLink,
+  createAlbumLinks,
   updateAlbum,
   getAlbums,
   getAlbum,
