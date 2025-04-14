@@ -1,8 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const {
-  createAlbumLink,
-  getAlbumLinkNoError,
   getAlbumLinks,
 } = require("./albums.lib");
 const { normalizeImagePath } = require("@utils/image.util");

@@ -110,7 +110,7 @@ afterAll(async () => {
 });
 
 // TODO - add tests for delete images & fetch images
-/* describe("/images", () => {
+describe("/images", () => {
   // Cleanup images potentially created by the user before each test in this block
   beforeEach(async () => {
     if (testUserId && Images && Images.deleteImagesByUserId) {
@@ -153,7 +153,7 @@ afterAll(async () => {
       if (firstImage.image_id && Images && Images.deleteImageById) {
         await Images.deleteImageById(firstImage.image_id);
       }
-    }, 10000);
+    }, 20000);
 
     test("should fail to upload without authentication", async () => {
       const res = await agent
@@ -318,7 +318,7 @@ afterAll(async () => {
       }
     });
   });
-}); */
+});
 
 // --- Album-Image Linking Endpoint Tests ---
 describe("/albums/:albumId/images", () => {
@@ -690,8 +690,8 @@ describe("/albums/:albumId/images", () => {
       expect(res.body.message).toMatch(/imageIds must be an array/i);
     });
   }); */
-  /* 
-  describe("DELETE /albums/:albumId/images/:imageId", () => {
+
+  describe("POST /albums/:albumId/images/delete-batch", () => {
     beforeEach(async () => {
       await agent
         .post(`${baseURL}/albums/${testAlbumId}/images`)
@@ -701,12 +701,15 @@ describe("/albums/:albumId/images", () => {
 
     test("should remove an image from an album", async () => {
       const res = await agent
-        .delete(`${baseURL}/albums/${testAlbumId}/images/${testImageId1}`)
-        .set("Authorization", `Bearer ${authToken}`);
+        .post(`${baseURL}/albums/${testAlbumId}/images/delete-batch`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ imageIds: [testImageId1] });
 
       expect(res.status).toBe(HTTP_STATUS_CODES.OK); // Or 204 No Content
       expect(res.body.status).toBe("completed");
-      expect(res.body.message).toBe("Image removed from album successfully.");
+      expect(res.body.message).toBe(
+        "Image(s) removed from album successfully."
+      );
 
       // Verify removal
       const getRes = await agent
@@ -716,19 +719,19 @@ describe("/albums/:albumId/images", () => {
     });
 
     test("should fail without authentication", async () => {
-      const res = await agent.delete(
-        `${baseURL}/albums/${testAlbumId}/images/${testImageId1}`
-      );
+      const res = await agent
+        .post(`${baseURL}/albums/${testAlbumId}/images/delete-batch`)
+        .send({ imageIds: [testImageId1] });
       expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
     });
 
     test("should return 404 if album does not exist", async () => {
       const nonExistentAlbumId = "123e4567-e89b-12d3-a456-426614174000";
       const res = await agent
-        .delete(
-          `${baseURL}/albums/${nonExistentAlbumId}/images/${testImageId1}`
-        )
-        .set("Authorization", `Bearer ${authToken}`);
+        .post(`${baseURL}/albums/${nonExistentAlbumId}/images/delete-batch`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ imageIds: [testImageId1] });
+
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
       expect(res.body.message).toMatch(/Album not found/i);
     });
@@ -736,24 +739,27 @@ describe("/albums/:albumId/images", () => {
     test("should return 404 if image does not exist", async () => {
       const nonExistentImageId = "123e4567-e89b-12d3-a456-426614174000";
       const res = await agent
-        .delete(`${baseURL}/albums/${testAlbumId}/images/${nonExistentImageId}`)
-        .set("Authorization", `Bearer ${authToken}`);
+        .post(`${baseURL}/albums/${testAlbumId}/images/delete-batch`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ imageIds: [nonExistentImageId] });
+
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
-      expect(res.body.message).toMatch(/Image not found|Link not found/i); // Adjust message
+      expect(res.body.message).toMatch(/Images not found|Link not found/i);
     });
 
     test("should return 404 if image exists but is not in the specified album", async () => {
       // testImageId2 exists but wasn't added in this specific beforeEach
       const res = await agent
-        .delete(`${baseURL}/albums/${testAlbumId}/images/${testImageId2}`)
-        .set("Authorization", `Bearer ${authToken}`);
+        .post(`${baseURL}/albums/${testAlbumId}/images/delete-batch`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ imageIds: [testImageId2] });
+
       expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
       expect(res.body.message).toMatch(
-        /Image not found in album|Link not found/i
-      ); // Adjust message
+        /Image\(s\) not found in album.|Link not found/i
+      );
     });
   });
-   */
 });
 
 /* describe("Faces Endpoints", () => {

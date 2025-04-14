@@ -3,6 +3,7 @@ const {
   fetchAlbumImages,
   fetchAlbumImage,
   createAlbumImageLinks,
+  deleteLinksByAlbumIdAndImageIds,
 } = require("@models/albumImages.model");
 const {
   createNewAlbum,
@@ -172,6 +173,25 @@ const getAlbumLinks = async (where) => {
   return album;
 };
 
+const getAlbumLinksForDelete = async (where) => {
+  // image_ids, album_id, user_id
+  await albumLinkValidation(where, {
+    check_image_id: false,
+    check_image_ids: true,
+  });
+
+  const { image_ids, album_id } = where;
+  const album = await fetchAlbumImages({
+    album_id,
+    image_id: { in: image_ids },
+  });
+
+  if (!album || !album.length) {
+    return [];
+  }
+  return album;
+};
+
 const deleteAlbum = async (album_id, created_by) => {
   if (!album_id) {
     throw new Error(`Album id: ${album_id} is required`);
@@ -188,6 +208,9 @@ const deleteAlbums = async (created_by) => {
   }
   return await deleteAlbumsByUserid(created_by);
 };
+const deleteAlbumImages = async (albumId, imageIds) => {
+  return await deleteLinksByAlbumIdAndImageIds(albumId, imageIds);
+};
 
 module.exports = {
   createAlbum,
@@ -199,7 +222,9 @@ module.exports = {
   getAlbumLinkNoError,
   getAlbumLinksNoError,
   getAlbumLinks,
+  getAlbumLinksForDelete,
   getAlbumLink,
   deleteAlbum,
   deleteAlbums,
+  deleteAlbumImages,
 };

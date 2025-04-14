@@ -41,10 +41,36 @@ const deleteLinksByAlbumId = async (albumId) => {
   });
 };
 
+const deleteLinksByAlbumIdAndImageIds = async (albumId, imageIds) => {
+  if (!albumId) {
+    throw new Error("Album ID is required");
+  }
+  if (!imageIds && imageIds.length === 0) {
+    throw new Error("Image IDs are required");
+  }
+  const albumLinks = await prisma.album_images.findMany({
+    where: { album_id: albumId, image_id: { in: imageIds } },
+    include: {
+      images: true,
+    },
+  });
+  if (!albumLinks) {
+    throw new Error("No album links found for the given IDs");
+  }
+
+  return await prisma.album_images.deleteMany({
+    where: {
+      album_id: albumId,
+      image_id: { in: imageIds },
+    },
+  });
+};
+
 module.exports = {
   createAlbumImageLink,
   createAlbumImageLinks,
   fetchAlbumImage,
   fetchAlbumImages,
   deleteLinksByAlbumId,
+  deleteLinksByAlbumIdAndImageIds,
 };
