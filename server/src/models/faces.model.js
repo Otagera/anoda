@@ -55,9 +55,9 @@ const deleteFacesByIds = async (faceIds) => {
 };
 
 const deleteFacesByImageId = async (image_id) => {
-  return await prisma.face_images.deleteMany({
+  return await prisma.faces.deleteMany({
     where: {
-      image_id,
+      images: { image_id },
     },
   });
 };

@@ -1,7 +1,7 @@
 const Joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const { normalizeImagePath } = require("@utils/image.util");
-const { getImage } = require("./pictures.lib");
+const { getFaces } = require("./pictures.lib");
 
 const spec = Joi.object({
   image_id: Joi.string().uuid().required(),
@@ -14,12 +14,20 @@ const aliasSpec = {
     userId: "uploaded_by",
   },
   response: {
-    image_id: "imageId",
     faces: "faces",
-    image_path: "imagePath",
-    upload_date: "uploadDate",
-    original_size: "originalSize",
-    uploaded_by: "userId",
+  },
+  face: {
+    face_id: "faceId",
+    image_id: "imageId",
+    embedding: "embedding",
+    bounding_box: "boundingBox",
+    processed_time: "processedTime",
+  },
+  bounding_box: {
+    top: "top",
+    left: "left",
+    right: "right",
+    bottom: "bottom",
   },
 };
 
@@ -27,15 +35,20 @@ const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
   const params = validateSpec(spec, aliasReq);
 
-  const image = await getImage(params);
+  const faces = await getFaces(params);
 
   const aliasRes = aliaserSpec(aliasSpec.response, {
-    ...image,
-    original_size: {
-      height: image.original_height,
-      width: image.original_width,
-    },
-    image_path: normalizeImagePath(image.image_path),
+    faces: faces.map((face) => {
+      const boundingBox = aliaserSpec(
+        aliasSpec.bounding_box,
+        face.bounding_box
+      );
+      const faceData = aliaserSpec(aliasSpec.face, {
+        ...face,
+        bounding_box: boundingBox,
+      });
+      return faceData;
+    }),
   });
   return aliasRes;
 };

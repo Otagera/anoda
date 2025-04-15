@@ -12,6 +12,15 @@ const uploadImages = async (imagesData) => {
   });
 };
 
+const fetchFaces = async ({ image_id, uploaded_by }) => {
+  return await prisma.faces.findMany({
+    where: {
+      image_id,
+      images: { uploaded_by },
+    },
+  });
+};
+
 const fetchImage = async (where) => {
   return await prisma.images.findFirst({
     where,
@@ -41,6 +50,7 @@ const fetchImagesByIds = async (imageIds) => {
     },
   }));
 };
+
 const fetchAllImages = async () => {
   const images = await prisma.images.findMany({
     include: {
@@ -65,6 +75,7 @@ const fetchAllImages = async () => {
     },
   }));
 };
+
 const deleteImage = async (where) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     await prisma.faces.deleteMany({
@@ -79,6 +90,7 @@ const deleteImage = async (where) => {
   });
   return transaction;
 };
+
 const deleteImageById = async (image_id) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     await prisma.faces.deleteMany({
@@ -96,6 +108,7 @@ const deleteImageById = async (image_id) => {
 
   return transaction;
 };
+
 const deleteImagesByIds = async (imageIds) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     await prisma.faces.deleteMany({
@@ -117,6 +130,7 @@ const deleteImagesByIds = async (imageIds) => {
 
   return transaction;
 };
+
 const deleteImagesByUserId = async (uploaded_by) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     const imagesToDelete = await prisma.images.findMany({
@@ -145,6 +159,7 @@ const deleteImagesByUserId = async (uploaded_by) => {
 
   return transaction;
 };
+
 const deleteAllImages = async () => {
   const transaction = await prisma.$transaction(async (prisma) => {
     await prisma.faces.deleteMany({});
@@ -155,6 +170,7 @@ const deleteAllImages = async () => {
   return transaction;
 };
 
+// Query functions
 const fetchImagesByIdsQuery = async (imageIds) => {
   return pool.query(
     `
@@ -258,6 +274,7 @@ const deleteAllImagesQuery = async () => {
 module.exports = {
   uploadImage,
   uploadImages,
+  fetchFaces,
   fetchImage,
   fetchImagesByIds,
   fetchAllImages,

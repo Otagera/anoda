@@ -5,6 +5,7 @@ const {
   fetchImage,
   uploadImages,
   deleteImage,
+  fetchFaces,
 } = require("@models/images.model");
 const { NotFoundError } = require("@utils/error.util");
 
@@ -38,6 +39,18 @@ const createImages = async (imagesData) => {
     validateImageData(imageData);
   });
   return await uploadImages(imagesData);
+};
+
+const getFaces = async (where) => {
+  const { image_id, uploaded_by } = where;
+  if (!image_id) {
+    throw new Error("No image_id provided.");
+  }
+  if (!uploaded_by) {
+    throw new Error("No uploaded_by provided.");
+  }
+  await getImage({ image_id, uploaded_by });
+  return fetchFaces({ image_id, uploaded_by });
 };
 
 const getImage = async (where) => {
@@ -86,6 +99,7 @@ const removeImage = async (where) => {
 module.exports = {
   createImage,
   createImages,
+  getFaces,
   getImage,
   getImageById,
   getImagesByIds,
