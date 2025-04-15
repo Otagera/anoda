@@ -48,67 +48,54 @@ The color schemes and fonts will be based on what tailwind provides, and will be
 
 PostgreSQL will be used as the database for the application. The database will store paths that reference the images. In development, the images will be stored locally on the filesystem, while in production, images will be stored in either AWS S3 or Cloudinary.
 
-The `pg` library will be used for interacting with the PostgreSQL database, and raw SQL queries will be used. ORMs may be revisited in the future if raw queries become too difficult to manage.
+The `prisma` ORM will be used for interacting with the PostgreSQL database.
 
 Redis will be used as a caching layer to improve query performance.
 
 #### Database Schema
-
 **Table: `images`**
-
-| Column Name   | Data Type       | Description                                                                     |
-| ------------- | --------------- | ------------------------------------------------------------------------------- |
-| image\_id     | UUID (Primary)  | Unique identifier for the image              |
-| image\_path   | TEXT            | Path to the image (local or cloud)                                               |
-| upload\_time | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)              |
-| original_size | JSON | contains the image original size |
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| image\_id         | UUID (Primary)  | Unique identifier for the image                                                |
+| image\_path       | TEXT            | Path to the image (local or cloud)                                             |
+| upload\_date      | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)            |
+| update\_date      | TIMESTAMPTZ     | Date and time the image was last updated (default: `CURRENT_TIMESTAMP`)        |
+| original\_width   | INT             | Original width of the image                                                   |
+| original\_height  | INT             | Original height of the image                                                  |
+| uploaded\_by      | UUID (Foreign)  | ID of the user who uploaded the image (references `users.user_id`)             |
 
 **Table: `faces`**
-
-| Column Name    | Data Type       | Description                                                                          |
-| -------------- | --------------- | ------------------------------------------------------------------------------------ |
-| face\_id       | UUID (Primary)  | Unique identifier for the face                  |
-| image\_id      | UUID (Foreign)  | ID of the image containing this face (references `images.image_id`)                 |
-| embedding      | \_FLOAT4        | Vector representation of the face                                                  |
-| bounding\_box  | JSONB           | JSON object containing bounding box coordinates for the face                        |
-| processed\_time | TIMESTAMPTZ     | Date and time the face was processed (default: `CURRENT_TIMESTAMP`)              |
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| face\_id          | SERIAL (Primary)| Unique identifier for the face                                                 |
+| image\_id         | UUID (Foreign)  | ID of the image containing this face (references `images.image_id`)            |
+| embedding         | REAL[]          | Vector representation of the face                                              |
+| bounding\_box     | JSONB           | JSON object containing bounding box coordinates for the face                   |
+| processed\_time   | TIMESTAMPTZ     | Date and time the face was processed (default: `CURRENT_TIMESTAMP`)            |
 
 **Table: `albums`**
-
-| Column Name | Data Type       | Description                                    |
-| ----------- | --------------- | ---------------------------------------------- |
-| album\_id   | UUID (Primary)  | Unique identifier for the album                |
-| album\_name | TEXT            | Name of the album |
-| created\_by | user_id (Foreign) | The user that created the album |
-| creation\_date | TIMESTAMPTZ       | Date and time the album was created          |
-| shared\_link | TEXT       | The generated link to share the album |
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| album\_id         | UUID (Primary)  | Unique identifier for the album                                                |
+| album\_name       | TEXT            | Name of the album                                                              |
+| created\_by       | UUID (Foreign)  | ID of the user who created the album (references `users.user_id`)              |
+| creation\_date    | TIMESTAMPTZ     | Date and time the album was created (default: `CURRENT_TIMESTAMP`)             |
+| shared\_link      | TEXT            | The generated link to share the album                                          |
 
 **Table: `album_images`**
-
-| Column Name    | Data Type       | Description                                                    |
-| -------------- | --------------- | -------------------------------------------------------------- |
-| image\_id      | UUID (Foreign)  | ID of the image (references `images.image_id`)                 |
-| album\_id      | UUID (Foreign)  | ID of the album (references `albums.album_id`)                 |
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| album\_images\_id | UUID (Primary)  | Unique identifier for the album-image relationship                             |
+| image\_id         | UUID (Foreign)  | ID of the image (references `images.image_id`)                                 |
+| album\_id         | UUID (Foreign)  | ID of the album (references `albums.album_id`)                                 |
 
 **Table: `users`**
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| user\_id          | UUID (Primary)  | Unique identifier for the user                                                 |
+| email             | TEXT (Unique)   | Email address of the user                                                      |
+| password          | TEXT            | Password of the user                                                           |
 
-| Column Name | Data Type       | Description                                    |
-| ----------- | --------------- | ---------------------------------------------- |
-| user\_id    | UUID (Primary)  | Unique identifier for the user                 |
-
-#### SQL Queries to Create Tables
-
-CREATE TABLE images(image_id UUID PRIMARY KEY,image_path TEXT NOT NULL,upload_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,creation_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,update_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
-
-CREATE TABLE faces(face_id SERIAL PRIMARY KEY,image_id UUID REFERENCES images(image_id),embedding REAL[],-- Store face embedding as a real array (adjust type based on embedding vector length)
- bounding_box JSONB,-- Store bounding box coordinates as JSON [top, right, bottom, left]
- processed_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
-
-CREATE TABLE albums ( album_id UUID PRIMARY KEY, album_name TEXT, created_by UUID REFERENCES users(user_id), creation_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, shared_link TEXT );
-
-CREATE TABLE album_images ( image_id UUID REFERENCES images(image_id), album_id UUID REFERENCES albums(album_id) );
-
-CREATE TABLE users(user_id UUID PRIMARY KEY,email TEXT NOT NULL,password TEXT NOT NULL);
 
 
 ### Implementation Details
@@ -129,7 +116,7 @@ CREATE TABLE users(user_id UUID PRIMARY KEY,email TEXT NOT NULL,password TEXT NO
 
 *   Tasks:
     *   Complete the review and refinement of all sections in the `PRD.mdx` file.
-* Status: In progress
+* Status: Done
 
 **Milestone 2: Define and Implement API Endpoints**
 
@@ -149,7 +136,7 @@ CREATE TABLE users(user_id UUID PRIMARY KEY,email TEXT NOT NULL,password TEXT NO
     *   2.4. Face Management Endpoints:
         *   Create endpoints to process faces.
         *   Create endpoints to search for faces.
-*   Expected Timeframe: 3 weeks.
+*   Status: In progress.
 
 **Milestone 3: Create Basic Page Outlines**
 
