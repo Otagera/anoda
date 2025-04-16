@@ -30,3 +30,6 @@ uploads
 # React Router
 /.react-router/
 /build/
+
+.idx/*
+!.idx/dev.nix
