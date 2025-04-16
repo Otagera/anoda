@@ -109,7 +109,7 @@ afterAll(async () => {
 describe("/albums", () => {
   beforeEach(async () => {
     if (testUserId) {
-      await Albums.deleteAlbumsByUserid(testUserId);
+      await Albums.deleteAlbumsByUserId(testUserId);
     }
   });
 
@@ -206,7 +206,7 @@ describe("/albums", () => {
 
     test("should return an empty array if the user has no albums", async () => {
       // Clear albums created by the nested beforeEach
-      await Albums.deleteAlbumsByUserid(testUserId);
+      await Albums.deleteAlbumsByUserId(testUserId);
 
       const res = await agent
         .get(`${baseURL}/albums`)

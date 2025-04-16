@@ -11,6 +11,7 @@
     pkgs.python311Packages.pip
     pkgs.nodejs_20
     pkgs.nodePackages.nodemon
+    pkgs.openssl
   ];
   
   services = {
@@ -25,7 +26,10 @@
   };
 
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    PRISMA_CLIENT_ENGINE_TYPE = "binary";
+    OPENSSL_VERSION = "openssl-1.1.x";
+  };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
