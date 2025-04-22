@@ -51,6 +51,23 @@ const fetchImagesByIds = async (imageIds) => {
   }));
 };
 
+const fetchImages = async (where) => {
+  const images = await prisma.images.findMany({
+    where,
+    include: {
+      faces: true,
+    },
+  });
+
+  return images.map((image) => ({
+    ...image,
+    original_size: {
+      width: image.original_width,
+      height: image.original_height,
+    },
+  }));
+};
+
 const fetchAllImages = async () => {
   const images = await prisma.images.findMany({
     include: {
@@ -277,6 +294,7 @@ module.exports = {
   fetchFaces,
   fetchImage,
   fetchImagesByIds,
+  fetchImages,
   fetchAllImages,
   deleteImage,
   deleteImageById,

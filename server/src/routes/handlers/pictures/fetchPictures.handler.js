@@ -1,3 +1,4 @@
+const authentication = require("@routes/middleware/authentication.middleware");
 const fetchPicturesService = require("@services/pictures/fetchPictures.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
@@ -5,13 +6,19 @@ const handler = {
   method: "get",
   handler: async (req, res) => {
     try {
-      const data = await fetchPicturesService();
+      const { userId, query, params } = req;
+      const data = await fetchPicturesService({
+        userId,
+        ...query,
+      });
+
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
         message: "Fetch Images successfully.",
         data,
       });
     } catch (error) {
+      console.error("[fetchPictures] error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({
@@ -21,8 +28,8 @@ const handler = {
         });
     }
   },
-  path: "/pictures",
-  middlewares: [],
+  path: "/images",
+  middlewares: [authentication],
 };
 
 module.exports = handler;

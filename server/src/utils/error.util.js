@@ -82,11 +82,22 @@ class AuthError extends OperationError {
   }
 }
 
+class ValidationError extends OperationError {
+  name = "AuthError";
+  statusCode = HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY;
+
+  constructor(props) {
+    super(props);
+    this.message = getErrorMessageFromParams(props, "Validation error.");
+  }
+}
+
 module.exports = {
   AuthError,
   NotFoundError,
   OperationError,
   RateLimitError,
+  ValidationError,
   ResourceInUseError,
   InvalidRequestError,
 };

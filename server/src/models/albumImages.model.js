@@ -41,6 +41,20 @@ const deleteLinksByAlbumId = async (albumId) => {
   });
 };
 
+const deleteLinksByUserId = async (userId) => {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  return await prisma.album_images.deleteMany({
+    where: {
+      images: {
+        uploaded_by: userId,
+      },
+    },
+  });
+};
+
 const deleteLinksByAlbumIdAndImageIds = async (albumId, imageIds) => {
   if (!albumId) {
     throw new Error("Album ID is required");
@@ -72,5 +86,6 @@ module.exports = {
   fetchAlbumImage,
   fetchAlbumImages,
   deleteLinksByAlbumId,
+  deleteLinksByUserId,
   deleteLinksByAlbumIdAndImageIds,
 };

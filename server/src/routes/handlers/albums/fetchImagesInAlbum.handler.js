@@ -19,7 +19,6 @@ const handler = {
         data,
       });
     } catch (error) {
-      console.log("[fetchImagesInAlbum] error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({

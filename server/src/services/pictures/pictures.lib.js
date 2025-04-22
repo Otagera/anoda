@@ -6,8 +6,15 @@ const {
   uploadImages,
   deleteImage,
   fetchFaces,
+  fetchImages,
 } = require("@models/images.model");
 const { NotFoundError } = require("@utils/error.util");
+const {
+  cursorPagination,
+  PaginationTypeEnum,
+  offsetPagination,
+  decode_cursor,
+} = require("@utils/pagination.util");
 
 const validateImageData = (imageData) => {
   if (!imageData.image_path) {
@@ -76,6 +83,53 @@ const getImage = async (where) => {
 const getImageById = async (where) => fetchImageById(where);
 const getImagesByIds = async (where) => fetchImagesByIds(where);
 
+const getImages = async (where) => {
+  if (!where) {
+    throw new Error("No where clause provided.");
+  }
+  if (!where.uploaded_by) {
+    if (!where.uploaded_by) {
+      throw new Error("No uploaded_by provided.");
+    }
+  }
+  const { uploaded_by } = where;
+
+  return fetchImages({ uploaded_by });
+};
+
+const getImagesPaginaton = async (params) => {
+  if (!params) {
+    throw new Error("No params clause provided.");
+  }
+
+  const model = "images";
+  const { page, limit, pagination_type, ...paramsRest } = params;
+  const nextCursorDecoded = decode_cursor(paramsRest.next_cursor);
+  const previousCursorDecoded = decode_cursor(paramsRest.previous_cursor);
+  let paginatedImages;
+
+  if (pagination_type === PaginationTypeEnum.CURSOR) {
+    paginatedImages = await cursorPagination(
+      model,
+      limit,
+      nextCursorDecoded,
+      previousCursorDecoded,
+      model,
+      paramsRest
+    );
+  } else {
+    paginatedImages = await offsetPagination(
+      model,
+      page,
+      limit,
+      model,
+      paramsRest
+    );
+  }
+
+  return paginatedImages;
+};
+
 const removeImage = async (where) => {
   if (!where) {
     throw new Error("No where clause provided.");
@@ -103,5 +157,7 @@ module.exports = {
   getImage,
   getImageById,
   getImagesByIds,
+  getImages,
+  getImagesPaginaton,
   removeImage,
 };

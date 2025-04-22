@@ -1,8 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const {
-  getAlbumLinks,
-} = require("./albums.lib");
+const { getAlbumLinks } = require("./albums.lib");
 const { normalizeImagePath } = require("@utils/image.util");
 
 const spec = joi.object({
@@ -29,6 +27,7 @@ const aliasSpec = {
     faces: "faces",
     image_path: "imagePath",
     upload_date: "uploadDate",
+    update_date: "updateDate",
     original_size: "originalSize",
     uploaded_by: "userId",
   },

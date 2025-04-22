@@ -17,6 +17,7 @@ const aliasSpec = {
     faces: "faces",
     image_path: "imagePath",
     upload_date: "uploadDate",
+    update_date: "updateDate",
     original_size: "originalSize",
     uploaded_by: "userId",
   },
