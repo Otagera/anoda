@@ -1,7 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const { getAlbum, deleteAlbum } = require("./albums.lib");
-const { NotFoundError } = require("@utils/error.util");
 
 const spec = joi.object({
   album_id: joi.string().required(),
@@ -26,7 +25,7 @@ const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
   const params = validateSpec(spec, aliasReq);
 
-  const album = await getAlbum(params);
+  await getAlbum(params);
 
   const deletedAlbum = await deleteAlbum(params.album_id, params.created_by);
 

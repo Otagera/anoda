@@ -10,19 +10,16 @@ const aliasSpec = {
   request: {
     userId: "created_by",
   },
-  response: {
-    count: "count",
-  },
+  response: {},
 };
 
 const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
   const params = validateSpec(spec, aliasReq);
 
-  const deletedAlbum = await deleteAlbums(params.created_by);
+  await deleteAlbums(params.created_by);
 
-  const aliasRes = aliaserSpec(aliasSpec.response, deletedAlbum);
-  return aliasRes;
+  return {};
 };
 
 module.exports = service;

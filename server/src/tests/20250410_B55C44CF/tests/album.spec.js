@@ -406,7 +406,6 @@ describe("/albums", () => {
       expect(res.status).toBe(HTTP_STATUS_CODES.OK);
       expect(res.body.status).toBe("completed");
       expect(res.body.message).toBe(`Albums deleted successfully.`);
-      expect(res.body.data).toHaveProperty("count", 1);
 
       // Verify deletion
       const getRes = await agent

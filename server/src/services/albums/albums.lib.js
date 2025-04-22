@@ -11,7 +11,7 @@ const {
   fetchAlbumsByUserids,
   updateExistingAlbum,
   deleteAlbumById,
-  deleteAlbumsByUserid,
+  deleteAlbumsByUserId,
 } = require("@models/albums.model");
 const { fetchImage, fetchImagesByIds } = require("@models/images.model");
 const { NotFoundError } = require("@utils/error.util");
@@ -115,7 +115,7 @@ const getAlbum = async (where) => {
     throw new Error("No created_by or album_id provided");
   }
 
-  const album = fetchAlbum(where);
+  const album = await fetchAlbum(where);
 
   if (!album) {
     throw new NotFoundError("Album not found.");
@@ -206,7 +206,7 @@ const deleteAlbums = async (created_by) => {
   if (!created_by) {
     throw new Error(`User id: ${created_by} is required`);
   }
-  return await deleteAlbumsByUserid(created_by);
+  await deleteAlbumsByUserId(created_by);
 };
 const deleteAlbumImages = async (albumId, imageIds) => {
   return await deleteLinksByAlbumIdAndImageIds(albumId, imageIds);
