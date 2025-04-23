@@ -18,7 +18,6 @@ const handler = {
         data,
       });
     } catch (error) {
-      console.error("[fetchPictures] error", error);
       return res
         .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
         .send({

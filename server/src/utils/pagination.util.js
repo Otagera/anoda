@@ -83,7 +83,7 @@ const buildQuery = (params) => {
     filter.image_id = { gt: previous_cursor };
     other_options.orderBy = { image_id: "asc" };
   } else {
-    other_options.orderBy = { image_id: "asc" };
+    other_options.orderBy = { image_id: "desc" };
   }
 
   return { filter, other_options };
@@ -97,7 +97,7 @@ const decode_cursor = (cursor) => {
   try {
     return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
   } catch (e) {
-    return null;
+    throw new InvalidRequestError("Invalid cursor value");
   }
 };
 
@@ -149,6 +149,8 @@ const cursorPagination = async (
       if (x.image_id < y.image_id) return 1;
       return 0;
     });
+  } else {
+    data = data.sort((x, y) => x.image_id - y.image_id);
   }
 
   // Check if there's a next page by inspecting if we fetched an extra item
@@ -227,7 +229,7 @@ const offsetPagination = async (
 
   const total = await prisma[model].count({ where: { ...filter } });
 
-  const data = await prisma[model].findMany({
+  let data = await prisma[model].findMany({
     ...other_options,
     where: { ...filter },
     include: {
@@ -238,6 +240,12 @@ const offsetPagination = async (
   });
 
   const pageCount = Math.ceil(total / limit);
+  data = data.sort((x, y) => {
+    if (x.image_id > y.image_id) return -1;
+    if (x.image_id < y.image_id) return 1;
+    return 0;
+  });
+
   const pagination = {
     total_pages: pageCount,
     total,

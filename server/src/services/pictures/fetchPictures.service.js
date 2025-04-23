@@ -10,8 +10,8 @@ const spec = Joi.object({
   album_id: Joi.string().uuid(),
   page: Joi.number().optional().default(1),
   limit: Joi.number().optional().default(10),
-  next_cursor: Joi.string().base64(),
-  prev_cursor: Joi.string().base64(),
+  next_cursor: Joi.string().base64().message("Invalid cursor"),
+  prev_cursor: Joi.string().base64().message("Invalid cursor"),
   pagination_type: Joi.string()
     .valid(...Object.values(PaginationTypeEnum))
     .optional()

@@ -10,9 +10,9 @@
 // });
 // module.exports = pool;
 
-const { PrismaClient } = require("@prisma/client");
+// const { PrismaClient } = require("@prisma/client");
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 // async function main() {
 // ... you will write your Prisma Client queries here
@@ -27,5 +27,12 @@ const prisma = new PrismaClient();
 //     await prisma.$disconnect();
 //     process.exit(1);
 //   });
+const { PrismaClient } = require("@prisma/client");
+
+const globalForPrisma = globalThis;
+
+const prisma = globalForPrisma.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 module.exports = prisma;
