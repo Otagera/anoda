@@ -33,3 +33,5 @@ uploads
 
 .idx/*
 !.idx/dev.nix
+
+venv

@@ -126,6 +126,8 @@ describe("Faces Endpoints", () => {
       .post(`${baseURL}/images`)
       .set("Authorization", `Bearer ${authToken}`)
       .attach("uploadedImages", sampleImagePath);
+    console.log("createRes.status", createRes.status);
+    console.log("createRes.body", createRes.body);
 
     if (
       createRes.status !== HTTP_STATUS_CODES.CREATED ||
@@ -170,9 +172,7 @@ describe("Faces Endpoints", () => {
       }
     }
   });
-  /* describe("Advanced Image and Face Endpoint Tests", () => {
-    
-
+  describe("Advanced Image and Face Endpoint Tests", () => {
     // --- Faces Endpoint Tests ---
     describe("Faces Endpoints (Get Specific / Search)", () => {
       // Setup for faces: Requires images and manually created face records
@@ -476,15 +476,7 @@ describe("Faces Endpoints", () => {
           expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
           expect(res.body.message).toBe("Face not found.");
         });
-          });
-          });
-  
       });
-  
-      });
-  
-      });
-  
     });
-  }); */
+  });
 });
