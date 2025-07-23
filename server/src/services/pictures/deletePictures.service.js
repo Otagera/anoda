@@ -1,6 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { deleteAllImagesQuery } = require("@models/images.model");
+const { deleteAllImages } = require("@models/images.model");
 
 const spec = joi.object({});
 
@@ -11,11 +11,11 @@ const aliasSpec = {
 
 const service = async (data) => {
   const aliasReq = aliaserSpec(aliasSpec.request, data);
-  const { pictureId } = validateSpec(spec, aliasReq);
+  validateSpec(spec, aliasReq);
 
-  const { rows } = await deleteAllImagesQuery();
+  const result = await deleteAllImages();
 
-  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(rows));
+  const aliasRes = aliaserSpec(aliasSpec.response, normalizeImagePath(result));
   return aliasRes;
 };
 

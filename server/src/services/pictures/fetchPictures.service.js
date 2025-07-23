@@ -2,7 +2,7 @@ const Joi = require("joi");
 const dayjs = require("dayjs");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const { normalizeImagePath } = require("@utils/image.util");
-const { getImages, getImagesPaginaton } = require("./pictures.lib");
+const { getImagesPaginaton } = require("./pictures.lib");
 const { PaginationTypeEnum } = require("@utils/pagination.util");
 
 const spec = Joi.object({
@@ -68,7 +68,7 @@ const aliasSpec = {
     //cursor pagination
     next_cursor: "nextCursor",
     previous_cursor: "previousCursor",
-    limit: "limit",
+    // limit: "limit",
     has_more_items: "hasMoreItems",
   },
 };

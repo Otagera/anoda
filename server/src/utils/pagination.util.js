@@ -96,7 +96,7 @@ const decode_cursor = (cursor) => {
 
   try {
     return JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
-  } catch (e) {
+  } catch (_e) {
     throw new InvalidRequestError("Invalid cursor value");
   }
 };

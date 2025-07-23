@@ -138,7 +138,7 @@ function calculateEuclideanDistance(arr1, arr2) {
   return Math.sqrt(sum);
 }
 
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res, _next) {
   if (err instanceof MulterError) {
     return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
       status: "error",
@@ -159,7 +159,7 @@ app.use(function (err, req, res, next) {
   });
 });
 
-app.use(function (req, res, next) {
+app.use(function (req, res, _next) {
   return res.status(HTTP_STATUS_CODES.NOTFOUND).send({
     status: "error",
     message: "Resource not found",

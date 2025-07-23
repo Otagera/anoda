@@ -6,7 +6,6 @@ const {
   Faces,
   Albums,
   Images,
-  AlbumImages,
   closeServerAsync,
   HTTP_STATUS_CODES,
 } = require("../../common");
@@ -17,18 +16,17 @@ const testUser = {
 };
 const testAlbumData = { albumName: "Test Album for Images" };
 const sampleImagePath = path.join(__dirname, "..", "assets", "sample.jpg");
-const faceslessImagePath = path.join(
+/* const faceslessImagePath = path.join(
   __dirname,
   "..",
   "assets",
   "facesless.jpeg"
-);
+); */
 
 let agent;
 let server;
 let authToken;
 let testUserId;
-let testAlbumId;
 
 beforeAll(async () => {
   const common = require("../../common");

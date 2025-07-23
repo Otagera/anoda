@@ -9,7 +9,7 @@ const {
   normalizeImagePath,
   isImageCorrupted,
 } = require("@utils/image.util");
-const { createImages, getImagesByIds, createImage } = require("./pictures.lib");
+const { getImagesByIds, createImage } = require("./pictures.lib");
 
 const fileSchema = Joi.object({
   fieldname: Joi.string().valid("uploadedImages").required(),
@@ -57,20 +57,17 @@ const storeImage = async (filename, uploaded_by) => {
   if (isCorrupted) {
     throw new Error(`Image: ${filename} is corrupted`);
   }
-  try {
-    const imageResult = await createImage({
-      image_path: imagePath,
-      original_height: imageSize.height,
-      original_width: imageSize.width,
-      uploaded_by,
-    });
 
-    const imageId = imageResult.image_id;
+  const imageResult = await createImage({
+    image_path: imagePath,
+    original_height: imageSize.height,
+    original_width: imageSize.width,
+    uploaded_by,
+  });
 
-    return { imagePath, imageId: imageId.toString() };
-  } catch (error) {
-    throw error;
-  }
+  const imageId = imageResult.image_id;
+
+  return { imagePath, imageId: imageId.toString() };
 };
 
 const runPythonScript = async (scriptArgs) => {

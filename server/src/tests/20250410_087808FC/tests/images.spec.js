@@ -218,7 +218,7 @@ describe("/images", () => {
           await agent
             .delete(`${baseURL}/images/${testImageId}`)
             .set("Authorization", `Bearer ${authToken}`);
-        } catch (apiError) {
+        } catch (_apiError) {
           // Fallback to direct DB deletion if API fails or ID is known
           await Images.deleteImageById(testImageId);
         }

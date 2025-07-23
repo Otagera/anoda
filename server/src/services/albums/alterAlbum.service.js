@@ -1,7 +1,6 @@
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 const { getAlbum, updateAlbum } = require("./albums.lib");
-const { NotFoundError } = require("@utils/error.util");
 
 const spec = joi.object({
   album_name: joi.string().required(),

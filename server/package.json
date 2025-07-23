@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node -r module-alias/register src/index.js",
-    "dev": "nodemon -r module-alias/register src/index.js --ignore logQueue.json | pino-pretty -c",
+    "dev": "nodemon -r module-alias/register src/index.js | pino-pretty -c",
     "worker": "node -r module-alias/register src/worker.js",
     "worker:dev": "nodemon -r module-alias/register src/worker.js | pino-pretty -c",
     "email": "node -r module-alias/register src/email.js",
@@ -17,7 +17,9 @@
     "test": "NODE_ENV=test node src/utils/scripts/test/execute.js",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage",
-    "testinit": "NODE_ENV=test node src/utils/scripts/test/initialize.js"
+    "testinit": "NODE_ENV=test node src/utils/scripts/test/initialize.js",
+    "format": "prettier --write \"src/**/*.js\"",
+    "lint": "eslint --config eslint.config.mjs \"src/**/*.js\""
   },
   "_moduleAliases": {
     "@config": "src/config",
@@ -35,10 +37,17 @@
     "semi": true,
     "singleQuote": false
   },
+  "nodemonConfig": {
+    "ignore": [
+      "logQueue.json",
+      "src/utils/sdk/data"
+    ]
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@chatterbox/chatterbox-sdk": "file:src/utils/sdk",
     "@prisma/client": "^6.6.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
@@ -68,6 +77,11 @@
     "url": "^0.11.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "globals": "^16.3.0",
     "jest-module-name-mapper": "^0.1.5",
     "prisma": "^6.6.0"
   }

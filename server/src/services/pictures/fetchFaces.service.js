@@ -1,6 +1,5 @@
 const Joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
-const { normalizeImagePath } = require("@utils/image.util");
 const { getFaces } = require("./pictures.lib");
 
 const spec = Joi.object({

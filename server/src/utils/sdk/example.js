@@ -1,20 +1,20 @@
+require("dotenv");
 const { randomUUID } = require("node:crypto");
 const { pino } = require("pino");
 const { pinoHttp } = require("pino-http");
 const { green, isColorSupported } = require("colorette");
 const { DateTime } = require("luxon");
-const { startChatterboxServer } = require("@chatterbox/chatterbox-sdk");
-const config = require("@config/index.config");
+const { startChatterboxServer } = require("./index");
 
 startChatterboxServer({
-  appName: config[config.env].chatterbox.app_name,
-  apiSecret: config[config.env].chatterbox.api_secret,
-  logFile:
-    process.env.NODE_ENV === "test"
-      ? "chatterbox-queue-test.json"
-      : "chatterbox-queue.json",
+  appName: process.env.CHATTERBOX_APP_NAME,
+  apiSecret: process.env.CHATTERBOX_API_SECRET,
+  logFile: "chatterbox-queue.json",
 });
 
+const config = {
+  app_name: process.env.CHATTERBOX_APP_NAME,
+};
 class PinoLogger {
   httpLoggerInstance;
   _config;
@@ -45,7 +45,7 @@ class PinoLogger {
       {
         context: [context, this._config.appName].find(Boolean),
         type: error.name,
-        formattedTimestamp: `${this._getDateFormat()}`,
+        formatedTimestamp: `${this._getDateFormat()}`,
         application: this._config.appName,
         stack: error.stack,
       },
@@ -98,11 +98,10 @@ class PinoLogger {
   _getLogDestination() {
     const targets = [
       {
-        target: "@chatterbox/chatterbox-sdk/chatterboxTransport.mjs",
+        target: "./chatterboxTransport.mjs",
         options: {
           appName: this._config.appName,
           apiSecret: process.env.CHATTERBOX_API_SECRET,
-          fallbackQueueFilePath: "chatterbox-queue.json",
         },
       },
     ];
@@ -115,7 +114,7 @@ class PinoLogger {
           colorizeObjects: true,
           messageKey: this._config.messageKey,
           ignore: "pid,hostname,name",
-          singleLine: config.env === "development",
+          singleLine: process.env.NODE_ENV === "development",
           translateTime: "SYS:yyyy-mm-dd HH:MM:ss",
           customColors: {
             info: "green",
@@ -149,10 +148,7 @@ class PinoLogger {
       customReceivedMessage: (req) => {
         return `REQUEST-INITIATED-${req.id}`;
       },
-      customSuccessMessage: (req, res) => {
-        if (res.statusCode >= 400) {
-          return `REQUEST-FAILED-${req.id}`;
-        }
+      customSuccessMessage: (req) => {
         return `REQUEST-COMPLETE-${req.id}`;
       },
       customErrorMessage: (req) => {
@@ -171,7 +167,7 @@ class PinoLogger {
         };
       },
       serializers: {
-        err: pino.stdSerializers.err,
+        err: () => false,
         req: (req) => {
           return process.env.NODE_ENV === "development"
             ? `${req.method} ${req.url}`
@@ -182,7 +178,7 @@ class PinoLogger {
             ? `${res.statusCode} ${res.headers["content-type"]}`
             : res,
       },
-      customLogLevel: (_req, res) => {
+      customLogLevel: (req, res) => {
         if (res.statusCode >= 400) {
           return "error";
         }
@@ -208,10 +204,21 @@ class PinoLogger {
 }
 
 const logger = new PinoLogger({
-  appName: config[config.env].chatterbox.app_name,
+  appName: config.app_name,
   level: "debug",
   messageKey: "key",
   enableConsoleLogs: true,
 });
 
-module.exports = logger;
+logger.info("info", "example-test");
+logger.info({ test: "info" }, "exampleTest");
+console.log("Sending a test log message...");
+logger.info(
+  { details: "This log is sent via the transport worker." },
+  "EXAMPLE_LOG"
+);
+
+setTimeout(() => {
+  logger.info("info", "example-test");
+  console.log("\n .Example finished.");
+}, 5000);

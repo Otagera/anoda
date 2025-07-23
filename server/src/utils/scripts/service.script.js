@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const fileContent = (serviceName, options) => `
+const fileContent = (_serviceName, _options) => `
 const joi = require("joi");
 const { validateSpec, aliaserSpec } = require("@utils/specValidator.util");
 

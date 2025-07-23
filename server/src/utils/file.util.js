@@ -28,7 +28,7 @@ const yamlToJson = (ymlFile) => {
     doc = yaml.load(fs.readFileSync(ymlFile, "utf8"), {
       schema: yaml.JSON_SCHEMA,
     });
-  } catch (exc) {
+  } catch (_exc) {
     throw new Error("There was an error getting documentation");
   }
   return doc;

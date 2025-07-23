@@ -10,7 +10,7 @@ const isImageCorrupted = async (imagePath) => {
   try {
     await sharp(imagePath).metadata();
     return false;
-  } catch (error) {
+  } catch (_error) {
     return true;
   }
 };

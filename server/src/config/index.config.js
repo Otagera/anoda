@@ -10,7 +10,7 @@ const config = {
     // DB
     db_user: process.env.PG_USERNAME,
     db_host: process.env.PG_HOSTNAME,
-    database: process.env.PG_DATABASE, // Choose a database name
+    database: process.env.PG_DATABASE,
     db_password: process.env.PG_PASSWORD,
     db_port: 5432,
     db_url: `${process.env.DB_URL}${process.env.DB_NAME}`,
@@ -19,9 +19,9 @@ const config = {
     secret: process.env.SESSION_SECRET,
 
     // Redis
-    redis_port: process.env.REDIS_PORT, // Redis port
-    redis_host: process.env.REDIS_HOSTNAME, // Redis host
-    redis_username: process.env.REDIS_USERNAME || "default", // needs Redis >= 6
+    redis_port: process.env.REDIS_PORT,
+    redis_host: process.env.REDIS_HOSTNAME,
+    redis_username: process.env.REDIS_USERNAME || "default",
     redis_password: process.env.REDIS_PASSWORD || "",
     redis_url: process.env.REDIS_URL,
 
@@ -33,6 +33,17 @@ const config = {
       process.env.CHATTERBOX_API_URL || "http://localhost:3005",
     chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
     chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
+
+    chatterbox: {
+      log_file: process.env.LOG_FILE || "logQueue.json",
+      retry_delay_MS: Number(process.env.RETRY_DELAY_MS) || 10000,
+      max_bilk_log: Number(process.env.MAX_BULK_LOG) || 10,
+      api_url: process.env.CHATTERBOX_API_URL,
+      logging_api_url: process.env.LOGGING_API_URL,
+      bulk_logging_api_url: process.env.BULK_LOGGING_API_URL,
+      app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
+      api_secret: process.env.CHATTERBOX_API_SECRET,
+    },
 
     // python
     python_interpreter_path: path.join(
@@ -55,6 +66,17 @@ const config = {
     redis_username: process.env.TEST_REDIS_USERNAME || "default", // needs Redis >= 6
     redis_password: process.env.TEST_REDIS_PASSWORD || "",
     redis_url: process.env.TEST_REDIS_URL,
+
+    chatterbox: {
+      log_file: process.env.LOG_FILE || "testLogQueue.json",
+      retry_delay_MS: Number(process.env.RETRY_DELAY_MS) || 10000,
+      max_bilk_log: Number(process.env.MAX_BULK_LOG) || 10,
+      api_url: process.env.CHATTERBOX_API_URL,
+      logging_api_url: process.env.LOGGING_API_URL,
+      bulk_logging_api_url: process.env.BULK_LOGGING_API_URL,
+      app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
+      api_secret: process.env.CHATTERBOX_API_SECRET,
+    },
 
     // python
     python_interpreter_path: path.join(
@@ -87,6 +109,18 @@ const config = {
       process.env.CHATTERBOX_API_URL || "http://localhost:3005",
     chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
     chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
+
+    chatterbox: {
+      log_file: process.env.LOG_FILE || "logQueue.json",
+      retry_delay_MS: Number(process.env.RETRY_DELAY_MS) || 10000,
+      max_bilk_log: Number(process.env.MAX_BULK_LOG) || 10,
+      api_url: process.env.CHATTERBOX_API_URL,
+      logging_api_url: process.env.LOGGING_API_URL,
+      bulk_logging_api_url: process.env.BULK_LOGGING_API_URL,
+      app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
+      api_secret: process.env.CHATTERBOX_API_SECRET,
+    },
   },
 };
+
 module.exports = config;
