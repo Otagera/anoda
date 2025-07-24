@@ -47,11 +47,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@bull-board/express": "^6.11.2",
     "@chatterbox/chatterbox-sdk": "file:src/utils/sdk",
     "@prisma/client": "^6.6.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
+    "bullmq": "^5.56.5",
     "colorette": "^2.0.20",
     "commander": "^13.1.0",
     "cors": "^2.8.5",

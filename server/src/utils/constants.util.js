@@ -21,7 +21,8 @@ module.exports = {
   },
   BULL_QUEUE_NAMES: {
     DEFAULT: "default",
-    EMAIL: "email",
+    FACE_RECOGNITION: "face_recognition",
+    FACE_SEARCH: "face_search",
   },
   DEGREES: ["Bsc.", "B.A", "LLB.", "MSc.", "M.A."],
   LEVELS: ["Undergraduate", "Postgraduate"],

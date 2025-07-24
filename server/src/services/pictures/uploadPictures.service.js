@@ -116,16 +116,13 @@ const service = async (data) => {
     imagesToProcess.push(await storeImage(file.filename, params.uploaded_by));
   }
 
-  const pythonScriptArgs = [
-    path.join("src", "utils", "scripts", "python", "face_processing_script.py"),
-  ];
-
   for (const imageInfo of imagesToProcess) {
-    pythonScriptArgs.push(imageInfo.imagePath); // Add image path
-    pythonScriptArgs.push(imageInfo.imageId.toString()); // Add image ID as string
+    await queueServices.faceRecognitionQueueLib.addJob(
+      "faceRecognition",
+      { imageId: imageInfo.imageId, imagePath: imageInfo.imagePath },
+      { removeOnComplete: true, removeOnFail: true }
+    );
   }
-
-  await runPythonScript(pythonScriptArgs);
   const imageIds = imagesToProcess.map((img) => {
     return img.imageId;
   });
