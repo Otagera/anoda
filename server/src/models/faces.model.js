@@ -1,79 +1,74 @@
 const prisma = require("@config/db.config");
 
-const createNewFace = async (data) => {
-  return await prisma.faces.create({
-    data,
-  });
-};
-
-const fetchFace = async (face_id) => {
+const fetchFaceById = async (face_id) => {
   return await prisma.faces.findUnique({
-    where: { face_id },
-  });
-};
-
-const fetchFacesByIds = async (faceIds) => {
-  return await prisma.faces.findMany({
-    where: {
-      face_id: {
-        in: faceIds,
-      },
-    },
-  });
-};
-
-const fetchFacesByImageids = async (imageIds) => {
-  return await prisma.faces.findMany({
-    where: {
-      image_id: {
-        in: imageIds,
-      },
-    },
-  });
-};
-
-const fetchAllFaces = async () => {
-  return await prisma.faces.findMany();
-};
-
-const deleteFaceById = async (face_id) => {
-  return await prisma.faces.delete({
     where: {
       face_id,
     },
   });
 };
 
-const deleteFacesByIds = async (faceIds) => {
-  return await prisma.faces.deleteMany({
-    where: {
-      face_id: {
-        in: faceIds,
-      },
-    },
-  });
-};
+const searchSimilarFaces = async (
+  faceId,
+  albumId,
+  threshold = 0.6,
+  limit = 10
+) => {
+  const targetFace = await fetchFaceById(faceId);
+  if (!targetFace) {
+    return [];
+  }
+  const embedding = targetFace.embedding;
 
-const deleteFacesByImageId = async (image_id) => {
-  return await prisma.faces.deleteMany({
-    where: {
-      images: { image_id },
-    },
-  });
-};
+  const params = [faceId, embedding, threshold, limit];
 
-const deleteAllFaces = async () => {
-  return await prisma.faces.deleteMany({});
+  let query = `
+    WITH distances AS (
+      SELECT
+        f.face_id,
+        (
+          SELECT sqrt(sum(pow(u1.val - u2.val, 2)))
+          FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
+          JOIN unnest($2::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
+        ) as distance
+      FROM
+        faces f
+      WHERE f.face_id != $1
+    )
+    SELECT
+      f.face_id,
+      f.image_id,
+      i.image_path,
+      f.bounding_box,
+      d.distance
+    FROM
+      faces f
+    JOIN
+      images i ON f.image_id = i.image_id
+    JOIN
+      distances d ON f.face_id = d.face_id
+  `;
+
+  const whereClauses = ["d.distance <= $3"];
+  if (albumId) {
+    params.push(albumId);
+    whereClauses.push(
+      `i.image_id IN (SELECT image_id FROM album_images WHERE album_id = ${params.length})`
+    );
+  }
+
+  query += ` WHERE ${whereClauses.join(" AND ")}`;
+
+  query += `
+    ORDER BY
+      d.distance ASC
+    LIMIT $4;
+  `;
+
+  return await prisma.$queryRawUnsafe(query, ...params);
 };
 
 module.exports = {
-  createNewFace,
-  fetchFace,
-  fetchFacesByIds,
-  fetchFacesByImageids,
-  fetchAllFaces,
-  deleteFaceById,
-  deleteFacesByIds,
-  deleteFacesByImageId,
-  deleteAllFaces,
+  fetchFaceById,
+  searchSimilarFaces,
 };

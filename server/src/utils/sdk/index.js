@@ -350,9 +350,9 @@ class ChatterboxSDK {
     if (!exists) {
       this.logQueue.push({ id: logId, data: logData });
       await this.saveQueue();
-      console.log(
-        `[ChatterboxSDK] Log queued: ${logId}. Queue size: ${this.logQueue.length}`
-      );
+      // console.log(
+      //   `[ChatterboxSDK] Log queued: ${logId}. Queue size: ${this.logQueue.length}`
+      // );
     }
   };
 

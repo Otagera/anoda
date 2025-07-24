@@ -1,20 +1,22 @@
 const authentication = require("@routes/middleware/authentication.middleware");
-// const fetchFaceService = require("@services/pictures/fetchFace.service");
+const searchFacesService = require("@services/pictures/searchFaces.service");
 const { HTTP_STATUS_CODES } = require("@utils/constants.util");
 
 const handler = {
   method: "get",
   handler: async (req, res) => {
     try {
-      const imageId = req.params.imageId;
-      const userId = req.userId;
-      const data = await fetchFaceService({
-        imageId,
-        userId,
+      const faceId = parseInt(req.params.faceId, 10);
+      const { albumId, threshold, limit } = req.query;
+      const data = await searchFacesService({
+        faceId,
+        albumId,
+        threshold,
+        limit,
       });
       return res.status(HTTP_STATUS_CODES.OK).send({
         status: "completed",
-        message: "Faces retrieved successfully.",
+        message: "Similar faces retrieved successfully.",
         data,
       });
     } catch (error) {
@@ -27,7 +29,7 @@ const handler = {
         });
     }
   },
-  path: "/images/:imageId/faces",
+  path: "/faces/:faceId/search",
   middlewares: [authentication],
 };
 

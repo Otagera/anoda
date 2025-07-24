@@ -4,7 +4,7 @@ import { Form } from "react-router";
 import api from "~/utils/axios";
 
 export async function action({ request }: Route.ActionArgs) {
-	let formData = await request.formData();
+	const formData = await request.formData();
 
 	try {
 		const response = await api.post("search", formData);

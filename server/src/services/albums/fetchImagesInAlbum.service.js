@@ -14,13 +14,8 @@ const aliasSpec = {
     userId: "user_id",
   },
   response: {
-    imagesInAlbum: "imagesInAlbum",
-  },
-  imageInAlbum: {
     album_id: "albumId",
-    image_id: "imageId",
-    album_images_id: "albumImageId",
-    images: "images",
+    imagesInAlbum: "imagesInAlbum",
   },
   image: {
     image_id: "imageId",
@@ -30,6 +25,7 @@ const aliasSpec = {
     update_date: "updateDate",
     original_size: "originalSize",
     uploaded_by: "userId",
+    album_images_id: "albumImageId",
   },
 };
 
@@ -39,24 +35,30 @@ const service = async (data) => {
 
   const imagesInAlbum = await getAlbumLinks(params);
 
-  const aliasImagesInAlbum = imagesInAlbum
-    .map((imageInAlbum) => aliaserSpec(aliasSpec.imageInAlbum, imageInAlbum))
-    .map((image) => {
-      const imageData = aliaserSpec(aliasSpec.image, {
-        ...image.images,
-        original_size: {
-          height: image.images.original_height,
-          width: image.images.original_width,
-        },
-        image_path: normalizeImagePath(image.images.image_path),
-      });
-      return {
-        ...image,
-        images: imageData,
-      };
+  if (!imagesInAlbum || imagesInAlbum.length === 0) {
+    return aliaserSpec(aliasSpec.response, {
+      imagesInAlbum: [],
+      album_id: params.album_id,
     });
+  }
+
+  const aliasImagesInAlbum = imagesInAlbum.map((_image) => {
+    const imageData = aliaserSpec(aliasSpec.image, {
+      ..._image.images,
+      original_size: {
+        height: _image.images.original_height,
+        width: _image.images.original_width,
+      },
+      image_path: normalizeImagePath(_image.images.image_path),
+      album_images_id: _image.album_images_id,
+    });
+
+    return imageData;
+  });
+
   const aliasRes = aliaserSpec(aliasSpec.response, {
     imagesInAlbum: aliasImagesInAlbum,
+    album_id: params.album_id,
   });
   return aliasRes;
 };
