@@ -46,12 +46,9 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.get(
 		"/",
-		async ({ set /*, user */ }) => {
+		async ({ set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
-
-				const data = await fetchAlbumsService({ userId: userId });
+				const data = await fetchAlbumsService({ userId });
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -70,16 +67,14 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		},
 		{
 			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
+				albumId: t.Optional(t.String()), // Assuming albumId is a string/UUID
 			}),
 		},
 	)
 	.get(
 		"/:albumId",
-		async ({ params, set /*, user */ }) => {
+		async ({ params, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await fetchAlbumService({ userId, albumId });
@@ -107,10 +102,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.put(
 		"/:albumId",
-		async ({ params, body, set /*, user */ }) => {
+		async ({ params, body, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await alterAlbumService({ ...body, userId, albumId });
@@ -141,10 +134,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.delete(
 		"/:albumId",
-		async ({ params, set /*, user */ }) => {
+		async ({ params, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await removeAlbumService({ userId, albumId });
@@ -172,10 +163,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.get(
 		"/:albumId/images",
-		async ({ params, query, set /*, user */ }) => {
+		async ({ params, query, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await fetchImagesInAlbumService({
@@ -213,10 +202,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.post(
 		"/:albumId/images",
-		async ({ params, body, set /*, user */ }) => {
+		async ({ params, body, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await addImagesToAlbumService({
@@ -259,10 +246,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 	)
 	.post(
 		"/:albumId/images/delete-batch",
-		async ({ params, body, set /*, user */ }) => {
+		async ({ params, body, set, userId }) => {
 			try {
-				// authentication placeholder for now
-				const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
 				const albumId = params.albumId;
 
 				const data = await removeImagesInAlbumService({
@@ -295,11 +280,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	)
-	.delete("/", async ({ set /*, user */ }) => {
+	.delete("/", async ({ set, userId }) => {
 		try {
-			// authentication placeholder for now
-			const userId = "c53175ba-b3b1-4223-9a5f-8b746d5e2fdd"; // Replace with actual user ID from auth
-
 			const data = await removeAlbumsService({ userId });
 
 			set.status = HTTP_STATUS_CODES.OK;

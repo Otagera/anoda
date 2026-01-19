@@ -10,7 +10,7 @@ const start = async () => {
     const { default: picturesRoutes } = await import("./routes/pictures.route");
 
     const app = new Elysia()
-      // .use(swagger())
+      .use(swagger())
       .use(authRoutes)
       .use(albumsRoutes)
       .use(picturesRoutes)
