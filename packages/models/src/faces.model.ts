@@ -65,82 +65,43 @@ const searchFaces = async ({
 
 
 	let query = `
-
     WITH distances AS (
-
       SELECT
-
         f.face_id,
-
         (
-
           SELECT sqrt(sum(pow(u1.val - u2.val, 2)))
-
           FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
-
           JOIN unnest($2::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
-
         ) as distance
-
       FROM
-
         faces f
-
-      WHERE f.face_id != 
-
-
+      WHERE f.face_id != $1
     )
-
     SELECT
-
       f.face_id as "faceId",
-
       f.image_id as "imageId",
-
       i.image_path as "imagePath",
-
       f.bounding_box as "boundingBox",
-
       d.distance
-
     FROM
-
       faces f
-
     JOIN
-
       images i ON f.image_id = i.image_id
-
     JOIN
-
       distances d ON f.face_id = d.face_id
-
   `;
 
-
-
 	const whereClauses = ["d.distance <= $3"];
-
 	if (albumId) {
-
 		params.push(albumId);
-
 		whereClauses.push(
-
-			`i.image_id IN (SELECT image_id FROM album_images WHERE album_id = ${params.length}::uuid)`,
-
+			`i.image_id IN (SELECT image_id FROM album_images WHERE album_id = $${params.length}::uuid)`,
 		);
-
 	}
 
-
-
 	if (imageIds && imageIds.length > 0) {
-
 		params.push(imageIds);
-
-		whereClauses.push(`i.image_id = ANY(${params.length}::uuid[])`);
-
+		whereClauses.push(`i.image_id = ANY($${params.length}::uuid[])`);
 	}
 
 

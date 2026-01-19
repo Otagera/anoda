@@ -34,7 +34,17 @@ const service = async (data) => {
 	const { album_id, created_by, ...updateData } = validateSpec(spec, aliasReq);
 
 	await getAlbum({ album_id, created_by });
-	const alteredAlbum = await updateAlbum(album_id, created_by, updateData);
+
+	// Filter out undefined values to prevent Prisma from trying to update them
+	const cleanUpdateData = Object.fromEntries(
+		Object.entries(updateData).filter(([_, v]) => v !== undefined),
+	);
+
+	const alteredAlbum = await updateAlbum(
+		album_id,
+		created_by,
+		cleanUpdateData,
+	);
 
 	const aliasRes = aliaserSpec(aliasSpec.response, alteredAlbum);
 	return aliasRes;

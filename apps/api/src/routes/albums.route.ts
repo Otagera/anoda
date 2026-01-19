@@ -120,7 +120,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				albumId: t.String(), // Assuming albumId is a string/UUID
 			}),
 			body: t.Object({
-				albumName: t.String(),
+				albumName: t.Optional(t.String()),
+				shareToken: t.Optional(t.Nullable(t.String())),
 			}),
 		},
 	)
