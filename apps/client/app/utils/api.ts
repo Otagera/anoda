@@ -9,7 +9,7 @@ export const fetchImages = async () => {
 	}
 };
 
-export const fetchImage = async (imageId: number) => {
+export const fetchImage = async (imageId: string) => {
 	try {
 		const response = await axiosAPI.get(`/images/${imageId}`);
 		return response.data;

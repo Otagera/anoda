@@ -47,14 +47,56 @@ const fetchAllAlbums = async () => {
 };
 
 const deleteAlbumById = async (albumId, userId) => {
-	return await prisma.albums.delete({
-		where: {
-			album_id: albumId,
-			created_by: userId,
-		},
-	});
-};
+	const transaction = await prisma.$transaction(async (prisma) => {
+		// Find all images linked to this album
+		const albumLinks = await prisma.album_images.findMany({
+			where: { album_id: albumId },
+		});
 
+		const imageIds = albumLinks
+			.map((link) => link.image_id)
+			.filter((id) => id !== null) as string[];
+
+		if (imageIds.length > 0) {
+			// Get paths for file deletion
+			const images = await prisma.images.findMany({
+				where: { image_id: { in: imageIds } },
+			});
+
+			// Delete faces
+			await prisma.faces.deleteMany({
+				where: { image_id: { in: imageIds } },
+			});
+
+			// Delete album links
+			await prisma.album_images.deleteMany({
+				where: { album_id: albumId },
+			});
+
+			// Delete images
+			await prisma.images.deleteMany({
+				where: { image_id: { in: imageIds } },
+			});
+
+			// Delete local files after transaction
+			for (const img of images) {
+				if (img.image_path) {
+					await deleteFile(img.image_path);
+				}
+			}
+		}
+
+		// Finally delete the album
+		return await prisma.albums.delete({
+			where: {
+				album_id: albumId,
+				created_by: userId,
+			},
+		});
+	});
+
+	return transaction;
+};
 const deleteAlbumsByIds = async (albumIds) => {
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.albums.deleteMany({

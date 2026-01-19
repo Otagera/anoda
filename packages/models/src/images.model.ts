@@ -1,4 +1,5 @@
 import prisma from "../../config/src/db.config.ts";
+import { deleteFile } from "../../utils/src/file.util.ts";
 
 const uploadImage = async (imageData) => {
 	return await prisma.images.create({
@@ -94,8 +95,17 @@ const fetchAllImages = async () => {
 };
 
 const deleteImage = async (where) => {
+	const image = await prisma.images.findFirst({ where });
+	if (!image) return;
+
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
+			where: {
+				image_id: where.image_id,
+			},
+		});
+
+		await prisma.album_images.deleteMany({
 			where: {
 				image_id: where.image_id,
 			},
@@ -105,12 +115,26 @@ const deleteImage = async (where) => {
 			where,
 		});
 	});
+
+	if (image.image_path) {
+		await deleteFile(image.image_path);
+	}
+
 	return transaction;
 };
 
 const deleteImageById = async (image_id) => {
+	const image = await prisma.images.findUnique({ where: { image_id } });
+	if (!image) return;
+
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
+			where: {
+				image_id,
+			},
+		});
+
+		await prisma.album_images.deleteMany({
 			where: {
 				image_id,
 			},
@@ -122,13 +146,29 @@ const deleteImageById = async (image_id) => {
 			},
 		});
 	});
+
+	if (image.image_path) {
+		await deleteFile(image.image_path);
+	}
 
 	return transaction;
 };
 
 const deleteImagesByIds = async (imageIds) => {
+	const images = await prisma.images.findMany({
+		where: { image_id: { in: imageIds } },
+	});
+
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
+			where: {
+				image_id: {
+					in: imageIds,
+				},
+			},
+		});
+
+		await prisma.album_images.deleteMany({
 			where: {
 				image_id: {
 					in: imageIds,
@@ -144,6 +184,12 @@ const deleteImagesByIds = async (imageIds) => {
 			},
 		});
 	});
+
+	for (const image of images) {
+		if (image.image_path) {
+			await deleteFile(image.image_path);
+		}
+	}
 
 	return transaction;
 };

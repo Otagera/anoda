@@ -113,14 +113,35 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 	}
 
 	return (
-		<main className="pt-16 p-4 container mx-auto">
-			<h1>{message}</h1>
-			<p>{details}</p>
-			{stack && (
-				<pre className="w-full p-4 overflow-x-auto">
-					<code>{stack}</code>
-				</pre>
-			)}
+		<main className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+			<div className="max-w-md w-full bg-white dark:bg-gray-800 shadow-xl rounded-xl p-8 text-center border border-gray-100 dark:border-gray-700">
+				<h1 className="text-6xl font-extrabold text-blue-600 mb-4">{message}</h1>
+				<p className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+					{details}
+				</p>
+				<p className="text-gray-600 dark:text-gray-400 mb-8">
+					Something went wrong on our end. Please try again later or return to
+					the home page.
+				</p>
+				<Link
+					to="/home"
+					className="inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+				>
+					Back to Home
+				</Link>
+				{stack && (
+					<div className="mt-8 text-left">
+						<details className="cursor-pointer">
+							<summary className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+								Technical Details
+							</summary>
+							<pre className="mt-2 w-full p-4 overflow-x-auto bg-gray-100 dark:bg-gray-900 rounded-lg text-xs font-mono text-red-600 dark:text-red-400">
+								<code>{stack}</code>
+							</pre>
+						</details>
+					</div>
+				)}
+			</div>
 		</main>
 	);
 }

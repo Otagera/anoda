@@ -1,12 +1,22 @@
-import fs from "fs";
+import fs from "node:fs";
+import { unlink } from "node:fs/promises";
 import yaml from "js-yaml";
-import path from "path";
+import path from "node:path";
 
 import config from "../../config/src/index.config.ts";
 
-const directory = path.join(__dirname, "../uploads");
+const deleteFile = async (filePath: string) => {
+	try {
+		if (fs.existsSync(filePath)) {
+			await unlink(filePath);
+		}
+	} catch (error) {
+		console.error(`Failed to delete file at ${filePath}:`, error);
+	}
+};
 
 const clearUploads = () => {
+	const directory = path.join(import.meta.dirname, "../uploads");
 	if (config.env === "production") {
 		return;
 	} else {
@@ -18,14 +28,10 @@ const clearUploads = () => {
 				});
 			}
 		});
-		// Assuming 'next()' was a callback for Express middleware. This needs re-evaluation
-		// if clearUploads is still used in a middleware context.
-		// For now, removing 'next()' as it's not applicable in a direct utility function.
-		// next();
 	}
 };
 
-const yamlToJson = (ymlFile) => {
+const yamlToJson = (ymlFile: string) => {
 	let doc;
 	try {
 		doc = yaml.load(fs.readFileSync(ymlFile, "utf8"), {
@@ -37,4 +43,4 @@ const yamlToJson = (ymlFile) => {
 	return doc;
 };
 
-export { clearUploads, yamlToJson };
+export { clearUploads, yamlToJson, deleteFile };

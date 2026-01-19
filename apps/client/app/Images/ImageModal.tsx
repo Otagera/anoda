@@ -92,6 +92,20 @@ const ImageModal = ({ image, albumId, onClose }: ImageModalProps) => {
 							);
 						})}
 				</div>
+				<div className="mt-6 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+					<p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+						{image.faces?.length || 0} faces detected
+					</p>
+					<button
+						onClick={() => {
+							onClose();
+							navigate(`/images/${image.imageId || image.id}`);
+						}}
+						className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+					>
+						View Full Details
+					</button>
+				</div>
 				<button
 					className="absolute top-4 right-4 p-2 bg-white/80 dark:bg-gray-700/80 rounded-full text-gray-800 dark:text-gray-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-gray-700 transition-all shadow-md z-10"
 					onClick={onClose}
