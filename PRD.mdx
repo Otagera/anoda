@@ -6,9 +6,32 @@ This application, Anoda Facematch, allows users to upload photos and organize th
 
 For this demo application, a simplified authentication will be used. This allows users to quickly start uploading pictures and using the app. Only the uploader and those they share album links with will be able to view the content.
 
-The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. In the future, this image processing will be moved to a background worker for better performance.
+The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. Image processing is handled by a background worker for better performance and scalability.
 
-This is a high-level overview of the application.
+### Image Optimization & Performance
+
+To ensure high performance while maintaining image quality, the application employs a two-tier strategy:
+*   **Original Tier:** The original uploaded file is stored to allow high-quality sharing and downloads.
+*   **Display Tier:** A worker automatically generates a WebP version of the image (max width 2000px). This optimized version is used for the app's UI, gallery, and face processing to minimize bandwidth and load times.
+*   **Storage Management:** Users have the option to purge "Original" files to save storage once the optimized versions are ready.
+
+### Background Uploads
+
+The application implements a non-intrusive background upload system similar to Google Photos:
+*   **Persistent Queue:** Uploads are managed in a global queue persisted via **IndexedDB**. This allows uploads to resume automatically if the page is refreshed or the browser is closed.
+*   **Background UI:** A floating manager at the bottom of the screen tracks progress, allowing the user to continue using the application during large uploads.
+*   **Control:** Users can pause, resume, or retry failed uploads.
+
+### Real-time Updates
+
+*   **Server-Sent Events (SSE):** The application uses SSE to push real-time status updates from the worker to the client. When face recognition is complete, the UI updates automatically without requiring a page refresh.
+
+### Task Tracking
+
+Development is tracked using `beads` (bd). Current active tasks:
+*   `anoda-facematch-ofp`: Optimization: Worker-based Image Processing
+*   `anoda-facematch-apr`: Upload: Persistent Background Manager
+*   `anoda-facematch-kgm`: Real-time: SSE Status Updates
 
 ### Scalability Considerations
 

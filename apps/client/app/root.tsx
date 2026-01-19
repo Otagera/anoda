@@ -16,6 +16,9 @@ import "./index.css";
 import "./app.css";
 import { AuthProvider, useAuth } from "./utils/auth";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { UploadProvider } from "./utils/UploadContext";
+import { EventsProvider } from "./utils/EventsContext";
+import { UploadManager } from "./components/UploadManager";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -40,7 +43,7 @@ const Navbar = () => {
 					{isAuthenticated && (
 						<button
 							onClick={handleLogout}
-							className="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
+							className="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors cursor-pointer"
 						>
 							Logout
 						</button>
@@ -56,7 +59,7 @@ const AppContent = () => {
 		const theme = localStorage.getItem("theme");
 		const root = window.document.documentElement;
 		const body = window.document.body;
-		
+
 		const applyTheme = (t: string) => {
 			if (t === "dark") {
 				root.classList.add("dark");
@@ -90,7 +93,12 @@ export default function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<AuthProvider>
-				<AppContent />
+				<EventsProvider>
+					<UploadProvider>
+						<AppContent />
+						<UploadManager />
+					</UploadProvider>
+				</EventsProvider>
 			</AuthProvider>
 		</QueryClientProvider>
 	);

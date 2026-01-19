@@ -1,5 +1,5 @@
 import { swagger } from "@elysiajs/swagger";
-import { Elysia } from "elysia";
+import { Elysia, sse } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { staticPlugin } from "@elysiajs/static";
 import { createBullBoard } from "@bull-board/api";
@@ -8,6 +8,10 @@ import { ElysiaAdapter } from "@bull-board/elysia";
 import { AuthError } from "../../../packages/utils/src/error.util.ts";
 import config from "../../../packages/config/src/index.config.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import {
+	eventEmitter,
+	EVENTS,
+} from "../../../packages/utils/src/events.util.ts";
 
 export const createElysiaApp = async () => {
 	const { default: albumsRoutes } = await import("./routes/albums.route");
@@ -89,11 +93,7 @@ export const createElysiaApp = async () => {
 			};
 		})
 		.group("/api/v1", (app) =>
-			// Register authPlugin globally for this group, but note it might affect authRoutes too (login/signup)
-			// We might need to make it optional or exclude it for auth routes if it enforces token presence.
-			// authPlugin checks for token presence.
-			// So we should NOT apply it to authRoutes (login/signup).
-			// We will apply it to albums and pictures.
+			// Register authPlugin globally for this group
 			app
 				.use(authRoutes)
 				.use(albumsRoutes)
@@ -101,7 +101,19 @@ export const createElysiaApp = async () => {
 				.use(facesRoutes)
 				.use(publicRoutes),
 		)
-		.get("/", () => "Face Search Backend is running with Elysia!");
+		.get("/", () => "Face Search Backend is running with Elysia!")
+		.get("/api/v1/events", () => {
+			return sse((stream) => {
+				const handler = (data: any) => {
+					stream.send(data);
+				};
+
+				eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+
+				// In Elysia, cleanup is often handled via stream.close or automatic detection
+				// For now, we remove the incorrect .on('close') which was causing the 500 error
+			});
+		});
 
 	return app;
 };

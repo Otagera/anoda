@@ -6,6 +6,7 @@ import { createApp } from "./app";
 const startServer = async () => {
 	const now = Date.now();
 	dotenv.config();
+	process.env.IS_API = "true";
 	const app = await createApp();
 
 	app.listen(config[config.env].port, () => {

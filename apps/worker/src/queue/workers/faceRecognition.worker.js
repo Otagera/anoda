@@ -1,14 +1,39 @@
 const { spawn } = require("child_process");
 const prisma = require("../../../../../packages/config/src/db.config.ts").default;
 const path = require("path");
+const sharp = require("sharp");
+const fs = require("fs").promises;
+const {
+	emitImageProcessed,
+} = require("../../../../../packages/utils/src/events.util.ts");
 const config = require("../../../../../packages/config/src/index.config.ts").default;
 
 const run = async (jobData) => {
-	const { imageId, imagePath } = jobData;
+	const { imageId, imagePath, albumId } = jobData;
 
 	try {
-		console.log(`Processing image: ${imagePath} for face recognition.`);
+		console.log(
+			`Processing image: ${imagePath} for optimization and face recognition.`,
+		);
 
+		// 1. Generate Optimized WebP Version
+		const optimizedFilename = `${path.basename(imagePath, path.extname(imagePath))}_optimized.webp`;
+		const optimizedPath = path.join(path.dirname(imagePath), optimizedFilename);
+
+		await sharp(imagePath)
+			.resize({ width: 2000, withoutEnlargement: true })
+			.webp({ quality: 80 })
+			.toFile(optimizedPath);
+
+		// 2. Update Database with Optimized Path
+		await prisma.images.update({
+			where: { image_id: imageId },
+			data: { optimized_path: optimizedPath },
+		});
+
+		console.log(`Optimized image saved: ${optimizedPath}`);
+
+		// 3. Face Recognition (using the original image for accuracy)
 		const pythonProcess = spawn(config[config.env].python_interpreter_path, [
 			path.join(
 				__dirname,
@@ -70,6 +95,7 @@ const run = async (jobData) => {
 							);
 						}
 						console.log(`Face data saved for image: ${imagePath}`);
+						emitImageProcessed(imageId, albumId);
 						resolve();
 					} catch (parseError) {
 						console.error(

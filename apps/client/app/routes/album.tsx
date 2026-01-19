@@ -4,10 +4,12 @@ import { ShareModal } from "../components/ShareModal";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAlbum, fetchImagesInAlbum, uploadImages } from "../utils/api";
+import { useUpload } from "../utils/UploadContext";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();
 	const queryClient = useQueryClient();
+	const { addUploads } = useUpload();
 	const [selectedImage, setSelectedImage] = useState<any>(null);
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -42,12 +44,9 @@ const AlbumPage = () => {
 
 	const handleUpload = () => {
 		if (files) {
-			const formData = new FormData();
-			for (let i = 0; i < files.length; i++) {
-				formData.append("uploadedImages", files[i]);
-			}
-			formData.append("albumId", albumId!);
-			uploadImagesMutation.mutate(formData);
+			addUploads(files, albumId!);
+			setIsUploadModalOpen(false);
+			setFiles(null);
 		}
 	};
 

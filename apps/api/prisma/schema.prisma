@@ -39,6 +39,7 @@ model faces {
 model images {
   image_id        String         @id @default(uuid()) @db.Uuid
   image_path      String
+  optimized_path  String?
   upload_date     DateTime?      @default(now()) @db.Timestamptz(6)
   update_date     DateTime?      @default(now()) @db.Timestamptz(6)
   album_images    album_images[]

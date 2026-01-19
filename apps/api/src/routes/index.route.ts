@@ -2,8 +2,27 @@ import fs from "node:fs";
 import path from "node:path";
 import express from "express";
 import handlerWrapper from "../../../../packages/utils/src/handler.util.ts";
+import { eventEmitter, EVENTS } from "../../../../packages/utils/src/events.util.ts";
 
 const router = express.Router();
+
+// SSE Events Endpoint
+router.get("/events", (req, res) => {
+	res.setHeader("Content-Type", "text/event-stream");
+	res.setHeader("Cache-Control", "no-cache");
+	res.setHeader("Connection", "keep-alive");
+	res.flushHeaders();
+
+	const handler = (data: any) => {
+		res.write(`data: ${JSON.stringify(data)}\n\n`);
+	};
+
+	eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+
+	req.on("close", () => {
+		eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
+	});
+});
 
 const mountPaths = async (handlersPath, rootRouter) => {
 	const handlers = fs.readdirSync(handlersPath);
