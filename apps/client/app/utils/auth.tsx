@@ -19,15 +19,23 @@ interface AuthContextType {
 	signup: (credentials: { email: string; password: string }) => Promise<void>;
 	logout: () => void;
 	isAuthenticated: boolean;
+	isInitialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-	const [token, setToken] = useState<string | null>(
-		localStorage.getItem("token"),
-	);
+	const [token, setToken] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
+	const [isInitialized, setIsInitialized] = useState(false);
+
+	useEffect(() => {
+		const savedToken = localStorage.getItem("token");
+		if (savedToken) {
+			setToken(savedToken);
+		}
+		setIsInitialized(true);
+	}, []);
 
 	useEffect(() => {
 		if (token) {
@@ -40,25 +48,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	}, [token]);
 
 	const login = async (credentials: { email: string; password: string }) => {
-		const response = await apiLogin(credentials);
+		try {
+			const response = await apiLogin(credentials);
 
-		if (response && response.data && response.data.accessToken) {
-			localStorage.setItem("token", response.data.accessToken);
-			setToken(response.data.accessToken);
-			// Optionally, fetch user data here if your API returns it separately
-		} else {
-			throw new Error("Login failed");
+			if (response && response.data && response.data.accessToken) {
+				localStorage.setItem("token", response.data.accessToken);
+				setToken(response.data.accessToken);
+				// Optionally, fetch user data here if your API returns it separately
+			} else {
+				throw new Error("Login failed");
+			}
+		} catch (error: any) {
+			throw new Error(error.response?.data?.message || error.message || "Login failed");
 		}
 	};
 
 	const signup = async (credentials: { email: string; password: string }) => {
-		const response = await apiSignup(credentials);
-		if (response && response.token) {
-			localStorage.setItem("token", response.token);
-			setToken(response.token);
-			// Optionally, fetch user data here
-		} else {
-			throw new Error("Signup failed");
+		try {
+			const response = await apiSignup(credentials);
+			if (response && response.data && response.data.accessToken) {
+				localStorage.setItem("token", response.data.accessToken);
+				setToken(response.data.accessToken);
+				// Optionally, fetch user data here
+			} else {
+				throw new Error("Signup failed");
+			}
+		} catch (error: any) {
+			throw new Error(error.response?.data?.message || error.message || "Signup failed");
 		}
 	};
 
@@ -72,7 +88,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 	return (
 		<AuthContext.Provider
-			value={{ token, user, login, signup, logout, isAuthenticated }}
+			value={{
+				token,
+				user,
+				login,
+				signup,
+				logout,
+				isAuthenticated,
+				isInitialized,
+			}}
 		>
 			{children}
 		</AuthContext.Provider>

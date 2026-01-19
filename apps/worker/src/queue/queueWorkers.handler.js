@@ -45,17 +45,19 @@ class WorkersHandler {
 			`Processing job ${job.id} with bull worker ${job.data.worker}.`,
 		);
 		try {
-			const __dirname = path.dirname(new URL(import.meta.url).pathname);
-			const handlersFilePath = `${__dirname}${path.sep}workers`;
+			const handlersFilePath = path.join(import.meta.dir, "workers");
 			const handlers = fs.readdirSync(handlersFilePath);
-			if (!handlers.includes(`${job.data.worker}.worker.js`)) {
-				throw new Error("Sorry invalid worker");
+			
+			const workerFile = handlers.find(h => h.startsWith(`${job.data.worker}.worker.`));
+
+			if (!workerFile) {
+				throw new Error(`Sorry invalid worker: ${job.data.worker}`);
 			}
-			const imported = await import(
-				`${handlersFilePath}${path.sep}${job.data.worker}.worker.js`
-			);
+
+			const imported = await import(path.join(handlersFilePath, workerFile));
 			if (job.data.worker && imported) {
-				return imported.default(job.data);
+				const run = imported.default || imported;
+				return run(job.data);
 			} else {
 				throw new Error("Invalid worker sent");
 			}

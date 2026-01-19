@@ -11,7 +11,11 @@ const fetchAlbumImage = async (where) => {
 	return await prisma.album_images.findFirst({
 		where,
 		include: {
-			images: true,
+			images: {
+				include: {
+					faces: true,
+				},
+			},
 		},
 	});
 };
@@ -20,7 +24,11 @@ const fetchAlbumImages = async (where) => {
 	return await prisma.album_images.findMany({
 		where,
 		include: {
-			images: true,
+			images: {
+				include: {
+					faces: true,
+				},
+			},
 		},
 	});
 };

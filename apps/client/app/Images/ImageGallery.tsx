@@ -28,7 +28,7 @@ const ImagesList: FC = () => {
 
 	useEffect(() => {
 		if (__images) {
-			setImages(__images?.data);
+			setImages(__images?.data?.images);
 		}
 	}, [__images]);
 
@@ -53,11 +53,11 @@ const ImagesList: FC = () => {
 						<div key={index} className="imgList-grid-item">
 							<ImageGridItem
 								image={{
-									id: image.id,
-									width: image.original_size.width,
-									height: image.original_size.height,
-									url: image.image_path,
-									alt: image.image_path,
+									id: image.imageId,
+									width: image.originalSize.width,
+									height: image.originalSize.height,
+									url: image.imagePath,
+									alt: image.imagePath,
 								}}
 								className="cursor-pointer"
 								onClick={() => handleImageClick(image)}
@@ -66,7 +66,7 @@ const ImagesList: FC = () => {
 						</div>
 					);
 				})}
-				<ImageModal image={selectedImage} unSelectImage={unSelectImage} />
+				<ImageModal image={selectedImage} onClose={unSelectImage} />
 			</div>
 		</>
 	);

@@ -25,15 +25,13 @@ const faceslessImagePath = path.join(
 );
 
 let agent;
-let server;
 let authToken;
 let testUserId;
 let testAlbumId;
 
 beforeAll(async () => {
 	const common = require("../../common");
-	server = common.server;
-	agent = request.agent(server);
+	agent = request.agent();
 
 	// Cleanup existing test user if present
 	const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
@@ -111,8 +109,6 @@ afterAll(async () => {
 		}
 	} catch (error) {
 		console.error("Error during afterAll cleanup:", error);
-	} finally {
-		await closeServerAsync(server);
 	}
 });
 
@@ -428,7 +424,7 @@ describe("/albums/:albumId/images", () => {
 				.send({});
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/image_ids is required/i);
+			expect(res.body.message).toMatch(/image_ids is required|Expected array/i);
 		});
 
 		test("should handle adding the same image twice (idempotent or conflict)", async () => {

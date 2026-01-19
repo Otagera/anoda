@@ -1,7 +1,4 @@
 import path from "node:path";
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { ExpressAdapter } from "@bull-board/express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -11,27 +8,11 @@ import config from "../../../packages/config/src/index.config.ts";
 import { HTTP_STATUS_CODES } from "../../../packages/utils/src/constants.util.ts";
 import logger from "../../../packages/utils/src/logger.util.ts";
 import limiter from "../../../packages/utils/src/rateLimiter.util.ts";
-import { queueServices } from "../../worker/src/index.js";
 import getRouter from "./routes/index.route";
 
 const createApp = async () => {
 	dotenv.config();
 	const app = express();
-
-	// For dashboard to virtually see queues and jobs
-	const serverAdapter = new ExpressAdapter();
-	serverAdapter.setBasePath("/worker/admin");
-	createBullBoard({
-		queues: [
-			new BullMQAdapter(queueServices.defaultQueueLib.getQueue()),
-			new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
-			new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
-		],
-		serverAdapter: serverAdapter,
-	});
-
-	// To make sure /worker/admin points to the bull queue dashboard
-	app.use("/worker/admin", serverAdapter.getRouter());
 
 	app.use(cors());
 	app.use(logger.httpLoggerInstance);
@@ -64,6 +45,7 @@ const createApp = async () => {
 				data: null,
 			});
 		}
+		console.error("Global Error Handler:", err); // Added for debugging
 		return res.status(err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST).send({
 			status: "error",
 			message: err?.message || "Internal server error",

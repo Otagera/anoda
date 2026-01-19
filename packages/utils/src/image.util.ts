@@ -19,7 +19,7 @@ const normalizeImagePath = (image_path) => {
 	if (config.env === "test" || "development") {
 		const imagePathSplit = image_path.split("/");
 		const strucImagePath = image_path
-			? `http://localhost:${config[config.env].port}/api/uploads/${
+			? `http://localhost:${config[config.env].elysia_port}/api/uploads/${
 					imagePathSplit[imagePathSplit.length - 1]
 				}`
 			: image_path;

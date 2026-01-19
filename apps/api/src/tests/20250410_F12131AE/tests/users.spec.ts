@@ -23,16 +23,14 @@ const users = [
 	},
 ];
 let agent;
-let server;
 
 beforeAll(async () => {
 	const common = require("../../common");
-	server = common.server;
-	agent = request.agent(server);
+	agent = request.agent();
 });
 
-afterAll((done) => {
-	server.close(done);
+afterAll(async () => {
+	await Users.deleteAllUsers();
 });
 
 describe("/auth", () => {
@@ -64,7 +62,7 @@ describe("/auth", () => {
 				.post(`${baseURL}/auth/signup`)
 				.send({ email: "email", password: 12345678 });
 
-			expect(signupWrongEmailRes.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
+			expect(signupWrongEmailRes.status).toBe(400); // Elysia validation error
 			expect(signupWrongEmailRes.body.status).toBe("error");
 			// expect(signupWrongEmailRes.body.message).toBe("Internal server error");
 			expect(signupWrongEmailRes.body.data).toBe(null);
@@ -120,7 +118,7 @@ describe("/auth", () => {
 					password: "12345678",
 				});
 
-			expect(loginWrongUsernameRes.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
+			expect(loginWrongUsernameRes.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
 			expect(loginWrongUsernameRes.body.status).toBe("error");
 			// expect(loginWrongUsernameRes.body.message).toBe("Internal server error");
 			expect(loginWrongUsernameRes.body.data).toBe(null);

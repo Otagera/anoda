@@ -16,7 +16,7 @@ const config = {
 		base_api_url: process.env.BASE_API_URL || "http://localhost",
 		port: process.env.PORT || 5001,
 		worker_port: process.env.WORKER_PORT || 5002,
-		elysia_port: process.env.ELYSIA_PORT || 3000,
+		elysia_port: process.env.ELYSIA_PORT || 3005,
 		secret: process.env.SESSION_SECRET,
 
 		// Redis
@@ -61,7 +61,7 @@ const config = {
 		db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,
 		base_api_url: process.env.TEST_BASE_API_URL || "http://localhost",
 		port: process.env.TEST_PORT || 5001,
-		elysia_port: process.env.TEST_ELYSIA_PORT || 3000,
+		elysia_port: process.env.TEST_ELYSIA_PORT || 3005,
 		secret: process.env.TEST_SESSION_SECRET,
 		redis_port: process.env.TEST_REDIS_PORT, // Redis port
 		redis_host: process.env.TEST_REDIS_HOSTNAME, // Redis host

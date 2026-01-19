@@ -8,10 +8,24 @@ const fetchFaceById = async (face_id) => {
 	});
 };
 
+const createNewFace = async (data) => {
+	return await prisma.faces.create({
+		data,
+	});
+};
+
+const deleteFacesByImageId = async (image_id) => {
+	return await prisma.faces.deleteMany({
+		where: {
+			image_id,
+		},
+	});
+};
+
 const searchSimilarFaces = async (
 	faceId,
 	albumId,
-	threshold = 0.6,
+	threshold = 0.8,
 	limit = 10,
 ) => {
 	const targetFace = await fetchFaceById(faceId);
@@ -53,7 +67,7 @@ const searchSimilarFaces = async (
 	if (albumId) {
 		params.push(albumId);
 		whereClauses.push(
-			`i.image_id IN (SELECT image_id FROM album_images WHERE album_id = ${params.length})`,
+			`i.image_id IN (SELECT image_id FROM album_images WHERE album_id = $${params.length}::uuid)`,
 		);
 	}
 
@@ -68,4 +82,9 @@ const searchSimilarFaces = async (
 	return await prisma.$queryRawUnsafe(query, ...params);
 };
 
-export { fetchFaceById, searchSimilarFaces };
+export {
+	fetchFaceById,
+	searchSimilarFaces,
+	createNewFace,
+	deleteFacesByImageId,
+};

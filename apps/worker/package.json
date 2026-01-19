@@ -9,8 +9,8 @@
 		"./*": "./src/*"
 	},
 	"scripts": {
-		"start": "node -r ./path-register.js src/index.js",
-		"dev": "nodemon -r ./path-register.js src/index.js | pino-pretty -c"
+		"start": "bun src/index.js",
+		"dev": "bun --watch src/index.js | bun run pino-pretty -c"
 	},
 	"dependencies": {
 		"bullmq": "^5.x.x",

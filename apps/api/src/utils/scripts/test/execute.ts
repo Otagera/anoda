@@ -33,7 +33,7 @@ const REPORT_HEADERS = [
 
 	const testConfigOptions = {
 		collectCoverageFrom: config.files,
-		config: "jest.config.json",
+		config: "jest.config.js",
 		roots: [testDir],
 		collectCoverage: true,
 		watch: true,

@@ -4,14 +4,14 @@
 		"target": "es6",
 		"baseUrl": "./",
 		"paths": {
-			"@config/*": ["src/config/*"],
-			"@utils/*": ["src/utils/*"],
-			"@models/*": ["src/models/*"],
-			"@routes/*": ["src/routes/*"],
-			"@middlewares/*": ["src/routes/middlewares/*"],
-			"@services/*": ["src/services/*"],
+			"@config/*": ["../../packages/config/src/*"],
+			"@utils/*": ["../../packages/utils/src/*"],
+			"@models/*": ["../../packages/models/src/*"],
+			"@routes/*": ["../api/src/routes/*"],
+			"@middlewares/*": ["../api/src/routes/middlewares/*"],
+			"@services/*": ["../api/src/services/*"],
 			"@queue/*": ["src/queue/*"],
-			"@email/*": ["src/email/*"]
+			"@email/*": ["../../packages/email/src/*"]
 		}
 	},
 	"exclude": ["node_modules", "**/node_modules/*"]

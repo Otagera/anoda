@@ -29,6 +29,7 @@ const aliasSpec = {
 		original_size: "originalSize",
 		uploaded_by: "userId",
 		album_images_id: "albumImageId",
+		album_id: "albumId",
 	},
 };
 
@@ -53,10 +54,14 @@ const service = async (data) => {
 				width: _image.images.original_width,
 			},
 			image_path: normalizeImagePath(_image.images.image_path),
-			album_images_id: _image.album_images_id,
 		});
 
-		return imageData;
+		return {
+			albumId: _image.album_id,
+			imageId: _image.image_id,
+			albumImageId: _image.album_images_id,
+			images: imageData,
+		};
 	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {

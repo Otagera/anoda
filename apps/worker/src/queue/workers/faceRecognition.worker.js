@@ -1,6 +1,7 @@
 const { spawn } = require("child_process");
-const prisma = require("@config/db.config");
+const prisma = require("../../../../../packages/config/src/db.config.ts").default;
 const path = require("path");
+const config = require("../../../../../packages/config/src/index.config.ts").default;
 
 const run = async (jobData) => {
 	const { imageId, imagePath } = jobData;
@@ -8,12 +9,14 @@ const run = async (jobData) => {
 	try {
 		console.log(`Processing image: ${imagePath} for face recognition.`);
 
-		const pythonProcess = spawn("python", [
+		const pythonProcess = spawn(config[config.env].python_interpreter_path, [
 			path.join(
 				__dirname,
 				"..",
 				"..",
 				"..",
+				"..",
+				"api",
 				"src",
 				"utils",
 				"scripts",

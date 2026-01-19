@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../utils/auth";
 
 const SignupPage = () => {
@@ -8,7 +8,13 @@ const SignupPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const { signup } = useAuth();
+	const { signup, isAuthenticated, isInitialized } = useAuth();
+
+	useEffect(() => {
+		if (isInitialized && isAuthenticated) {
+			navigate("/home", { replace: true });
+		}
+	}, [isInitialized, isAuthenticated, navigate]);
 
 	const mutation = useMutation({
 		mutationFn: signup,
@@ -29,7 +35,7 @@ const SignupPage = () => {
 	return (
 		<div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
 			<div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
-				<h1 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-200">
+				<h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
 					Sign Up
 				</h1>
 				<form className="space-y-6" onSubmit={handleSubmit}>

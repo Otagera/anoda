@@ -41,8 +41,8 @@ export interface DisplayImageProps extends HTMLAttributes<HTMLImageElement> {
 
 export interface ImageFromDB {
 	faces: Face[];
-	image_id: number;
-	image_path: string;
-	original_size: { width: number; height: number };
-	upload_time: Date;
+	imageId: string;
+	imagePath: string;
+	originalSize: { width: number; height: number };
+	uploadDate: string;
 }

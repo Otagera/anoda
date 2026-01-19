@@ -12,5 +12,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11"
+	},
+	"dependencies": {
+		"@bull-board/elysia": "^6.16.2",
+		"@elysiajs/cors": "^1.4.1",
+		"@elysiajs/static": "^1.4.7"
 	}
 }

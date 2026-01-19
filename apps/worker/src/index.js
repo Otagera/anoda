@@ -1,3 +1,4 @@
+import "../path-register.js";
 import express from "express";
 import dotenv from "dotenv";
 import config from "../../../packages/config/src/index.config.ts";

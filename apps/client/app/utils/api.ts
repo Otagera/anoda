@@ -1,11 +1,8 @@
 import axiosAPI from "./axios";
 
-// api.js
-const API_URL = "/api/images"; // Replace with your API endpoint
-
 export const fetchImages = async () => {
 	try {
-		const response = await axiosAPI.get("/pictures");
+		const response = await axiosAPI.get("/images");
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching images:", error);
@@ -14,7 +11,7 @@ export const fetchImages = async () => {
 
 export const fetchImage = async (imageId: number) => {
 	try {
-		const response = await axiosAPI.get(`/pictures/${imageId}`);
+		const response = await axiosAPI.get(`/images/${imageId}`);
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching image:", error);
@@ -38,12 +35,13 @@ export const uploadImages = async (formData: FormData) => {
 		return uploadResponseData;
 	} catch (error) {
 		console.error("Error uploading images:", error);
+		throw error;
 	}
 };
 
 export const deleteImage = async (imageId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/pictures/${imageId}`);
+		const response = await axiosAPI.delete(`/images/${imageId}`);
 		return response.data;
 	} catch (error) {
 		console.error("Error deleting image:", error);
@@ -83,6 +81,7 @@ export const login = async (credentials: any) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error logging in:", error);
+		throw error;
 	}
 };
 
@@ -92,6 +91,7 @@ export const signup = async (credentials: any) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error signing up:", error);
+		throw error;
 	}
 };
 
@@ -125,5 +125,29 @@ export const deleteAlbum = async (albumId: string) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error deleting album:", error);
+	}
+};
+
+export const searchFaces = async ({
+	faceId,
+	albumId,
+	threshold,
+	limit,
+}: {
+	faceId: number;
+	albumId?: string;
+	threshold?: number;
+	limit?: number;
+}) => {
+	try {
+		const response = await axiosAPI.post("/faces/search", {
+			faceId,
+			albumId,
+			threshold,
+			limit,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error searching faces:", error);
 	}
 };

@@ -15,14 +15,12 @@ const testUser = {
 };
 
 let agent;
-let server;
 let authToken;
 let testUserId;
 
 beforeAll(async () => {
 	const common = require("../../common");
-	server = common.server;
-	agent = request.agent(server);
+	agent = request.agent();
 
 	// Cleanup existing test user if present
 	const fetchedTestUser = await Users.fetchUserByEmail(testUser.email);
@@ -82,18 +80,11 @@ afterAll(async () => {
 				await Albums.deleteAlbumsByUserId(userIdToDelete);
 			}
 			if (Users?.deleteUserById) {
-				const userExists = await Users.fetchUserById(userIdToDelete);
-				if (userExists) {
-					await Users.deleteUserById(userIdToDelete);
-				}
+				await Users.deleteUserById(userIdToDelete);
 			}
-		} else {
-			console.warn("No testUserId found, skipping user/data cleanup.");
 		}
 	} catch (error) {
 		console.error("Error during afterAll cleanup:", error);
-	} finally {
-		await closeServerAsync(server);
 	}
 });
 

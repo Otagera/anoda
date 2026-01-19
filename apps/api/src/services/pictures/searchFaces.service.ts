@@ -5,6 +5,8 @@ import {
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 import { findSimilarFaces } from "./faces.lib.ts";
+import { fetchFaceById } from "../../../../../packages/models/src/faces.model.ts";
+import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 
 const spec = Joi.object({
 	faceId: Joi.number().required(),
@@ -35,6 +37,11 @@ const aliasSpec = {
 const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
+
+	const face = await fetchFaceById(params.faceId);
+	if (!face) {
+		throw new NotFoundError("Face not found.");
+	}
 
 	const similarFaces = await findSimilarFaces(
 		params.faceId,

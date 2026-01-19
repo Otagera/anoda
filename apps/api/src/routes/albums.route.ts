@@ -10,10 +10,10 @@ import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
 import { removeAlbumsService } from "../services/albums/removeAlbums.service.ts";
 import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlbum.service.ts";
 
-import { authPlugin } from "./middleware/auth.plugin.ts";
+import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const albumsRoutes = new Elysia({ prefix: "/albums" })
-	.use(authPlugin)
+	.derive(authDerivation)
 	.post(
 		"/",
 		async ({ body, set, userId }) => {
@@ -44,33 +44,25 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	)
-	.get(
-		"/",
-		async ({ set, userId }) => {
-			try {
-				const data = await fetchAlbumsService({ userId });
+	.get("/", async ({ set, userId }) => {
+		try {
+			const data = await fetchAlbumsService({ userId });
 
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: `Albums retrieved successfully.`,
-					data,
-				};
-			} catch (error) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({
-				albumId: t.Optional(t.String()), // Assuming albumId is a string/UUID
-			}),
-		},
-	)
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: `Albums retrieved successfully.`,
+				data,
+			};
+		} catch (error) {
+			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	})
 	.get(
 		"/:albumId",
 		async ({ params, set, userId }) => {
