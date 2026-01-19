@@ -1,0 +1,26 @@
+{
+	"name": "@anoda-facematch/models",
+	"version": "1.0.0",
+	"description": "Shared model definitions for Anoda Facematch monorepo",
+	"main": "src/index.js",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./albumImages.model": "./src/albumImages.model",
+		"./albums.model": "./src/albums.model",
+		"./faces.model": "./src/faces.model",
+		"./images.model": "./src/images.model",
+		"./index.model": "./src/index.model",
+		"./users.lib": "./src/users.lib",
+		"./users.model": "./src/users.model"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@prisma/client": "^6.6.0"
+	}
+}

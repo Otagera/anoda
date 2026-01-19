@@ -1,0 +1,25 @@
+{
+	"name": "@anoda-facematch/worker",
+	"version": "1.0.0",
+	"description": "Worker application for Anoda Facematch",
+	"main": "src/index.js",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./*": "./src/*"
+	},
+	"scripts": {
+		"start": "node -r ./path-register.js src/index.js",
+		"dev": "nodemon -r ./path-register.js src/index.js | pino-pretty -c"
+	},
+	"dependencies": {
+		"bullmq": "^5.x.x",
+		"dotenv": "^16.x.x",
+		"pino": "^9.x.x",
+		"pino-pretty": "^13.x.x",
+		"tsconfig-paths": "^3.x.x"
+	},
+	"devDependencies": {
+		"nodemon": "^3.x.x"
+	}
+}

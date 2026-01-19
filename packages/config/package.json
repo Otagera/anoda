@@ -1,0 +1,17 @@
+{
+	"name": "@anoda-facematch/config",
+	"version": "1.0.0",
+	"description": "Shared configuration for Anoda Facematch monorepo",
+	"main": "src/index.config.ts",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"dotenv": "^16.4.7"
+	}
+}

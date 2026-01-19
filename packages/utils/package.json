@@ -1,0 +1,42 @@
+{
+	"name": "@anoda-facematch/utils",
+	"version": "1.0.0",
+	"description": "Shared utility functions for Anoda Facematch monorepo",
+	"main": "src/index.js",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./auth.util": "./src/auth.util",
+		"./constants.util": "./src/constants.util",
+		"./error.util": "./src/error.util",
+		"./file.util": "./src/file.util",
+		"./handler.util": "./src/handler.util",
+		"./httpResponse.util": "./src/httpResponse.util",
+		"./image.util": "./src/image.util",
+		"./index.util": "./src/index.util",
+		"./logger.util": "./src/logger.util",
+		"./pagination.util": "./src/pagination.util",
+		"./rateLimiter.util": "./src/rateLimiter.util",
+		"./redisClient.util": "./src/redisClient.util",
+		"./runPythonScript.util": "./src/runPythonScript.util",
+		"./specValidator.util": "./src/specValidator.util",
+		"./web.util": "./src/web.util"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"mongoose": "^8.2.3",
+		"dotenv": "^16.4.7",
+		"joi": "^17.13.3",
+		"jsonwebtoken": "^9.0.2",
+		"bcrypt": "^5.1.1",
+		"sharp": "^0.33.5",
+		"pino": "^9.6.0",
+		"ioredis": "^5.5.0",
+		"express-rate-limit": "^7.5.0"
+	}
+}
