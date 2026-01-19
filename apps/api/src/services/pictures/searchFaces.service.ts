@@ -4,7 +4,7 @@ import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { findSimilarFaces } from "./faces.lib.ts";
+import { searchFaces } from "../../../../../packages/models/src/faces.model.ts";
 import { fetchFaceById } from "../../../../../packages/models/src/faces.model.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 
@@ -25,13 +25,6 @@ const aliasSpec = {
 	response: {
 		faces: "faces",
 	},
-	face: {
-		face_id: "faceId",
-		image_id: "imageId",
-		image_path: "imagePath",
-		bounding_box: "boundingBox",
-		distance: "distance",
-	},
 };
 
 const service = async (data) => {
@@ -43,20 +36,18 @@ const service = async (data) => {
 		throw new NotFoundError("Face not found.");
 	}
 
-	const similarFaces = await findSimilarFaces(
-		params.faceId,
-		params.albumId,
-		params.threshold,
-		params.limit,
-	);
+	const similarFaces = await searchFaces({
+		faceId: params.faceId,
+		albumId: params.albumId,
+		threshold: params.threshold,
+		limit: params.limit,
+	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
-		faces: similarFaces.map((face) => {
-			return aliaserSpec(aliasSpec.face, {
-				...face,
-				image_path: normalizeImagePath(face.image_path),
-			});
-		}),
+		faces: similarFaces.map((face) => ({
+			...face,
+			imagePath: normalizeImagePath(face.imagePath),
+		})),
 	});
 
 	return aliasRes;

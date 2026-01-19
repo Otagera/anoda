@@ -107,12 +107,17 @@ export const createAlbum = async (albumName: string) => {
 export const editAlbum = async ({
 	albumId,
 	albumName,
+	shareToken,
 }: {
 	albumId: string;
-	albumName: string;
+	albumName?: string;
+	shareToken?: string | null;
 }) => {
 	try {
-		const response = await axiosAPI.put(`/albums/${albumId}`, { albumName });
+		const response = await axiosAPI.put(`/albums/${albumId}`, {
+			albumName,
+			shareToken,
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error editing album:", error);
@@ -133,21 +138,41 @@ export const searchFaces = async ({
 	albumId,
 	threshold,
 	limit,
+	shareToken,
 }: {
 	faceId: number;
 	albumId?: string;
 	threshold?: number;
 	limit?: number;
+	shareToken?: string;
 }) => {
 	try {
-		const response = await axiosAPI.post("/faces/search", {
-			faceId,
-			albumId,
-			threshold,
-			limit,
-		});
+		const url = shareToken ? "/public/faces/search" : "/faces/search";
+		const body = shareToken
+			? { faceId, shareToken, threshold, limit }
+			: { faceId, albumId, threshold, limit };
+
+		const response = await axiosAPI.post(url, body);
 		return response.data;
 	} catch (error) {
 		console.error("Error searching faces:", error);
+	}
+};
+
+export const fetchSharedAlbum = async (token: string) => {
+	try {
+		const response = await axiosAPI.get(`/public/albums/${token}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching shared album:", error);
+	}
+};
+
+export const fetchSharedImage = async (token: string, imageId: string) => {
+	try {
+		const response = await axiosAPI.get(`/public/images/${token}/${imageId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching shared image:", error);
 	}
 };

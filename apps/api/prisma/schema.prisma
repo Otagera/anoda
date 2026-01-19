@@ -22,6 +22,7 @@ model albums {
   created_by    String?        @db.Uuid
   creation_date DateTime?      @default(now()) @db.Timestamptz(6)
   shared_link   String?
+  share_token   String?        @unique
   album_images  album_images[]
   users         users?         @relation(fields: [created_by], references: [user_id], onDelete: SetNull)
 }

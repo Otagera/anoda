@@ -15,16 +15,16 @@ const aliasSpec = {
 		albumId: "album_id",
 		userId: "created_by",
 	},
-	response: {
-		album_id: "id",
-		album_name: "albumName",
-		created_by: "userId",
-		creation_date: "createdAt",
-		shared_link: "sharedLink",
-	},
-};
-
-const service = async (data: unknown) => {
+	        response: {
+	                album_id: "id",
+	                album_name: "albumName",
+	                created_by: "userId",
+	                creation_date: "createdAt",
+	                shared_link: "sharedLink",
+	                share_token: "shareToken",
+	        },
+	};
+	const service = async (data: unknown) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 

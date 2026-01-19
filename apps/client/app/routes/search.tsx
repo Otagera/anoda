@@ -10,6 +10,7 @@ const SearchPage = () => {
 
 	const faceId = searchParams.get("faceId");
 	const albumId = searchParams.get("albumId");
+	const shareToken = searchParams.get("shareToken");
 
 	useEffect(() => {
 		const performSearch = async () => {
@@ -24,6 +25,7 @@ const SearchPage = () => {
 				const response = await searchFaces({
 					faceId: parseInt(faceId, 10),
 					albumId: albumId || undefined,
+					shareToken: shareToken || undefined,
 				});
 
 				if (response?.status === "completed") {
@@ -40,12 +42,15 @@ const SearchPage = () => {
 		};
 
 		performSearch();
-	}, [faceId, albumId]);
+	}, [faceId, albumId, shareToken]);
 
 	return (
 		<div className="container mx-auto px-4 py-8">
-			<Link to="/home" className="text-blue-600 hover:underline mb-8 block font-medium">
-				&larr; Back to Home
+			<Link
+				to={shareToken ? `/share/${shareToken}` : "/home"}
+				className="text-blue-600 dark:text-blue-400 hover:underline mb-8 block font-medium transition-colors"
+			>
+				&larr; Back to {shareToken ? "Album" : "Home"}
 			</Link>
 			
 			<div className="mb-8">
@@ -100,8 +105,12 @@ const SearchPage = () => {
 									<p className="text-sm text-gray-600 dark:text-gray-400">
 										Similarity: {((1 - (face.distance || 0)) * 100).toFixed(2)}%
 									</p>
-									<Link 
-										to={`/images/${face.imageId}`} 
+									<Link
+										to={
+											shareToken
+												? `/share/${shareToken}/images/${face.imageId}`
+												: `/images/${face.imageId}`
+										}
 										className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium inline-block transition-colors"
 									>
 										View Full Image

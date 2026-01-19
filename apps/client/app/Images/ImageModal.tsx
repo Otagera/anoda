@@ -4,10 +4,11 @@ import { useNavigate } from "react-router";
 interface ImageModalProps {
 	image: any; // TODO: Define a proper interface for the image object
 	albumId?: string;
+	shareToken?: string;
 	onClose: () => void;
 }
 
-const ImageModal = ({ image, albumId, onClose }: ImageModalProps) => {
+const ImageModal = ({ image, albumId, shareToken, onClose }: ImageModalProps) => {
 	const imgRef = useRef<HTMLImageElement>(null);
 	const navigate = useNavigate();
 	const [imageDimensions, setImageDimensions] = useState({
@@ -43,7 +44,9 @@ const ImageModal = ({ image, albumId, onClose }: ImageModalProps) => {
 
 	const handleFaceClick = (faceId: number) => {
 		let searchUrl = `/search?faceId=${faceId}`;
-		if (albumId) {
+		if (shareToken) {
+			searchUrl += `&shareToken=${shareToken}`;
+		} else if (albumId) {
 			searchUrl += `&albumId=${albumId}`;
 		}
 		navigate(searchUrl);
@@ -99,7 +102,10 @@ const ImageModal = ({ image, albumId, onClose }: ImageModalProps) => {
 					<button
 						onClick={() => {
 							onClose();
-							navigate(`/images/${image.imageId || image.id}`);
+							const detailPath = shareToken
+								? `/share/${shareToken}/images/${image.imageId || image.id}`
+								: `/images/${image.imageId || image.id}`;
+							navigate(detailPath);
 						}}
 						className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
 					>

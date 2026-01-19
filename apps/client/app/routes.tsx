@@ -6,8 +6,10 @@ import Album from "./routes/album";
 import Search from "./routes/search";
 import Login from "./routes/login";
 import Signup from "./routes/signup";
-import PrivateRoute from "./components/PrivateRoute";
+import SharedAlbum from "./routes/sharedAlbum";
+import SharedImageDetail from "./routes/sharedImageDetail";
 import ImageDetail from "./routes/imageDetail";
+import PrivateRoute from "./components/PrivateRoute";
 
 export default [
 	{
@@ -26,6 +28,14 @@ export default [
 			{
 				path: "signup",
 				element: <Signup />,
+			},
+			{
+				path: "share/:token",
+				element: <SharedAlbum />,
+			},
+			{
+				path: "share/:token/images/:imageId",
+				element: <SharedImageDetail />,
 			},
 			{
 				element: <PrivateRoute />,
