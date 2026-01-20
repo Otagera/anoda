@@ -1,0 +1,69 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model album_images {
+  album_images_id String  @id @default(uuid()) @db.Uuid
+  image_id        String? @db.Uuid
+  album_id        String? @db.Uuid
+  albums          albums? @relation(fields: [album_id], references: [album_id], onDelete: SetNull)
+  images          images? @relation(fields: [image_id], references: [image_id], onDelete: SetNull)
+}
+
+model albums {
+  album_id      String         @id @default(uuid()) @db.Uuid
+  album_name    String?
+  created_by    String?        @db.Uuid
+  creation_date DateTime?      @default(now()) @db.Timestamptz(6)
+  shared_link   String?
+  share_token   String?        @unique
+  album_images  album_images[]
+  users         users?         @relation(fields: [created_by], references: [user_id], onDelete: SetNull)
+}
+
+model faces {
+  face_id        Int       @id @default(autoincrement())
+  image_id       String?   @db.Uuid
+  embedding      Float[]   @db.Real
+  bounding_box   Json?
+  processed_time DateTime? @default(now()) @db.Timestamptz(6)
+  person_id      String?   @db.Uuid
+  images         images?   @relation(fields: [image_id], references: [image_id], onDelete: SetNull)
+  people         people?   @relation(fields: [person_id], references: [person_id], onDelete: SetNull)
+}
+
+model people {
+  person_id   String    @id @default(uuid()) @db.Uuid
+  name        String
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
+  faces       faces[]
+}
+
+model images {
+  image_id        String         @id @default(uuid()) @db.Uuid
+  image_path      String
+  optimized_path  String?
+  upload_date     DateTime?      @default(now()) @db.Timestamptz(6)
+  update_date     DateTime?      @default(now()) @db.Timestamptz(6)
+  album_images    album_images[]
+  faces           faces[]
+  original_width  Int
+  original_height Int
+  uploaded_by     String?        @db.Uuid
+  users           users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
+}
+
+model users {
+  user_id  String   @id @default(uuid()) @db.Uuid
+  email    String   @unique
+  password String
+  albums   albums[]
+  images   images[]
+}

@@ -4,159 +4,114 @@
 
 ## Overview
 
-Anoda Facematch is a [brief description of the project]. It provides [key features or functionality] to [target audience or use case]. This project is designed to [main purpose or goal].
+Anoda Facematch is a photo management application that allows users to upload photos, organize them into albums, and perform face recognition. Users can select a recognized face in a photo and search for other photos containing that same person within an album. The application also supports creating shared albums with public links, tagging identified people, and real-time processing updates.
 
 ## Features
 
-- [Feature 1: e.g., Face detection and recognition]
-- [Feature 2: e.g., Image processing and analysis]
-- [Feature 3: e.g., RESTful API for managing images and faces]
-- [Feature 4: e.g., Scalable architecture for large datasets]
+- **Face Detection & Recognition:** Automatically detects faces in uploaded images using a background worker.
+- **Face Search:** Find all occurrences of a specific face within an album or shared collection.
+- **Face Confirmation (Tagging):** Tag detected faces with names to organize people.
+- **Shared Albums:** Generate public links to share albums with non-users.
+- **Real-time Updates:** UI updates automatically when image processing is complete via Server-Sent Events (SSE).
+- **Background Uploads:** Persistent upload manager (using IndexedDB) allows uploads to continue in the background and resume after page reloads.
+- **Image Optimization:** Automatically generates optimized WebP versions of images for fast display.
+- **Responsive UI:** Modern, responsive interface built with React and Tailwind CSS.
 
 ## Installation
 
+### Prerequisites
+- [Bun](https://bun.sh/) (v1.0+)
+- [Node.js](https://nodejs.org/) (v18+)
+- [Docker](https://www.docker.com/) (for Database & Redis)
+
 To set up the project locally, follow these steps:
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/your-repo/anoda-facematch.git
-   ```
-
-2. Navigate to the project directory: 
-   ```bash
    cd anoda-facematch
    ```
-### To start the Server
-1. Navigate to the project directory: 
+
+2. **Start Infrastructure (Postgres & Redis):**
+   Ensure you have a `docker-compose.yml` or running instances of PostgreSQL and Redis.
+   
+3. **Install Dependencies:**
    ```bash
-   cd server
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-### To start the Client
-1. Navigate to the project directory: 
-   ```bash
-   cd client
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm start
+   bun install
    ```
 
+### Running the Application
+
+You can start the different parts of the application using the following commands:
+
+**1. Server (API):**
+```bash
+cd apps/api
+bun run dev
+```
+
+**2. Worker (Background Processing):**
+```bash
+cd apps/worker
+bun run dev
+```
+
+**3. Client (Frontend):**
+```bash
+cd apps/client
+npm install
+npm run dev
+```
 
 ## Usage
-1. Upload an image to the system.
-2. Detect and manage faces within the image.
-3. Use the API endpoints to interact with images and faces.
 
+1. **Sign Up/Login:** Create an account to start using the application.
+2. **Create Album:** Organize your photos by creating albums.
+3. **Upload Images:** Drag and drop images into an album. The background uploader will handle the process.
+4. **View & Search:** Click on an image to view details. Click on any detected face to find matches in the album.
+5. **Tag People:** Click "Tag Person" on a detected face to assign a name.
+6. **Share:** Use the "Share" button in an album to generate a public link for others.
 
 ## API Endpoints
-- GET /images: Retrieve all images.
-- POST /images: Upload a new image.
-- GET /images/:imageId/faces: Retrieve all faces for a specific image.
-- GET /images/:imageId/faces/:faceId: Retrieve details of a specific face.
-- DELETE /images/:imageId/faces/:faceId: Delete a specific face.
 
-## Contributing
-We welcome contributions! Please follow these steps:
+The API is built with ElysiaJS. Key endpoints include:
 
-1. Fork the repository.
-2. Create a new branch:
-3. Commit your changes:
-4. Push to your branch:
-5. Open a pull request.
+**Authentication**
+- `POST /api/v1/auth/signup`: Register a new user.
+- `POST /api/v1/auth/login`: Log in.
 
-## License
-This project is licensed under the [MIT License](I don’t have access to the content of `PRD.mdx` or specific details about your project. However, I can provide a general structure for your README based on typical software project documentation. You can fill in the details based on your project specifics.
+**Albums**
+- `GET /api/v1/albums`: List user albums.
+- `POST /api/v1/albums`: Create a new album.
+- `GET /api/v1/albums/:id`: Get album details.
+- `PUT /api/v1/albums/:id`: Update album (rename, generate share token).
 
-```markdown
-# Anoda Facematch
+**Images**
+- `GET /api/v1/images`: List images.
+- `POST /api/v1/images`: Upload images.
+- `GET /api/v1/images/:id`: Get image details and faces.
 
-![diagram-export-15-04-2025-11_32_33](https://github.com/user-attachments/assets/f4715318-8575-4a6b-9227-4073fb53c234)
+**Faces & People**
+- `GET /api/v1/faces/:id`: Get face details.
+- `POST /api/v1/faces/search`: Search for similar faces.
+- `PATCH /api/v1/faces/:id`: Update face (assign person).
+- `GET /api/v1/people`: List people.
+- `POST /api/v1/people`: Create a new person.
 
-## Overview
-
-Anoda Facematch is a [brief description of the project]. It provides [key features or functionality] to [target audience or use case]. This project is designed to [main purpose or goal].
-
-## Features
-
-- [Feature 1: e.g., Face detection and recognition]
-- [Feature 2: e.g., Image processing and analysis]
-- [Feature 3: e.g., RESTful API for managing images and faces]
-- [Feature 4: e.g., Scalable architecture for large datasets]
-
-## Installation
-
-To set up the project locally, follow these steps:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/anoda-facematch.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd anoda-facematch
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server:
-   ```bash
-   npm start
-   ```
-
-## Usage
-
-1. Upload an image to the system.
-2. Detect and manage faces within the image.
-3. Use the API endpoints to interact with images and faces.
-
-### API Endpoints
-
-- `GET /images`: Retrieve all images.
-- `POST /images`: Upload a new image.
-- `GET /images/:imageId/faces`: Retrieve all faces for a specific image.
-- `GET /images/:imageId/faces/:faceId`: Retrieve details of a specific face.
-- `DELETE /images/:imageId/faces/:faceId`: Delete a specific face.
+**Public (Shared)**
+- `GET /api/v1/public/albums/:token`: View shared album.
+- `POST /api/v1/public/faces/search`: Search faces in shared album.
 
 ## Contributing
 
 We welcome contributions! Please follow these steps:
 
 1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your message here"
-   ```
-4. Push to your branch:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+2. Create a new branch: `git checkout -b feature/your-feature-name`
+3. Commit your changes: `git commit -m "Add your message here"`
+4. Push to your branch: `git push origin feature/your-feature-name`
 5. Open a pull request.
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-## Contact
-
-For questions or support, please contact [otagera@gmail.com](otagera@gmail.com).
-
-```
-Let me know if you'd like me to refine this further or add specific sections!
-```

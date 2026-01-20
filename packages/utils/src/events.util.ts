@@ -1,0 +1,39 @@
+import { EventEmitter } from "node:events";
+import redisClient from "./redisClient.util";
+
+export const eventEmitter = new EventEmitter();
+
+export const EVENTS = {
+	IMAGE_PROCESSED: "IMAGE_PROCESSED",
+};
+
+const REDIS_CHANNEL = "facematch_events";
+
+// Bridge Redis Pub/Sub to local EventEmitter for the API process
+if (process.env.IS_API === "true") {
+	const subClient = redisClient.duplicate();
+	subClient.subscribe(REDIS_CHANNEL);
+	subClient.on("message", (channel, message) => {
+		if (channel === REDIS_CHANNEL) {
+			try {
+				const data = JSON.parse(message);
+				eventEmitter.emit(data.type, data.payload);
+			} catch (err) {
+				console.error("Failed to parse Redis message:", err);
+			}
+		}
+	});
+}
+
+export const emitImageProcessed = async (imageId: string, albumId?: string) => {
+	const message = JSON.stringify({
+		type: EVENTS.IMAGE_PROCESSED,
+		payload: { imageId, albumId },
+	});
+
+	// Emit locally (for same-process consistency)
+	eventEmitter.emit(EVENTS.IMAGE_PROCESSED, { imageId, albumId });
+
+	// Publish to Redis (for cross-process communication)
+	await redisClient.publish(REDIS_CHANNEL, message);
+};

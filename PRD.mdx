@@ -6,9 +6,32 @@ This application, Anoda Facematch, allows users to upload photos and organize th
 
 For this demo application, a simplified authentication will be used. This allows users to quickly start uploading pictures and using the app. Only the uploader and those they share album links with will be able to view the content.
 
-The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. In the future, this image processing will be moved to a background worker for better performance.
+The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. Image processing is handled by a background worker for better performance and scalability.
 
-This is a high-level overview of the application.
+### Image Optimization & Performance
+
+To ensure high performance while maintaining image quality, the application employs a two-tier strategy:
+*   **Original Tier:** The original uploaded file is stored to allow high-quality sharing and downloads.
+*   **Display Tier:** A worker automatically generates a WebP version of the image (max width 2000px). This optimized version is used for the app's UI, gallery, and face processing to minimize bandwidth and load times.
+*   **Storage Management:** Users have the option to purge "Original" files to save storage once the optimized versions are ready.
+
+### Background Uploads
+
+The application implements a non-intrusive background upload system similar to Google Photos:
+*   **Persistent Queue:** Uploads are managed in a global queue persisted via **IndexedDB**. This allows uploads to resume automatically if the page is refreshed or the browser is closed.
+*   **Background UI:** A floating manager at the bottom of the screen tracks progress, allowing the user to continue using the application during large uploads.
+*   **Control:** Users can pause, resume, or retry failed uploads.
+
+### Real-time Updates
+
+*   **Server-Sent Events (SSE):** The application uses SSE to push real-time status updates from the worker to the client. When face recognition is complete, the UI updates automatically without requiring a page refresh.
+
+### Task Tracking
+
+Development is tracked using `beads` (bd). Current active tasks:
+*   `anoda-facematch-ofp`: Optimization: Worker-based Image Processing
+*   `anoda-facematch-apr`: Upload: Persistent Background Manager
+*   `anoda-facematch-kgm`: Real-time: SSE Status Updates
 
 ### Scalability Considerations
 
@@ -101,12 +124,12 @@ Redis will be used as a caching layer to improve query performance.
 ### Implementation Details
 
 -   **Tech Stack:**
-    -   Server: JavaScript (Node.js, Express.js)
+    -   Server: TypeScript (Bun, ElysiaJS)
     -   Client: TypeScript, ReactJS, React Router DOM, Tailwind CSS
 - **Python**:
     - Python will be used for the face recognition script.
 -   **Configuration:**
-    -   Docker will be used to deploy the application. There will be two main containers: one for the server application (Node.js with Express.js) and one for the client application (React). Both containers will be initialized when the docker application is deployed. The python application will be available in the server container, so the face recognition script can be used.
+    -   Docker will be used to deploy the application. There will be two main containers: one for the server application (Bun with ElysiaJS) and one for the client application (React). Both containers will be initialized when the docker application is deployed. The python application will be available in the server container, so the face recognition script can be used.
 
 ### Project Milestones
 
@@ -136,8 +159,7 @@ Redis will be used as a caching layer to improve query performance.
     *   2.4. Face Management Endpoints:
         *   Create endpoints to process faces.
         *   Create endpoints to search for faces.
-*   Status: In progress.
-    Completed: User Authentication, Album Management, and Image Management endpoints implemented in the server directory.
+*   Status: Done.
 **Milestone 3: Create Basic Page Outlines**
 
 *   Tasks:
@@ -146,61 +168,91 @@ Redis will be used as a caching layer to improve query performance.
     *   3.3. Album Page: Create a basic layout for an Album Page (displaying the photos in an album).
     *   3.4. Image Modal: Create a basic structure for the Image Modal.
     * 3.5 Search page: Create a basic structure for the search page.
-*   Expected Timeframe: 2 weeks.
+*   Status: Done.
 
-**Milestone 4: Implement User Authentication**
-
-* Tasks:
-    * 4.1 User Auth Backend: Implement user authentication and session logic on the server.
-    * 4.2 User Auth Frontend: Implement user login/registration on the frontend.
-    * 4.3 User Auth Endpoints: Test all User auth endpoints.
-    * 4.4 User Auth UI: Test all user auth views.
-* Expected Timeframe: 2 weeks
-
-**Milestone 5: Implement Album Management**
-
-* Tasks:
-    * 5.1 Album Management Backend: Implement album creation, listing, deletion and edition logic on the server.
-    * 5.2 Album Management Frontend: Implement album views, album creation on the frontend.
-    * 5.3 Album Management Endpoints: Test all album management endpoints.
-    * 5.4 Album Management UI: test all album management views.
-* Expected Timeframe: 2 weeks.
-
-**Milestone 6: Implement Image Upload**
-
-* Tasks:
-    * 6.1 Image Upload Backend: Implement image uploading logic on the server.
-    * 6.2 Image Upload Frontend: Implement image upload on the frontend.
-    * 6.3 Image Upload Endpoints: Test all image upload endpoints.
-    * 6.4 Image Upload UI: test all image upload views.
-* Expected Timeframe: 2 weeks.
-
-**Milestone 7: Implement Image View**
-
-* Tasks:
-    * 7.1 Image View Backend: Implement image viewing logic on the server.
-    * 7.2 Image View Frontend: Implement image viewing on the frontend.
-    * 7.3 Image View Endpoints: Test all image view endpoints.
-    * 7.4 Image View UI: test all image view views.
-* Expected Timeframe: 2 weeks.
-
-**Milestone 8: Implement Face Recognition**
+**Milestone 4: Connect Frontend to Backend**
 
 *   Tasks:
-    *   8.1. Integrate Python Script: Integrate the existing Python face recognition script with the server.
-    *   8.2. Process Faces: Create logic for processing faces on image upload.
-    *   8.3. Store Face Embeddings: Store the face embedding information in the `faces` table.
-    * 8.4 Test: test that faces are processed correctly.
-*   Expected Timeframe: 2 weeks.
-    
-**Milestone 9: Implement Face Search**
+    *   4.1. Connect the albums page to the backend.
+    *   4.2. Connect the album page to the backend.
+*   Status: Done.
+
+**Milestone 5: Implement User Authentication**
 
 * Tasks:
-    * 9.1 Face search Backend: Implement face search on the server.
-    * 9.2 Face search Frontend: Implement face search on the frontend.
-    * 9.3 Face search Endpoints: Test all face search endpoints.
-    * 9.4 Face search UI: test all face search views.
-* Expected Timeframe: 2 weeks
+    * 5.1 User Auth Backend: Implement user authentication and session logic on the server.
+    * 5.2 User Auth Frontend: Implement user login/registration on the frontend.
+    * 5.3 User Auth Endpoints: Test all User auth endpoints.
+    * 5.4 User Auth UI: Test all user auth views.
+* Status: Done.
+
+**Milestone 6: Implement Album Management**
+
+* Tasks:
+    * 6.1 Album Management Backend: Implement album creation, listing, deletion and edition logic on the server.
+    * 6.2 Album Management Frontend: Implement album views, album creation on the frontend.
+    * 6.3 Album Management Endpoints: Test all album management endpoints.
+    * 6.4 Album Management UI: test all album management views.
+* Status: Done.
+
+**Milestone 7: Implement Image Upload**
+
+* Tasks:
+    * 7.1 Image Upload Backend: Implement image uploading logic on the server.
+    * 7.2 Image Upload Frontend: Implement image upload on the frontend.
+    * 7.3 Image Upload Endpoints: Test all image upload endpoints.
+    * 7.4 Image Upload UI: test all image upload views.
+* Status: Done.
+
+**Milestone 8: Implement Image View**
+
+* Tasks:
+    * 8.1 Image View Backend: Implement image viewing logic on the server.
+    * 8.2 Image View Frontend: Implement image viewing on the frontend.
+    * 8.3 Image View Endpoints: Test all image view endpoints.
+    * 8.4 Image View UI: test all image view views.
+* Status: Done.
+
+**Milestone 9: Implement Face Recognition**
+
+*   Tasks:
+    *   9.1. Integrate Python Script: Integrate the existing Python face recognition script with the server.
+    *   9.2. Process Faces: Create logic for processing faces on image upload.
+    *   9.3. Store Face Embeddings: Store the face embedding information in the `faces` table.
+    *   9.4 Test: test that faces are processed correctly.
+*   Status: Done.
+    
+**Milestone 10: Implement Face Search**
+
+* Tasks:
+    * 10.1 Face search Backend: Implement face search on the server.
+    * 10.2 Face search Frontend: Implement face search on the frontend.
+    * 10.3 Face search Endpoints: Test all face search endpoints.
+    * 10.4 Face search UI: test all face search views.
+* Status: Done
+
+**Milestone 11: Framework Migration (Express.js to ElysiaJS)**
+
+* Tasks:
+    * 11.1 Setup Bun and ElysiaJS environment: Done.
+    * 11.2 Convert server code to TypeScript and ES Modules: Done.
+    * 11.3 Migrate User Authentication routes: Done.
+    * 11.4 Migrate Album Management routes: Done.
+    * 11.5 Migrate Image Management routes: Done.
+    * 11.6 Migrate Face Management routes: Done.
+    * 11.7 Replace Joi with TypeBox for validation: Pending.
+    * 11.8 Verify all migrated endpoints with tests: Pending.
+* Status: In Progress.
+
+**Milestone 12: Advanced Features**
+
+* Tasks:
+    * 12.1 Face Confirmation (Tagging): Implement people management and face tagging. Done.
+    * 12.2 Shared Albums: Implement public access with share tokens. Done.
+    * 12.3 Real-time Updates: Implement SSE for live status updates. Done.
+    * 12.4 Background Uploads: Implement persistent uploads with IndexedDB. Done.
+    * 12.5 Image Optimization: Implement WebP conversion worker. Done.
+* Status: Done.
 
 ### Expected Deliverables
 

@@ -1,0 +1,96 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import config from "../../config/src/index.config.ts";
+
+const encryptPassword = async (password) => {
+	const hash = await bcrypt.hash(password, 10);
+	return hash;
+};
+
+const comparePasswords = async (password, userPassword) => {
+	const match = await bcrypt.compare(password, userPassword);
+	return match;
+};
+
+const createAdminToken = (adminId) => {
+	const adminToken = jwt.sign(
+		{ adminId, type: "admin" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	return adminToken;
+};
+
+const createUserAuthToken = async (userId) => {
+	const accessToken = jwt.sign(
+		{ userId, type: "access" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	const refreshToken = jwt.sign(
+		{ userId, type: "refresh" },
+		config[config.env].secret,
+		{ expiresIn: "720h" },
+	);
+
+	return { accessToken, refreshToken };
+};
+
+const createUserResetPasswordToken = (email, userId) => {
+	const token = jwt.sign(
+		{ userId, email, type: "resetPassword" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	return token;
+};
+
+const createCompanyAuthToken = async (companyId) => {
+	const accessToken = jwt.sign(
+		{ companyId, type: "access" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	const refreshToken = jwt.sign(
+		{ companyId, type: "refresh" },
+		config[config.env].secret,
+		{ expiresIn: "720h" },
+	);
+	return { accessToken, refreshToken };
+};
+
+const createCompanyActivationToken = (email, companyId) => {
+	const token = jwt.sign(
+		{ companyId, email, type: "activate" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	return token;
+};
+
+const createCompanyResetPasswordToken = (email, companyId) => {
+	const token = jwt.sign(
+		{ companyId, email, type: "resetPassword" },
+		config[config.env].secret,
+		{ expiresIn: "24h" },
+	);
+	return token;
+};
+
+const hashToken = async (token) => bcrypt.hash(token, 10);
+
+const compareTokens = async (token, hashedToken) =>
+	bcrypt.compare(token, hashedToken);
+
+export {
+	encryptPassword,
+	comparePasswords,
+	createAdminToken,
+	createUserAuthToken,
+	createUserResetPasswordToken,
+	createCompanyAuthToken,
+	createCompanyActivationToken,
+	createCompanyResetPasswordToken,
+	hashToken,
+	compareTokens,
+};
