@@ -3,16 +3,16 @@ import { Elysia, t } from "elysia";
 import {
 	HTTP_STATUS_CODES,
 	MAXIMUM_IMAGES_CAN_UPLOAD,
+	UPLOADS_DIR,
 } from "../../../../packages/utils/src/constants.util.ts";
-import { authDerivation } from "./middleware/auth.plugin.ts";
-
 import deletePictureService from "../services/pictures/deletePicture.service.ts";
 import fetchFacesService from "../services/pictures/fetchFaces.service.ts";
 import fetchPictureService from "../services/pictures/fetchPicture.service.ts";
 import fetchPicturesService from "../services/pictures/fetchPictures.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
+import { authDerivation } from "./middleware/auth.plugin.ts";
 
-const UPLOADS_DIR = path.join(import.meta.dir, "..", "uploads");
+const resolvedUploadsDir = path.resolve(process.cwd(), UPLOADS_DIR);
 
 const picturesRoutes = new Elysia({ prefix: "/images" })
 	.derive(authDerivation)
@@ -37,7 +37,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				const convertedFiles = await Promise.all(
 					(Array.isArray(files) ? files : [files]).map(async (file) => {
 						const filename = `${Date.now()}-${file.name}`;
-						const destination = UPLOADS_DIR;
+						const destination = resolvedUploadsDir;
 						const filePath = path.join(destination, filename);
 
 						await Bun.write(filePath, file);

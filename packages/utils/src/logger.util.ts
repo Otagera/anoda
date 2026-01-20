@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { pino } from "pino";
-import pinoHttp from "pino-http";
 import { green, isColorSupported } from "colorette";
 import { DateTime } from "luxon";
+import { pino } from "pino";
+import pinoHttp from "pino-http";
 // import { startChatterboxServer } from "@chatterbox/chatterbox-sdk";
 import config from "../../config/src/index.config.ts";
 

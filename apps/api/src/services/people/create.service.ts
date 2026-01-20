@@ -1,9 +1,9 @@
 import Joi from "joi";
+import { createPerson } from "../../../../../packages/models/src/people.model.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { createPerson } from "../../../../../packages/models/src/people.model.ts";
 
 const spec = Joi.object({
 	name: Joi.string().required().min(1).max(100),

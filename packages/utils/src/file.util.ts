@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
-import yaml from "js-yaml";
 import path from "node:path";
+import yaml from "js-yaml";
 
 import config from "../../config/src/index.config.ts";
 

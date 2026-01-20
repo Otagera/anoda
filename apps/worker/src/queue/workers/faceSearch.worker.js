@@ -1,4 +1,6 @@
-const { findSimilarFaces } = require("../../../api/src/services/pictures/faces.lib.ts");
+const {
+	findSimilarFaces,
+} = require("../../../api/src/services/pictures/faces.lib.ts");
 
 const run = async (jobData) => {
 	const { faceId, albumId } = jobData;

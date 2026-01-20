@@ -1,11 +1,9 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
-import { authDerivation } from "./middleware/auth.plugin.ts";
-
 import fetchFaceService from "../services/pictures/fetchFace.service.ts";
 import searchFacesService from "../services/pictures/searchFaces.service.ts";
-
 import updateFaceService from "../services/pictures/updateFace.service.ts";
+import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const facesRoutes = new Elysia({ prefix: "/faces" })
 	.derive(authDerivation)

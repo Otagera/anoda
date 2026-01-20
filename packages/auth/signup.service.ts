@@ -1,11 +1,11 @@
 import joi from "joi";
-import { validateSpec, aliaserSpec } from "../utils/src/specValidator.util.ts";
-import { ResourceInUseError } from "../utils/src/error.util.ts";
+import { createUser, getUser } from "../models/src/users.lib.ts";
 import {
-	encryptPassword,
 	createUserAuthToken,
+	encryptPassword,
 } from "../utils/src/auth.util.ts";
-import { getUser, createUser } from "../models/src/users.lib.ts";
+import { ResourceInUseError } from "../utils/src/error.util.ts";
+import { aliaserSpec, validateSpec } from "../utils/src/specValidator.util.ts";
 
 const spec = joi.object({
 	email: joi.string().email().required(),

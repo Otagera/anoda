@@ -1,4 +1,4 @@
-import { fetchUser, createNewUser } from "./users.model";
+import { createNewUser, fetchUser } from "./users.model";
 
 const createUser = async (userData) => {
 	return await createNewUser(userData);

@@ -23,7 +23,6 @@ const deleteFacesByImageId = async (image_id) => {
 };
 
 const searchFaces = async ({
-
 	faceId,
 
 	albumId,
@@ -33,9 +32,7 @@ const searchFaces = async ({
 	limit = 10,
 
 	imageIds,
-
 }: {
-
 	faceId: number;
 
 	albumId?: string;
@@ -45,24 +42,16 @@ const searchFaces = async ({
 	limit?: number;
 
 	imageIds?: string[];
-
 }) => {
-
 	const targetFace = await fetchFaceById(faceId);
 
 	if (!targetFace) {
-
 		return [];
-
 	}
 
 	const embedding = targetFace.embedding;
 
-
-
 	const params = [faceId, embedding, threshold, limit];
-
-
 
 	let query = `
     WITH distances AS (
@@ -122,10 +111,7 @@ const searchFaces = async ({
     LIMIT $4;
   `;
 
-
-
 	return (await prisma.$queryRawUnsafe(query, ...params)) as any[];
-
 };
 
 const updateFacePerson = async (face_id: number, person_id: string | null) => {
@@ -140,15 +126,9 @@ const updateFacePerson = async (face_id: number, person_id: string | null) => {
 };
 
 export {
-
 	fetchFaceById,
-
 	searchFaces,
-
 	createNewFace,
-
 	deleteFacesByImageId,
-    
-    updateFacePerson,
-
+	updateFacePerson,
 };

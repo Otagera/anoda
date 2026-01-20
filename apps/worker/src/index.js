@@ -1,10 +1,10 @@
 import "../path-register.js";
-import express from "express";
 import dotenv from "dotenv";
+import express from "express";
 import config from "../../../packages/config/src/index.config.ts";
-import QueueWorkersHandler from "./queue/queueWorkers.handler";
 import { BULL_QUEUE_NAMES } from "../../../packages/utils/src/constants.util.ts";
 import { queueServices } from "./queue/queue.service";
+import QueueWorkersHandler from "./queue/queueWorkers.handler";
 
 const now = Date.now();
 dotenv.config();

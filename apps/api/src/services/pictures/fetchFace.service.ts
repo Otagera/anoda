@@ -1,10 +1,10 @@
 import Joi from "joi";
+import { fetchFaceById } from "../../../../../packages/models/src/faces.model.ts";
+import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { fetchFaceById } from "../../../../../packages/models/src/faces.model.ts";
-import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 
 const spec = Joi.object({
 	face_id: Joi.number().required(),

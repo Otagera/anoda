@@ -1,6 +1,6 @@
 /* eslint-disable */
 window.PR_SHOULD_USE_CONTINUATION = true;
-(function () {
+(() => {
 	var h = ["break,continue,do,else,for,if,return,while"];
 	var u = [
 		h,
@@ -113,10 +113,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 			var aq = am
 				.substring(1, am.length - 1)
 				.match(
-					new RegExp(
-						"\\\\u[0-9A-Fa-f]{4}|\\\\x[0-9A-Fa-f]{2}|\\\\[0-3][0-7]{0,2}|\\\\[0-7]{1,2}|\\\\[\\s\\S]|-|[^-\\\\]",
-						"g",
-					),
+					/\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|\\[0-3][0-7]{0,2}|\\[0-7]{1,2}|\\[\s\S]|-|[^-\\]/g,
 				);
 			var ak = [];
 			var af = [];
@@ -145,9 +142,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 					}
 				}
 			}
-			af.sort(function (av, au) {
-				return av[0] - au[0] || au[1] - av[1];
-			});
+			af.sort((av, au) => av[0] - au[0] || au[1] - av[1]);
 			var ai = [];
 			var ap = [NaN, NaN];
 			for (var ar = 0; ar < af.length; ++ar) {
@@ -178,10 +173,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		}
 		function W(al) {
 			var aj = al.source.match(
-				new RegExp(
-					"(?:\\[(?:[^\\x5C\\x5D]|\\\\[\\s\\S])*\\]|\\\\u[A-Fa-f0-9]{4}|\\\\x[A-Fa-f0-9]{2}|\\\\[0-9]+|\\\\[^ux0-9]|\\(\\?[:!=]|[\\(\\)\\^]|[^\\x5B\\x5C\\(\\)\\^]+)",
-					"g",
-				),
+				/(?:\[(?:[^\x5C\x5D]|\\[\s\S])*\]|\\u[A-Fa-f0-9]{4}|\\x[A-Fa-f0-9]{2}|\\[0-9]+|\\[^ux0-9]|\(\?[:!=]|[()^]|[^\x5B\x5C()^]+)/g,
 			);
 			var ah = aj.length;
 			var an = [];
@@ -232,7 +224,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 						aj[ak] = X(ag);
 					} else {
 						if (ai !== "\\") {
-							aj[ak] = ag.replace(/[a-zA-Z]/g, function (ao) {
+							aj[ak] = ag.replace(/[a-zA-Z]/g, (ao) => {
 								var ap = ao.charCodeAt(0);
 								return "[" + String.fromCharCode(ap & ~32, ap | 32) + "]";
 							});
@@ -271,7 +263,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		var Y = S && "pre" === S.substring(0, 3);
 		function aa(ab) {
 			switch (ab.nodeType) {
-				case 1:
+				case 1: {
 					if (U.test(ab.className)) {
 						return;
 					}
@@ -285,8 +277,9 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 						Z[(W++ << 1) | 1] = ab;
 					}
 					break;
+				}
 				case 3:
-				case 4:
+				case 4: {
 					var ac = ab.nodeValue;
 					if (ac.length) {
 						if (!Y) {
@@ -300,6 +293,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 						Z[(W++ << 1) | 1] = ab;
 					}
 					break;
+				}
 			}
 		}
 		aa(V);
@@ -315,7 +309,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 	}
 	var v = /\S/;
 	function o(S) {
-		var V = undefined;
+		var V;
 		for (var U = S.firstChild; U; U = U.nextSibling) {
 			var T = U.nodeType;
 			V = T === 1 ? (V ? S : U) : T === 3 ? (v.test(U.nodeValue) ? S : V) : V;
@@ -325,7 +319,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 	function g(U, T) {
 		var S = {};
 		var V;
-		(function () {
+		(() => {
 			var ad = U.concat(T);
 			var ah = [];
 			var ag = {};
@@ -339,7 +333,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 				}
 				var af = Y[1];
 				var aa = "" + af;
-				if (!ag.hasOwnProperty(aa)) {
+				if (!Object.hasOwn(ag, aa)) {
 					ah.push(af);
 					ag[aa] = null;
 				}
@@ -348,7 +342,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 			V = k(ah);
 		})();
 		var X = T.length;
-		var W = function (ah) {
+		var W = (ah) => {
 			var Z = ah.sourceCode,
 				Y = ah.basePos;
 			var ad = [Y, F];
@@ -417,7 +411,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		if (T.tripleQuotedStrings) {
 			W.push([
 				C,
-				/^(?:\'\'\'(?:[^\'\\]|\\[\s\S]|\'{1,2}(?=[^\']))*(?:\'\'\'|$)|\"\"\"(?:[^\"\\]|\\[\s\S]|\"{1,2}(?=[^\"]))*(?:\"\"\"|$)|\'(?:[^\\\']|\\[\s\S])*(?:\'|$)|\"(?:[^\\\"]|\\[\s\S])*(?:\"|$))/,
+				/^(?:'''(?:[^'\\]|\\[\s\S]|'{1,2}(?=[^']))*(?:'''|$)|"""(?:[^"\\]|\\[\s\S]|"{1,2}(?=[^"]))*(?:"""|$)|'(?:[^\\']|\\[\s\S])*(?:'|$)|"(?:[^\\"]|\\[\s\S])*(?:"|$))/,
 				null,
 				"'\"",
 			]);
@@ -425,21 +419,21 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 			if (T.multiLineStrings) {
 				W.push([
 					C,
-					/^(?:\'(?:[^\\\']|\\[\s\S])*(?:\'|$)|\"(?:[^\\\"]|\\[\s\S])*(?:\"|$)|\`(?:[^\\\`]|\\[\s\S])*(?:\`|$))/,
+					/^(?:'(?:[^\\']|\\[\s\S])*(?:'|$)|"(?:[^\\"]|\\[\s\S])*(?:"|$)|`(?:[^\\`]|\\[\s\S])*(?:`|$))/,
 					null,
 					"'\"`",
 				]);
 			} else {
 				W.push([
 					C,
-					/^(?:\'(?:[^\\\'\r\n]|\\.)*(?:\'|$)|\"(?:[^\\\"\r\n]|\\.)*(?:\"|$))/,
+					/^(?:'(?:[^\\'\r\n]|\\.)*(?:'|$)|"(?:[^\\"\r\n]|\\.)*(?:"|$))/,
 					null,
 					"\"'",
 				]);
 			}
 		}
 		if (T.verbatimStrings) {
-			S.push([C, /^@\"(?:[^\"]|\"\")*(?:\"|$)/, null]);
+			S.push([C, /^@"(?:[^"]|"")*(?:"|$)/, null]);
 		}
 		var Y = T.hashComments;
 		if (Y) {
@@ -491,15 +485,12 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 			[F, /^[a-z_$][a-z_$@0-9]*/i, null],
 			[
 				G,
-				new RegExp(
-					"^(?:0x[a-f0-9]+|(?:\\d(?:_\\d+)*\\d*(?:\\.\\d*)?|\\.\\d\\+)(?:e[+\\-]?\\d+)?)[a-z]*",
-					"i",
-				),
+				/^(?:0x[a-f0-9]+|(?:\d(?:_\d+)*\d*(?:\.\d*)?|\.\d\+)(?:e[+-]?\d+)?)[a-z]*/i,
 				null,
 				"0123456789",
 			],
 			[F, /^\\[\s\S]?/, null],
-			[L, /^.[^\s\w\.$@\'\"\`\/\#\\]*/, null],
+			[L, /^.[^\s\w.$@'"`/#\\]*/, null],
 		);
 		return g(W, S);
 	}
@@ -688,7 +679,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 	function c(U, V) {
 		for (var S = V.length; --S >= 0; ) {
 			var T = V[S];
-			if (!t.hasOwnProperty(T)) {
+			if (!Object.hasOwn(t, T)) {
 				t[T] = U;
 			} else {
 				if (window.console) {
@@ -698,7 +689,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		}
 	}
 	function q(T, S) {
-		if (!(T && t.hasOwnProperty(T))) {
+		if (!(T && Object.hasOwn(t, T))) {
 			T = /^\s*</.test(S) ? "default-markup" : "default-code";
 		}
 		return t[T];
@@ -710,7 +701,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 			[
 				[F, /^[^<?]+/],
 				[E, /^<!\w[^>]*(?:>|$)/],
-				[j, /^<\!--[\s\S]*?(?:-\->|$)/],
+				[j, /^<!--[\s\S]*?(?:-->|$)/],
 				["lang-", /^<\?([\s\S]+?)(?:\?>|$)/],
 				["lang-", /^<%([\s\S]+?)(?:%>|$)/],
 				[L, /^(?:<[%?]|[%?]>)/],
@@ -726,19 +717,19 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		g(
 			[
 				[F, /^[\s]+/, null, " \t\r\n"],
-				[n, /^(?:\"[^\"]*\"?|\'[^\']*\'?)/, null, "\"'"],
+				[n, /^(?:"[^"]*"?|'[^']*'?)/, null, "\"'"],
 			],
 			[
 				[m, /^^<\/?[a-z](?:[\w.:-]*\w)?|\/?>$/i],
 				[P, /^(?!style[\s=]|on)[a-z](?:[\w:-]*\w)?/i],
-				["lang-uq.val", /^=\s*([^>\'\"\s]*(?:[^>\'\"\s\/]|\/(?=\s)))/],
-				[L, /^[=<>\/]+/],
-				["lang-js", /^on\w+\s*=\s*\"([^\"]+)\"/i],
-				["lang-js", /^on\w+\s*=\s*\'([^\']+)\'/i],
-				["lang-js", /^on\w+\s*=\s*([^\"\'>\s]+)/i],
-				["lang-css", /^style\s*=\s*\"([^\"]+)\"/i],
-				["lang-css", /^style\s*=\s*\'([^\']+)\'/i],
-				["lang-css", /^style\s*=\s*([^\"\'>\s]+)/i],
+				["lang-uq.val", /^=\s*([^>'"\s]*(?:[^>'"\s/]|\/(?=\s)))/],
+				[L, /^[=<>/]+/],
+				["lang-js", /^on\w+\s*=\s*"([^"]+)"/i],
+				["lang-js", /^on\w+\s*=\s*'([^']+)'/i],
+				["lang-js", /^on\w+\s*=\s*([^"'>\s]+)/i],
+				["lang-css", /^style\s*=\s*"([^"]+)"/i],
+				["lang-css", /^style\s*=\s*'([^']+)'/i],
+				["lang-css", /^style\s*=\s*([^"'>\s]+)/i],
 			],
 		),
 		["in.tag"],
@@ -850,9 +841,7 @@ window.PR_SHOULD_USE_CONTINUATION = true;
 		var W = Date;
 		if (!W.now) {
 			W = {
-				now: function () {
-					return +new Date();
-				},
+				now: () => +new Date(),
 			};
 		}
 		var X = 0;
@@ -933,7 +922,7 @@ PR.registerLangHandler(
 		[],
 		[
 			[PR.PR_DECLARATION, /^<!\w[^>]*(?:>|$)/],
-			[PR.PR_COMMENT, /^<\!--[\s\S]*?(?:-\->|$)/],
+			[PR.PR_COMMENT, /^<!--[\s\S]*?(?:-->|$)/],
 			[PR.PR_PUNCTUATION, /^(?:<[%?]|[%?]>)/],
 			["lang-", /^<\?([\s\S]+?)(?:\?>|$)/],
 			["lang-", /^<%([\s\S]+?)(?:%>|$)/],
@@ -957,35 +946,27 @@ PR.registerLangHandler(
 	PR.createSimpleLexer(
 		[[PR.PR_PLAIN, /^[ \t\r\n\f]+/, null, " \t\r\n\f"]],
 		[
-			[
-				PR.PR_STRING,
-				/^\"(?:[^\n\r\f\\\"]|\\(?:\r\n?|\n|\f)|\\[\s\S])*\"/,
-				null,
-			],
-			[
-				PR.PR_STRING,
-				/^\'(?:[^\n\r\f\\\']|\\(?:\r\n?|\n|\f)|\\[\s\S])*\'/,
-				null,
-			],
-			["lang-css-str", /^url\(([^\)\"\']*)\)/i],
+			[PR.PR_STRING, /^"(?:[^\n\r\f\\"]|\\(?:\r\n?|\n|\f)|\\[\s\S])*"/, null],
+			[PR.PR_STRING, /^'(?:[^\n\r\f\\']|\\(?:\r\n?|\n|\f)|\\[\s\S])*'/, null],
+			["lang-css-str", /^url\(([^)"']*)\)/i],
 			[
 				PR.PR_KEYWORD,
-				/^(?:url|rgb|\!important|@import|@page|@media|@charset|inherit)(?=[^\-\w]|$)/i,
+				/^(?:url|rgb|!important|@import|@page|@media|@charset|inherit)(?=[^\-\w]|$)/i,
 				null,
 			],
 			[
 				"lang-css-kw",
-				/^(-?(?:[_a-z]|(?:\\[0-9a-f]+ ?))(?:[_a-z0-9\-]|\\(?:\\[0-9a-f]+ ?))*)\s*:/i,
+				/^(-?(?:[_a-z]|(?:\\[0-9a-f]+ ?))(?:[_a-z0-9-]|\\(?:\\[0-9a-f]+ ?))*)\s*:/i,
 			],
-			[PR.PR_COMMENT, /^\/\*[^*]*\*+(?:[^\/*][^*]*\*+)*\//],
+			[PR.PR_COMMENT, /^\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//],
 			[PR.PR_COMMENT, /^(?:<!--|-->)/],
 			[PR.PR_LITERAL, /^(?:\d+|\d*\.\d+)(?:%|[a-z]+)?/i],
 			[PR.PR_LITERAL, /^#(?:[0-9a-f]{3}){1,2}/i],
 			[
 				PR.PR_PLAIN,
-				/^-?(?:[_a-z]|(?:\\[\da-f]+ ?))(?:[_a-z\d\-]|\\(?:\\[\da-f]+ ?))*/i,
+				/^-?(?:[_a-z]|(?:\\[\da-f]+ ?))(?:[_a-z\d-]|\\(?:\\[\da-f]+ ?))*/i,
 			],
-			[PR.PR_PUNCTUATION, /^[^\s\w\'\"]+/],
+			[PR.PR_PUNCTUATION, /^[^\s\w'"]+/],
 		],
 	),
 	["css"],
@@ -996,13 +977,12 @@ PR.registerLangHandler(
 		[
 			[
 				PR.PR_KEYWORD,
-				/^-?(?:[_a-z]|(?:\\[\da-f]+ ?))(?:[_a-z\d\-]|\\(?:\\[\da-f]+ ?))*/i,
+				/^-?(?:[_a-z]|(?:\\[\da-f]+ ?))(?:[_a-z\d-]|\\(?:\\[\da-f]+ ?))*/i,
 			],
 		],
 	),
 	["css-kw"],
 );
-PR.registerLangHandler(
-	PR.createSimpleLexer([], [[PR.PR_STRING, /^[^\)\"\']+/]]),
-	["css-str"],
-);
+PR.registerLangHandler(PR.createSimpleLexer([], [[PR.PR_STRING, /^[^)"']+/]]), [
+	"css-str",
+]);

@@ -1,7 +1,16 @@
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	jest,
+	mock,
+	test,
+} from "bun:test";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { jest, mock, beforeAll, afterAll, beforeEach, describe, test, expect } from "bun:test";
 
 // Mock modules BEFORE importing common.ts which might load them
 mock.module("../../../../../../packages/utils/src/image.util.ts", () => ({
@@ -40,16 +49,29 @@ mock.module("../../../services/pictures/pictures.lib.ts", () => ({
 
 mock.module("node:child_process", () => ({
 	spawn: jest.fn(() => ({
-		stdout: { on: jest.fn((event, cb) => { if (event === "data") cb("Processing complete"); }) },
+		stdout: {
+			on: jest.fn((event, cb) => {
+				if (event === "data") cb("Processing complete");
+			}),
+		},
 		stderr: { on: jest.fn() },
-		on: jest.fn((event, cb) => { if (event === "close") cb(0); }),
+		on: jest.fn((event, cb) => {
+			if (event === "close") cb(0);
+		}),
 		removeAllListeners: jest.fn(),
 		unref: jest.fn(),
 	})),
 }));
 
 // Use let for common variables and require them in beforeAll
-let AlbumImages, Albums, baseURL, closeServerAsync, HTTP_STATUS_CODES, Images, request, Users;
+let AlbumImages,
+	Albums,
+	baseURL,
+	closeServerAsync,
+	HTTP_STATUS_CODES,
+	Images,
+	request,
+	Users;
 let createImages, getImagesByIds, createImage;
 let getImageSize, isImageCorrupted;
 
@@ -68,13 +90,22 @@ let testAlbumId;
 
 beforeAll(async () => {
 	const common = require("../../common.ts");
-	({ AlbumImages, Albums, baseURL, closeServerAsync, HTTP_STATUS_CODES, Images, request, Users } = common);
-    
-    const picturesLib = require("../../../services/pictures/pictures.lib.ts");
-    ({ createImages, getImagesByIds, createImage } = picturesLib);
+	({
+		AlbumImages,
+		Albums,
+		baseURL,
+		closeServerAsync,
+		HTTP_STATUS_CODES,
+		Images,
+		request,
+		Users,
+	} = common);
 
-    const imageUtil = require("../../../../../../packages/utils/src/image.util.ts");
-    ({ getImageSize, isImageCorrupted } = imageUtil);
+	const picturesLib = require("../../../services/pictures/pictures.lib.ts");
+	({ createImages, getImagesByIds, createImage } = picturesLib);
+
+	const imageUtil = require("../../../../../../packages/utils/src/image.util.ts");
+	({ getImageSize, isImageCorrupted } = imageUtil);
 
 	server = common.server;
 	agent = request.agent();
@@ -109,10 +140,12 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	try {
-		let userIdToDelete = testUserId;
+		const userIdToDelete = testUserId;
 		if (userIdToDelete) {
-			if (Images?.deleteImagesByUserId) await Images.deleteImagesByUserId(userIdToDelete);
-			if (Albums?.deleteAlbumsByUserId) await Albums.deleteAlbumsByUserId(userIdToDelete);
+			if (Images?.deleteImagesByUserId)
+				await Images.deleteImagesByUserId(userIdToDelete);
+			if (Albums?.deleteAlbumsByUserId)
+				await Albums.deleteAlbumsByUserId(userIdToDelete);
 			if (Users?.deleteUserById) await Users.deleteUserById(userIdToDelete);
 		}
 	} catch (error) {
@@ -123,31 +156,43 @@ afterAll(async () => {
 });
 
 describe("/images", () => {
-    const MAXIMUM_IMAGES_CAN_UPLOAD = 10;
+	const MAXIMUM_IMAGES_CAN_UPLOAD = 10;
 
 	beforeEach(async () => {
 		// Reset mocks
-        getImageSize.mockClear();
-        isImageCorrupted.mockClear();
-        createImage.mockClear();
-        createImages.mockClear();
-        getImagesByIds.mockClear();
-        // @ts-ignore
-        spawn.mockClear();
+		getImageSize.mockClear();
+		isImageCorrupted.mockClear();
+		createImage.mockClear();
+		createImages.mockClear();
+		getImagesByIds.mockClear();
+		// @ts-expect-error
+		spawn.mockClear();
 	});
 
 	describe("Advanced Failure Scenarios", () => {
-		const largeFilePath = path.join(__dirname, "..", "assets", "large_file.bin");
+		const largeFilePath = path.join(
+			__dirname,
+			"..",
+			"assets",
+			"large_file.bin",
+		);
 		const textFilePath = path.join(__dirname, "..", "assets", "test.txt");
-		const corruptedImagePath = path.join(__dirname, "..", "assets", "corrupted.jpg");
+		const corruptedImagePath = path.join(
+			__dirname,
+			"..",
+			"assets",
+			"corrupted.jpg",
+		);
 
 		beforeAll(() => {
-			if (!fs.existsSync(textFilePath)) fs.writeFileSync(textFilePath, "This is not an image.");
+			if (!fs.existsSync(textFilePath))
+				fs.writeFileSync(textFilePath, "This is not an image.");
 			if (!fs.existsSync(largeFilePath)) {
 				const buffer = Buffer.alloc(6 * 1024 * 1024, "A");
 				fs.writeFileSync(largeFilePath, buffer);
 			}
-			if (!fs.existsSync(corruptedImagePath)) fs.writeFileSync(corruptedImagePath, "Corrupted JPEG");
+			if (!fs.existsSync(corruptedImagePath))
+				fs.writeFileSync(corruptedImagePath, "Corrupted JPEG");
 		});
 
 		afterAll(() => {
@@ -163,7 +208,9 @@ describe("/images", () => {
 				.attach("uploadedImages", textFilePath, { filename: "test.txt" });
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/mimetype must be one of|mimetype is invalid|Invalid file type/i);
+			expect(res.body.message).toMatch(
+				/mimetype must be one of|mimetype is invalid|Invalid file type/i,
+			);
 		});
 
 		test("should fail if uploaded file size exceeds limit", async () => {
@@ -173,7 +220,9 @@ describe("/images", () => {
 				.attach("uploadedImages", largeFilePath, { filename: "large.jpg" });
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/File too large|size exceeds limit|.size must be less than or equal to/i);
+			expect(res.body.message).toMatch(
+				/File too large|size exceeds limit|.size must be less than or equal to/i,
+			);
 		});
 
 		test("should fail if more than the maximum number of files are uploaded", async () => {
@@ -182,14 +231,18 @@ describe("/images", () => {
 				.set("Authorization", `Bearer ${authToken}`);
 
 			for (let i = 0; i < MAXIMUM_IMAGES_CAN_UPLOAD + 1; i++) {
-				agentRequest.attach("uploadedImages", sampleImagePath, { filename: `test${i}.jpg` });
+				agentRequest.attach("uploadedImages", sampleImagePath, {
+					filename: `test${i}.jpg`,
+				});
 			}
 			const res = await agentRequest;
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
 		});
 
 		test("should return 400 if database createImages fails", async () => {
-			createImage.mockImplementationOnce(() => Promise.reject(new Error("Simulated DB error")));
+			createImage.mockImplementationOnce(() =>
+				Promise.reject(new Error("Simulated DB error")),
+			);
 
 			const res = await agent
 				.post(`${baseURL}/images`)
@@ -197,11 +250,15 @@ describe("/images", () => {
 				.attach("uploadedImages", sampleImagePath);
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/Failed to save image|Database error|Internal server error|Simulated DB error/i);
+			expect(res.body.message).toMatch(
+				/Failed to save image|Database error|Internal server error|Simulated DB error/i,
+			);
 		});
 
 		test("should return 400 if getImageSize fails for a file", async () => {
-			getImageSize.mockImplementationOnce(() => Promise.reject(new Error("Simulated image processing error")));
+			getImageSize.mockImplementationOnce(() =>
+				Promise.reject(new Error("Simulated image processing error")),
+			);
 
 			const res = await agent
 				.post(`${baseURL}/images`)
@@ -209,7 +266,9 @@ describe("/images", () => {
 				.attach("uploadedImages", sampleImagePath);
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/Failed to process image|Internal server error|Simulated image processing error/i);
+			expect(res.body.message).toMatch(
+				/Failed to process image|Internal server error|Simulated image processing error/i,
+			);
 		});
 
 		test.skip("should return 400 if Python script execution fails", async () => {
@@ -221,7 +280,9 @@ describe("/images", () => {
 		});
 
 		test("should return 400 if database getImagesByIds fails", async () => {
-			getImagesByIds.mockImplementationOnce(() => Promise.reject(new Error("Simulated DB read error")));
+			getImagesByIds.mockImplementationOnce(() =>
+				Promise.reject(new Error("Simulated DB read error")),
+			);
 
 			const res = await agent
 				.post(`${baseURL}/images`)
@@ -229,7 +290,9 @@ describe("/images", () => {
 				.attach("uploadedImages", sampleImagePath);
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/Simulated DB read error|Internal server error/i);
+			expect(res.body.message).toMatch(
+				/Simulated DB read error|Internal server error/i,
+			);
 		});
 
 		test("should return 400 if file is corrupted", async () => {
@@ -241,7 +304,9 @@ describe("/images", () => {
 				.attach("uploadedImages", corruptedImagePath);
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
-			expect(res.body.message).toMatch(/Failed to process image|Internal server error|Image: .+? is corrupted/i);
+			expect(res.body.message).toMatch(
+				/Failed to process image|Internal server error|Image: .+? is corrupted/i,
+			);
 		});
 	});
 });

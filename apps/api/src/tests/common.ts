@@ -1,3 +1,4 @@
+import { jest } from "bun:test";
 import {
 	AlbumImages,
 	Albums,
@@ -6,7 +7,6 @@ import {
 	Users,
 } from "../../../../packages/models/src/index.model.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
-import { jest } from "bun:test";
 import { createElysiaApp } from "../elysia.ts";
 
 // Mock redisClient before importing anything that might use it
@@ -30,10 +30,10 @@ const elysiaApp = await createElysiaApp();
 const request = {
 	agent: () => {
 		const makeRequest = (method, url) => {
-			let headers = {};
+			const headers = {};
 			let body = null;
 			let formData = null;
-			let attachmentTasks = [];
+			const attachmentTasks = [];
 
 			const promise = {
 				async then(onFulfilled, onRejected) {
@@ -111,7 +111,7 @@ const request = {
 				},
 			};
 
-			// @ts-ignore
+			// @ts-expect-error
 			return promise;
 		};
 

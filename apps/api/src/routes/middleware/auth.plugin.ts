@@ -1,9 +1,9 @@
 import { Elysia } from "elysia";
 import { verify } from "jsonwebtoken";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { getUser } from "../../../../../packages/models/src/users.lib.ts";
 import { HTTP_STATUS_CODES } from "../../../../../packages/utils/src/constants.util.ts";
 import { AuthError } from "../../../../../packages/utils/src/error.util.ts";
-import { getUser } from "../../../../../packages/models/src/users.lib.ts";
 
 export const authDerivation = async ({ headers, set }) => {
 	let token = headers.authorization;

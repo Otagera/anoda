@@ -1,12 +1,14 @@
 const { spawn } = require("child_process");
-const prisma = require("../../../../../packages/config/src/db.config.ts").default;
+const prisma =
+	require("../../../../../packages/config/src/db.config.ts").default;
 const path = require("path");
 const sharp = require("sharp");
 const fs = require("fs").promises;
 const {
 	emitImageProcessed,
 } = require("../../../../../packages/utils/src/events.util.ts");
-const config = require("../../../../../packages/config/src/index.config.ts").default;
+const config =
+	require("../../../../../packages/config/src/index.config.ts").default;
 
 const run = async (jobData) => {
 	const { imageId, imagePath, albumId } = jobData;

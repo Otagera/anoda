@@ -1,9 +1,9 @@
 import { Elysia, t } from "elysia";
-import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import prisma from "../../../../packages/config/src/db.config.ts";
-import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 import { searchFaces } from "../../../../packages/models/src/faces.model.ts";
+import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
+import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.get(

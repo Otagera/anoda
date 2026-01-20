@@ -1,7 +1,5 @@
-import {
-	aliaserSpec,
-} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { getPeople } from "../../../../../packages/models/src/people.model.ts";
+import { aliaserSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const aliasSpec = {
 	response: {

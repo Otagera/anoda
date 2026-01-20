@@ -40,11 +40,7 @@ const service = async (data) => {
 		Object.entries(updateData).filter(([_, v]) => v !== undefined),
 	);
 
-	const alteredAlbum = await updateAlbum(
-		album_id,
-		created_by,
-		cleanUpdateData,
-	);
+	const alteredAlbum = await updateAlbum(album_id, created_by, cleanUpdateData);
 
 	const aliasRes = aliaserSpec(aliasSpec.response, alteredAlbum);
 	return aliasRes;

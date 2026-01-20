@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeAll, afterAll } from "bun:test";
-import { createElysiaApp } from "../elysia";
-import { Users, Albums } from "../../../../packages/models/src/index.model";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { Albums, Users } from "../../../../packages/models/src/index.model";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util";
+import { createElysiaApp } from "../elysia";
 
 const testUser = {
 	email: "native.album.test@email.com",

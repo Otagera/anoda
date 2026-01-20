@@ -1,17 +1,17 @@
-import { swagger } from "@elysiajs/swagger";
-import { Elysia, sse } from "elysia";
-import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ElysiaAdapter } from "@bull-board/elysia";
-import { AuthError } from "../../../packages/utils/src/error.util.ts";
+import { cors } from "@elysiajs/cors";
+import { staticPlugin } from "@elysiajs/static";
+import { swagger } from "@elysiajs/swagger";
+import { Elysia, sse } from "elysia";
 import config from "../../../packages/config/src/index.config.ts";
-import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import { AuthError } from "../../../packages/utils/src/error.util.ts";
 import {
-	eventEmitter,
 	EVENTS,
+	eventEmitter,
 } from "../../../packages/utils/src/events.util.ts";
+import { queueServices } from "../../worker/src/queue/queue.service.ts";
 
 export const createElysiaApp = async () => {
 	const { default: albumsRoutes } = await import("./routes/albums.route");
@@ -19,7 +19,7 @@ export const createElysiaApp = async () => {
 	const { default: picturesRoutes } = await import("./routes/pictures.route");
 	const { default: facesRoutes } = await import("./routes/faces.route");
 	const { default: publicRoutes } = await import("./routes/public.route");
-    const { default: peopleRoutes } = await import("./routes/people.route");
+	const { default: peopleRoutes } = await import("./routes/people.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -50,7 +50,8 @@ export const createElysiaApp = async () => {
 		app.use(bullBoardPlugin);
 	}
 
-	app.use(swagger())
+	app
+		.use(swagger())
 		.error({
 			AUTH_ERROR: AuthError,
 		})
@@ -84,7 +85,8 @@ export const createElysiaApp = async () => {
 				};
 			}
 
-			const statusCode = (error as any).statusCode || (error as any).status || 500;
+			const statusCode =
+				(error as any).statusCode || (error as any).status || 500;
 			set.status = statusCode;
 
 			return {
@@ -101,7 +103,7 @@ export const createElysiaApp = async () => {
 				.use(picturesRoutes)
 				.use(facesRoutes)
 				.use(publicRoutes)
-                .use(peopleRoutes),
+				.use(peopleRoutes),
 		)
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get("/api/v1/events", () => {

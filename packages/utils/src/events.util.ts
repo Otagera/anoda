@@ -30,10 +30,10 @@ export const emitImageProcessed = async (imageId: string, albumId?: string) => {
 		type: EVENTS.IMAGE_PROCESSED,
 		payload: { imageId, albumId },
 	});
-	
+
 	// Emit locally (for same-process consistency)
 	eventEmitter.emit(EVENTS.IMAGE_PROCESSED, { imageId, albumId });
-	
+
 	// Publish to Redis (for cross-process communication)
 	await redisClient.publish(REDIS_CHANNEL, message);
 };

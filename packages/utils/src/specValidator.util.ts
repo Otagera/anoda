@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
 import type { ObjectSchema, ValidationOptions } from "joi";
+import mongoose from "mongoose";
 
 export const validateSpec = (
 	spec: ObjectSchema,

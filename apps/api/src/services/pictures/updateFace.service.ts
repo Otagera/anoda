@@ -1,10 +1,13 @@
 import Joi from "joi";
 import {
+	fetchFaceById,
+	updateFacePerson,
+} from "../../../../../packages/models/src/faces.model.ts";
+import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
+import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { fetchFaceById, updateFacePerson } from "../../../../../packages/models/src/faces.model.ts";
-import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 
 const spec = Joi.object({
 	faceId: Joi.number().required(),
@@ -17,8 +20,8 @@ const aliasSpec = {
 		personId: "personId",
 	},
 	response: {
-        face_id: "faceId",
-        person_id: "personId",
+		face_id: "faceId",
+		person_id: "personId",
 	},
 };
 

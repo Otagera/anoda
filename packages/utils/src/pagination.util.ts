@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import prisma from "../../config/src/db.config.ts";
-import { InvalidRequestError, ValidationError } from "./error.util";
 import { models } from "../../models/src/index.model.ts";
+import { InvalidRequestError, ValidationError } from "./error.util";
 
 export const PaginationTypeEnum = {
 	CURSOR: "cursor",

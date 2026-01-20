@@ -1,12 +1,14 @@
 import Joi from "joi";
+import {
+	fetchFaceById,
+	searchFaces,
+} from "../../../../../packages/models/src/faces.model.ts";
+import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { searchFaces } from "../../../../../packages/models/src/faces.model.ts";
-import { fetchFaceById } from "../../../../../packages/models/src/faces.model.ts";
-import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 
 const spec = Joi.object({
 	faceId: Joi.number().required(),

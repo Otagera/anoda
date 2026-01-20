@@ -1,8 +1,8 @@
-import path from "path";
-import fs from "fs";
 import { Worker } from "bullmq";
-import { queueConnectionConfig } from "./queue.service";
+import fs from "fs";
+import path from "path";
 import logger from "../../../../packages/utils/src/logger.util.ts";
+import { queueConnectionConfig } from "./queue.service";
 
 // The handler class that is instantiated for each queue, with this handler,
 // it runs the worker when the worker server has started.
@@ -47,8 +47,10 @@ class WorkersHandler {
 		try {
 			const handlersFilePath = path.join(import.meta.dir, "workers");
 			const handlers = fs.readdirSync(handlersFilePath);
-			
-			const workerFile = handlers.find(h => h.startsWith(`${job.data.worker}.worker.`));
+
+			const workerFile = handlers.find((h) =>
+				h.startsWith(`${job.data.worker}.worker.`),
+			);
 
 			if (!workerFile) {
 				throw new Error(`Sorry invalid worker: ${job.data.worker}`);

@@ -32,3 +32,4 @@ export const MINIMUM_REQUIRED_SKILLS = 4;
 export const MINIMUM_REQUIRED_TOOLS = 4;
 export const MINIMUM_REQUIRED_KEY_RESPONSIBILITIES = 4;
 export const MAXIMUM_IMAGES_CAN_UPLOAD = 10;
+export const UPLOADS_DIR = "apps/api/src/uploads";

@@ -1,8 +1,8 @@
 import { verify } from "jsonwebtoken";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { getUser } from "../../../../../packages/models/src/users.lib.ts";
 import { HTTP_STATUS_CODES } from "../../../../../packages/utils/src/constants.util.ts";
 import { AuthError } from "../../../../../packages/utils/src/error.util.ts";
-import { getUser } from "../../../../../packages/models/src/users.lib.ts";
 
 const authentication = async (req, res, next) => {
 	let token = req.headers.authorization;

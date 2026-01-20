@@ -1,8 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import express from "express";
+import {
+	EVENTS,
+	eventEmitter,
+} from "../../../../packages/utils/src/events.util.ts";
 import handlerWrapper from "../../../../packages/utils/src/handler.util.ts";
-import { eventEmitter, EVENTS } from "../../../../packages/utils/src/events.util.ts";
 
 const router = express.Router();
 

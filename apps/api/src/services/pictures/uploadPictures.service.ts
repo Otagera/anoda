@@ -51,12 +51,12 @@ const aliasSpec = {
 	},
 };
 
-const storeImage = async (filename, uploaded_by) => {
-	const imagePath = path.join(__dirname, "..", "..", "uploads", filename);
+const storeImage = async (file, uploaded_by) => {
+	const imagePath = file.path;
 	const imageSize = await getImageSize(imagePath);
 	const isCorrupted = await isImageCorrupted(imagePath);
 	if (isCorrupted) {
-		throw new Error(`Image: ${filename} is corrupted`);
+		throw new Error(`Image: ${file.filename} is corrupted`);
 	}
 
 	const imageResult = await createImage({
@@ -78,7 +78,7 @@ const service = async (data) => {
 	const imagesToProcess = [];
 	for (const file of params.files) {
 		// figure out how to use createImages inside storeImage
-		imagesToProcess.push(await storeImage(file.filename, params.uploaded_by));
+		imagesToProcess.push(await storeImage(file, params.uploaded_by));
 	}
 
 	for (const imageInfo of imagesToProcess) {
