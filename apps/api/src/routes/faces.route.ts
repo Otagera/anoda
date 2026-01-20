@@ -5,6 +5,8 @@ import { authDerivation } from "./middleware/auth.plugin.ts";
 import fetchFaceService from "../services/pictures/fetchFace.service.ts";
 import searchFacesService from "../services/pictures/searchFaces.service.ts";
 
+import updateFaceService from "../services/pictures/updateFace.service.ts";
+
 const facesRoutes = new Elysia({ prefix: "/faces" })
 	.derive(authDerivation)
 	.get(
@@ -12,7 +14,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		async ({ params, set }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
-				if (isNaN(faceId)) {
+				if (Number.isNaN(faceId)) {
 					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
 					return {
 						status: "error",
@@ -46,6 +48,47 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		{
 			params: t.Object({
 				faceId: t.String(),
+			}),
+		},
+	)
+	.patch(
+		"/:faceId",
+		async ({ params, body, set }) => {
+			try {
+				const faceId = parseInt(params.faceId, 10);
+				if (Number.isNaN(faceId)) {
+					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+					return {
+						status: "error",
+						message: "Invalid face ID format.",
+						data: null,
+					};
+				}
+
+				const data = await updateFaceService({ ...body, faceId });
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Face updated successfully.",
+					data,
+				};
+			} catch (error: unknown) {
+				const err = error as { statusCode?: number; message?: string };
+				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: err?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				faceId: t.String(),
+			}),
+			body: t.Object({
+				personId: t.Optional(t.Union([t.String(), t.Null()])),
 			}),
 		},
 	)

@@ -19,6 +19,7 @@ export const createElysiaApp = async () => {
 	const { default: picturesRoutes } = await import("./routes/pictures.route");
 	const { default: facesRoutes } = await import("./routes/faces.route");
 	const { default: publicRoutes } = await import("./routes/public.route");
+    const { default: peopleRoutes } = await import("./routes/people.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -99,7 +100,8 @@ export const createElysiaApp = async () => {
 				.use(albumsRoutes)
 				.use(picturesRoutes)
 				.use(facesRoutes)
-				.use(publicRoutes),
+				.use(publicRoutes)
+                .use(peopleRoutes),
 		)
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get("/api/v1/events", () => {

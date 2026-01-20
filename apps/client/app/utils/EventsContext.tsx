@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface EventsContextType {
 	lastEvent: any | null;

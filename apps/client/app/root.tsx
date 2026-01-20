@@ -1,24 +1,24 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import {
 	isRouteErrorResponse,
+	Link,
 	Links,
 	Meta,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
 	useNavigate,
-	Link,
 } from "react-router-dom";
-import { useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
 import "./index.css";
 import "./app.css";
-import { AuthProvider, useAuth } from "./utils/auth";
 import { ThemeToggle } from "./components/ThemeToggle";
-import { UploadProvider } from "./utils/UploadContext";
-import { EventsProvider } from "./utils/EventsContext";
 import { UploadManager } from "./components/UploadManager";
+import { AuthProvider, useAuth } from "./utils/auth";
+import { EventsProvider } from "./utils/EventsContext";
+import { UploadProvider } from "./utils/UploadContext";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -123,7 +123,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 	return (
 		<main className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
 			<div className="max-w-md w-full bg-white dark:bg-gray-800 shadow-xl rounded-xl p-8 text-center border border-gray-100 dark:border-gray-700">
-				<h1 className="text-6xl font-extrabold text-blue-600 mb-4">{message}</h1>
+				<h1 className="text-6xl font-extrabold text-blue-600 mb-4">
+					{message}
+				</h1>
 				<p className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
 					{details}
 				</p>

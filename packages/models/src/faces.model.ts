@@ -76,19 +76,21 @@ const searchFaces = async ({
       FROM
         faces f
       WHERE f.face_id != $1
-    )
-    SELECT
-      f.face_id as "faceId",
-      f.image_id as "imageId",
-      i.image_path as "imagePath",
-      f.bounding_box as "boundingBox",
-      d.distance
-    FROM
-      faces f
-    JOIN
-      images i ON f.image_id = i.image_id
-    JOIN
-      distances d ON f.face_id = d.face_id
+    ),
+    ranked_faces AS (
+      SELECT
+        f.face_id,
+        f.image_id,
+        i.image_path,
+        f.bounding_box,
+        d.distance,
+        ROW_NUMBER() OVER (PARTITION BY f.image_id ORDER BY d.distance ASC) as rn
+      FROM
+        faces f
+      JOIN
+        images i ON f.image_id = i.image_id
+      JOIN
+        distances d ON f.face_id = d.face_id
   `;
 
 	const whereClauses = ["d.distance <= $3"];
@@ -104,20 +106,20 @@ const searchFaces = async ({
 		whereClauses.push(`i.image_id = ANY($${params.length}::uuid[])`);
 	}
 
-
-
 	query += ` WHERE ${whereClauses.join(" AND ")}`;
 
-
-
 	query += `
-
-    ORDER BY
-
-      d.distance ASC
-
+    )
+    SELECT
+      face_id as "faceId",
+      image_id as "imageId",
+      image_path as "imagePath",
+      bounding_box as "boundingBox",
+      distance
+    FROM ranked_faces
+    WHERE rn = 1
+    ORDER BY distance ASC
     LIMIT $4;
-
   `;
 
 
@@ -126,7 +128,16 @@ const searchFaces = async ({
 
 };
 
-
+const updateFacePerson = async (face_id: number, person_id: string | null) => {
+	return await prisma.faces.update({
+		where: {
+			face_id,
+		},
+		data: {
+			person_id,
+		},
+	});
+};
 
 export {
 
@@ -137,5 +148,7 @@ export {
 	createNewFace,
 
 	deleteFacesByImageId,
+    
+    updateFacePerson,
 
 };

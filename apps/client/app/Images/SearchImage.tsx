@@ -1,8 +1,8 @@
-import type { Route } from "../routes/+types/images";
 import type React from "react";
 import { useState } from "react";
 import { Form } from "react-router";
 import api from "~/utils/axios";
+import type { Route } from "../routes/+types/images";
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();

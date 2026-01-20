@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { get, set, del } from "idb-keyval";
-import { uploadImages } from "./api";
 import { useQueryClient } from "@tanstack/react-query";
+import { del, get, set } from "idb-keyval";
+import type React from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
+import { uploadImages } from "./api";
 
 export interface UploadTask {
 	id: string;
@@ -28,7 +35,9 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 const IDB_KEY = "facematch-upload-queue";
 
-export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
+	children,
+}) => {
 	const [tasks, setTasks] = useState<UploadTask[]>([]);
 	const [isManagerOpen, setIsManagerOpen] = useState(false);
 	const queryClient = useQueryClient();
@@ -39,8 +48,10 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			const saved = await get<UploadTask[]>(IDB_KEY);
 			if (saved) {
 				// Status cleanup: reset uploading to pending on refresh
-				const cleaned = saved.map(t => 
-					t.status === "uploading" ? { ...t, status: "pending" as const, progress: 0 } : t
+				const cleaned = saved.map((t) =>
+					t.status === "uploading"
+						? { ...t, status: "pending" as const, progress: 0 }
+						: t,
 				);
 				setTasks(cleaned);
 			}
@@ -50,7 +61,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 	// Persist tasks to IndexedDB whenever they change
 	useEffect(() => {
-		// We don't want to save the actual File object in localStorage, 
+		// We don't want to save the actual File object in localStorage,
 		// but IndexedDB handles Blobs/Files perfectly.
 		set(IDB_KEY, tasks);
 	}, [tasks]);
@@ -73,7 +84,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 		if (!nextTask) return;
 
 		setTasks((prev) =>
-			prev.map((t) => (t.id === nextTask.id ? { ...t, status: "uploading" } : t))
+			prev.map((t) =>
+				t.id === nextTask.id ? { ...t, status: "uploading" } : t,
+			),
 		);
 
 		try {
@@ -85,37 +98,50 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 			setTasks((prev) =>
 				prev.map((t) =>
-					t.id === nextTask.id ? { ...t, status: "completed", progress: 100 } : t
-				)
+					t.id === nextTask.id
+						? { ...t, status: "completed", progress: 100 }
+						: t,
+				),
 			);
-			
+
 			queryClient.invalidateQueries({ queryKey: ["images", nextTask.albumId] });
 		} catch (err: any) {
 			setTasks((prev) =>
 				prev.map((t) =>
-					t.id === nextTask.id ? { ...t, status: "error", error: err.message } : t
-				)
+					t.id === nextTask.id
+						? { ...t, status: "error", error: err.message }
+						: t,
+				),
 			);
 		}
 	}, [tasks, queryClient]);
 
 	useEffect(() => {
 		const activeUploads = tasks.filter((t) => t.status === "uploading").length;
-		if (activeUploads < 2) { // Allow 2 concurrent uploads
+		if (activeUploads < 2) {
+			// Allow 2 concurrent uploads
 			processNextTask();
 		}
 	}, [tasks, processNextTask]);
 
 	const pauseUpload = (id: string) => {
-		setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: "paused" } : t)));
+		setTasks((prev) =>
+			prev.map((t) => (t.id === id ? { ...t, status: "paused" } : t)),
+		);
 	};
 
 	const resumeUpload = (id: string) => {
-		setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: "pending" } : t)));
+		setTasks((prev) =>
+			prev.map((t) => (t.id === id ? { ...t, status: "pending" } : t)),
+		);
 	};
 
 	const retryUpload = (id: string) => {
-		setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: "pending", error: undefined } : t)));
+		setTasks((prev) =>
+			prev.map((t) =>
+				t.id === id ? { ...t, status: "pending", error: undefined } : t,
+			),
+		);
 	};
 
 	const removeTask = (id: string) => {
@@ -142,6 +168,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 export const useUpload = () => {
 	const context = useContext(UploadContext);
-	if (!context) throw new Error("useUpload must be used within an UploadProvider");
+	if (!context)
+		throw new Error("useUpload must be used within an UploadProvider");
 	return context;
 };

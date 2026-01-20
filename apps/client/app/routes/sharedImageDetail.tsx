@@ -1,12 +1,16 @@
-import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSharedImage } from "../utils/api";
+import { Link, useParams } from "react-router-dom";
 import DisplayImage from "../Images/DisplayImage";
+import { fetchSharedImage } from "../utils/api";
 
 const SharedImageDetail = () => {
 	const { token, imageId } = useParams<{ token: string; imageId: string }>();
 
-	const { data: imageResponse, isLoading, error } = useQuery({
+	const {
+		data: imageResponse,
+		isLoading,
+		error,
+	} = useQuery({
 		queryKey: ["shared-image", token, imageId],
 		queryFn: () => fetchSharedImage(token!, imageId!),
 		enabled: !!token && !!imageId,

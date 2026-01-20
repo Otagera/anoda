@@ -1,9 +1,9 @@
 import React, {
 	createContext,
-	useContext,
-	useState,
-	useEffect,
 	type ReactNode,
+	useContext,
+	useEffect,
+	useState,
 } from "react";
 import { login as apiLogin, signup as apiSignup } from "./api";
 
@@ -59,7 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				throw new Error("Login failed");
 			}
 		} catch (error: any) {
-			throw new Error(error.response?.data?.message || error.message || "Login failed");
+			throw new Error(
+				error.response?.data?.message || error.message || "Login failed",
+			);
 		}
 	};
 
@@ -74,7 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				throw new Error("Signup failed");
 			}
 		} catch (error: any) {
-			throw new Error(error.response?.data?.message || error.message || "Signup failed");
+			throw new Error(
+				error.response?.data?.message || error.message || "Signup failed",
+			);
 		}
 	};
 

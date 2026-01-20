@@ -17,6 +17,13 @@ export interface BoundingBox {
 export interface Face {
 	face_id: number;
 	bounding_box: BoundingBox;
+	person_id?: string | null;
+}
+
+export interface Person {
+	personId: string;
+	name: string;
+	createdAt: string;
 }
 
 export interface ImageSize {

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TagPersonModal from "../components/TagPersonModal";
 
 import type {
 	BoundingBox,
@@ -25,7 +26,10 @@ const DisplayImage = ({
 		BoundingBox[] | undefined
 	>();
 	const [canvasBox, setCanvasBox] = useState<CanvasBox[] | undefined>();
-	const [faceCrops, setFaceCrops] = useState<{ id: number; src: string }[]>([]);
+	const [faceCrops, setFaceCrops] = useState<
+		{ id: number; src: string; personId?: string | null }[]
+	>([]);
+	const [taggingFaceId, setTaggingFaceId] = useState<number | null>(null);
 
 	const imgRef = useRef<HTMLImageElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -99,7 +103,7 @@ const DisplayImage = ({
 			image.onload = resolve;
 		});
 
-		const crops: { id: number; src: string }[] = [];
+		const crops: { id: number; src: string; personId?: string | null }[] = [];
 		const canvas = document.createElement("canvas");
 		const cropCtx = canvas.getContext("2d");
 
@@ -125,7 +129,11 @@ const DisplayImage = ({
 				width,
 				height,
 			);
-			crops.push({ id: face.face_id, src: canvas.toDataURL() });
+			crops.push({
+				id: face.face_id,
+				src: canvas.toDataURL(),
+				personId: face.person_id,
+			});
 		}
 
 		setFaceCrops(crops);
@@ -203,42 +211,64 @@ const DisplayImage = ({
 					</h3>
 					<div className="flex flex-wrap gap-6 justify-center">
 						{faceCrops.map((crop, index) => (
-							<button
+							<div
 								key={`${crop.id}-${index}`}
-								onClick={() => handleFaceClick(crop.id)}
-								className="group flex flex-col items-center space-y-2 transition-transform hover:scale-110 focus:outline-none"
-								title="Click to search for this face"
+								className="flex flex-col items-center space-y-3"
 							>
-								<div className="relative">
-									<img
-										src={crop.src}
-										alt={`Face ${index + 1}`}
-										className="w-20 h-20 rounded-full border-4 border-white dark:border-gray-800 object-cover shadow-md group-hover:border-blue-500 transition-colors"
-									/>
-									<div className="absolute inset-0 rounded-full bg-blue-600/0 group-hover:bg-blue-600/10 transition-colors flex items-center justify-center">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-											/>
-										</svg>
+								<button
+									onClick={() => handleFaceClick(crop.id)}
+									className="group flex flex-col items-center space-y-2 transition-transform hover:scale-110 focus:outline-none"
+									title="Click to search for this face"
+								>
+									<div className="relative">
+										<img
+											src={crop.src}
+											alt={`Face ${index + 1}`}
+											className="w-20 h-20 rounded-full border-4 border-white dark:border-gray-800 object-cover shadow-md group-hover:border-blue-500 transition-colors"
+										/>
+										<div className="absolute inset-0 rounded-full bg-blue-600/0 group-hover:bg-blue-600/10 transition-colors flex items-center justify-center">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+												/>
+											</svg>
+										</div>
 									</div>
+								</button>
+								<div className="flex flex-col items-center">
+									<button
+										onClick={() => setTaggingFaceId(crop.id)}
+										className="text-xs font-semibold px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors"
+									>
+										{crop.personId ? "Change Tag" : "Tag Person"}
+									</button>
+									<span className="text-[10px] mt-1 text-gray-400">
+										ID: {crop.id}
+									</span>
 								</div>
-								<span className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-blue-600">
-									ID: {crop.id}
-								</span>
-							</button>
+							</div>
 						))}
 					</div>
 				</div>
+			)}
+
+			{taggingFaceId && (
+				<TagPersonModal
+					faceId={taggingFaceId}
+					currentPersonId={
+						faceCrops.find((f) => f.id === taggingFaceId)?.personId
+					}
+					onClose={() => setTaggingFaceId(null)}
+				/>
 			)}
 		</div>
 	);

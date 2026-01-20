@@ -1,8 +1,8 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchImage, deleteImage } from "../utils/api";
-import DisplayImage from "../Images/DisplayImage";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import DisplayImage from "../Images/DisplayImage";
+import { deleteImage, fetchImage } from "../utils/api";
 
 const ImageDetail = () => {
 	const { imageId } = useParams<{ imageId: string }>();
@@ -60,7 +60,7 @@ const ImageDetail = () => {
 	const handleDelete = () => {
 		if (
 			window.confirm(
-				"Are you sure you want to delete this image? This will also remove all detected faces and cannot be undone."
+				"Are you sure you want to delete this image? This will also remove all detected faces and cannot be undone.",
 			)
 		) {
 			setIsDeleting(true);

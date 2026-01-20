@@ -1,15 +1,15 @@
 import type { RouteObject } from "react-router-dom";
+import PrivateRoute from "./components/PrivateRoute";
 import App, { ErrorBoundary as AppErrorBoundary } from "./root";
-import Welcome from "./welcome/Welcome";
-import Home from "./routes/home";
 import Album from "./routes/album";
-import Search from "./routes/search";
+import Home from "./routes/home";
+import ImageDetail from "./routes/imageDetail";
 import Login from "./routes/login";
-import Signup from "./routes/signup";
+import Search from "./routes/search";
 import SharedAlbum from "./routes/sharedAlbum";
 import SharedImageDetail from "./routes/sharedImageDetail";
-import ImageDetail from "./routes/imageDetail";
-import PrivateRoute from "./components/PrivateRoute";
+import Signup from "./routes/signup";
+import Welcome from "./welcome/Welcome";
 
 export default [
 	{

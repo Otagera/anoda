@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 interface ImageModalProps {
@@ -8,7 +8,12 @@ interface ImageModalProps {
 	onClose: () => void;
 }
 
-const ImageModal = ({ image, albumId, shareToken, onClose }: ImageModalProps) => {
+const ImageModal = ({
+	image,
+	albumId,
+	shareToken,
+	onClose,
+}: ImageModalProps) => {
 	const imgRef = useRef<HTMLImageElement>(null);
 	const navigate = useNavigate();
 	const [imageDimensions, setImageDimensions] = useState({

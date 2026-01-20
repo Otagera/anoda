@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import type { FC } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
 import type { ImageFromDB } from "~/interface";
-import ImageModal from "./ImageModal";
+import { deleteImage, fetchImages } from "~/utils/api";
 import ImageGridItem from "./ImageGridItem";
-import { fetchImages, deleteImage } from "~/utils/api";
+import ImageModal from "./ImageModal";
 
 const ImagesList: FC = () => {
 	const [images, setImages] = useState<ImageFromDB[] | null>(null);

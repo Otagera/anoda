@@ -1,7 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ImageModal from "~/Images/ImageModal";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { fetchSharedAlbum } from "../utils/api";
 
 const SharedAlbumPage = () => {

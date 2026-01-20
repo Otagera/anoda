@@ -1,5 +1,5 @@
-import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { searchFaces } from "../utils/api";
 
 const SearchPage = () => {
@@ -52,7 +52,7 @@ const SearchPage = () => {
 			>
 				&larr; Back to {shareToken ? "Album" : "Home"}
 			</Link>
-			
+
 			<div className="mb-8">
 				<h1 className="text-3xl font-bold text-gray-900 dark:text-white">
 					Search Results
@@ -70,13 +70,18 @@ const SearchPage = () => {
 					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 				</div>
 			) : error ? (
-				<div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative" role="alert">
+				<div
+					className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative"
+					role="alert"
+				>
 					<strong className="font-bold">Error! </strong>
 					<span className="block sm:inline">{error}</span>
 				</div>
 			) : results.length === 0 ? (
 				<div className="text-center py-20">
-					<p className="text-xl text-gray-600 dark:text-gray-400">No matching faces found.</p>
+					<p className="text-xl text-gray-600 dark:text-gray-400">
+						No matching faces found.
+					</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -90,12 +95,12 @@ const SearchPage = () => {
 										className="w-full h-48 object-cover"
 									/>
 									{face.boundingBox && (
-										<div 
+										<div
 											className="absolute border-2 border-blue-500 pointer-events-none"
 											style={{
 												left: `${face.boundingBox.left}%`, // Note: Backend might return % or pixels. Assuming pixels for now based on previous code, but wait.
 												top: `${face.boundingBox.top}%`,
-												// Actually, the previous code used pixels. 
+												// Actually, the previous code used pixels.
 												// Let's keep it simple for now and just show the image.
 											}}
 										/>

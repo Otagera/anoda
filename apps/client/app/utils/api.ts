@@ -176,3 +176,33 @@ export const fetchSharedImage = async (token: string, imageId: string) => {
 		console.error("Error fetching shared image:", error);
 	}
 };
+
+export const fetchPeople = async () => {
+	try {
+		const response = await axiosAPI.get("/people");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching people:", error);
+	}
+};
+
+export const createPerson = async (name: string) => {
+	try {
+		const response = await axiosAPI.post("/people", { name });
+		return response.data;
+	} catch (error) {
+		console.error("Error creating person:", error);
+	}
+};
+
+export const updateFace = async (
+	faceId: number,
+	data: { personId: string | null },
+) => {
+	try {
+		const response = await axiosAPI.patch(`/faces/${faceId}`, data);
+		return response.data;
+	} catch (error) {
+		console.error("Error updating face:", error);
+	}
+};
