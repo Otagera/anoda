@@ -1,9 +1,10 @@
-1. Update PRD.mx frequently with changes so you can continue from where you stop in previous implementation
-2. /client is for the frontend
-3. /server is for the backend
-4. always lint at the end of every change you make
-5. always run test after making changes
-6. Use `beads` (bd) for task tracking and management.
+1. Update PRD.mdx frequently with changes so you can continue from where you stop in previous implementation
+2. apps/client is for the frontend
+3. apps/api is for the backend
+4. apps/worker is for background jobs
+5. always lint at the end of every change you make (use `bunx biome check --write .`)
+6. always run test after making changes (use `bun test`)
+7. Use `beads` (bd) for task tracking and management.
    - To create a new task: `/Users/othnielagera/.local/bin/bd create "Task Title" -d "Task description"`
    - To view ready tasks: `/Users/othnielagera/.local/bin/bd ready`
    - To close a task: `/Users/othnielagera/.local/bin/bd set-state <bead-id> status=closed --reason "Reason for closing"`
