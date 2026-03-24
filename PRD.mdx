@@ -292,6 +292,17 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
     * 13.5 Data Integrity: Fix nested data access across all main views. **Done**.
 * Status: Done.
 
+### Monitoring & Observability (LGTM Stack)
+
+The application implements the LGTM stack (Loki, Grafana, Tempo, Mimir/Prometheus) for comprehensive system visibility:
+*   **Centralized Logging (Loki):** Consolidates logs from API, Worker, and AI services into a single searchable interface.
+*   **Infrastructure Metrics (Prometheus + cAdvisor):** Real-time monitoring of CPU, Memory, and Network usage across all Docker containers, specifically tracking the load of the AI service.
+*   **Future Enhancements:**
+    *   **Distributed Tracing (Tempo):** Trace requests across service boundaries (API -> Worker -> AI) to identify latency bottlenecks.
+    *   **Structured JSON Logging:** Shift from plain text to JSON logs for advanced filtering and dashboarding in Grafana.
+    *   **Application-Level Metrics:** Track business-specific metrics like queue lengths, match accuracy, and user activity.
+    *   **Infrastructure Exporters:** Add dedicated exporters for PostgreSQL and Redis to monitor database health and connection pools.
+
 ### Expected Deliverables
 
 The Anoda Facematch application is expected to deliver the following core features and capabilities:

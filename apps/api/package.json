@@ -1,5 +1,5 @@
 {
-	"name": "anoda-facematch",
+	"name": "@anoda-facematch/api",
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",

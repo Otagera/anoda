@@ -8,6 +8,7 @@
 	"scripts": {
 		"start": "bun run --cwd apps/client start",
 		"start:api": "bun run --cwd apps/api start",
+		"migrate:api": "bun run --cwd apps/api migrate",
 		"start:worker": "bun run --cwd apps/worker start",
 		"dev": "bun run --cwd apps/client dev",
 		"dev:api": "bun run --cwd apps/api dev",
