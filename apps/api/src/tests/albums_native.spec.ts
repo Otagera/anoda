@@ -1,60 +1,21 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { Albums, Users } from "../../../../packages/models/src/index.model";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util";
-import { createElysiaApp } from "../elysia";
+import { setupTestEnv } from "./test-utils";
 
-const testUser = {
-	email: "native.album.test@email.com",
-	password: "ValidPassword123!",
-};
+let env: Awaited<ReturnType<typeof setupTestEnv>>;
 
 const albumData1 = {
 	albumName: "Summer Vacation 2025",
 };
 
-let app: any;
-let authToken: string;
-let testUserId: string;
-
 describe("Albums API (Native)", () => {
 	beforeAll(async () => {
-		// Initialize App
-		app = await createElysiaApp();
-
-		// Cleanup
-		const existingUser = await Users.fetchUserByEmail(testUser.email);
-		if (existingUser) {
-			await Albums.deleteAlbumsByUserId(existingUser.user_id);
-			await Users.deleteUserById(existingUser.user_id);
-		}
-
-		// Signup
-		const signupReq = new Request("http://localhost/api/v1/auth/signup", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(testUser),
-		});
-		const signupRes = await app.handle(signupReq);
-		expect(signupRes.status).toBe(201);
-
-		// Login
-		const loginReq = new Request("http://localhost/api/v1/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(testUser),
-		});
-		const loginRes = await app.handle(loginReq);
-		const loginBody = await loginRes.json();
-		authToken = loginBody.data.accessToken;
-
-		const user = await Users.fetchUserByEmail(testUser.email);
-		testUserId = user?.user_id;
+		env = await setupTestEnv("albums");
 	});
 
 	afterAll(async () => {
-		if (testUserId) {
-			await Albums.deleteAlbumsByUserId(testUserId);
-			await Users.deleteUserById(testUserId);
+		if (env?.cleanup) {
+			await env.cleanup();
 		}
 	});
 
@@ -63,18 +24,18 @@ describe("Albums API (Native)", () => {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				Authorization: `Bearer ${authToken}`,
+				Authorization: `Bearer ${env.authToken}`,
 			},
 			body: JSON.stringify(albumData1),
 		});
 
-		const res = await app.handle(req);
+		const res = await env.app.handle(req);
 		expect(res.status).toBe(HTTP_STATUS_CODES.CREATED);
 
 		const body = await res.json();
 		expect(body.status).toBe("completed");
 		expect(body.data.albumName).toBe(albumData1.albumName);
-		expect(body.data.userId).toBe(testUserId);
+		expect(body.data.userId).toBe(env.userId);
 	});
 
 	it("should fail to create an album without authentication", async () => {
@@ -84,7 +45,7 @@ describe("Albums API (Native)", () => {
 			body: JSON.stringify(albumData1),
 		});
 
-		const res = await app.handle(req);
+		const res = await env.app.handle(req);
 		expect(res.status).toBe(HTTP_STATUS_CODES.UNAUTHORIZED);
 	});
 
@@ -92,11 +53,11 @@ describe("Albums API (Native)", () => {
 		const req = new Request("http://localhost/api/v1/albums", {
 			method: "GET",
 			headers: {
-				Authorization: `Bearer ${authToken}`,
+				Authorization: `Bearer ${env.authToken}`,
 			},
 		});
 
-		const res = await app.handle(req);
+		const res = await env.app.handle(req);
 		expect(res.status).toBe(HTTP_STATUS_CODES.OK);
 
 		const body = await res.json();

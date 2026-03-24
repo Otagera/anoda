@@ -1,53 +1,26 @@
-import { beforeAll, describe, expect, it } from "bun:test";
-import { createElysiaApp } from "../elysia.ts";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { setupTestEnv } from "./test-utils";
 
-let app: any;
-let authToken: string;
+let env: Awaited<ReturnType<typeof setupTestEnv>>;
 
 describe("People API", () => {
 	beforeAll(async () => {
-		console.log("Creating app...");
-		app = await createElysiaApp();
+		env = await setupTestEnv("people");
+	});
 
-		// Create user and login to get token
-		const email = `test.people.${Date.now()}@example.com`;
-		const password = "Password123!";
-
-		console.log("Signing up...");
-		const signupRes = await app.handle(
-			new Request("http://localhost/api/v1/auth/signup", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
-			}),
-		);
-		console.log("Signup status:", signupRes.status);
-		if (signupRes.status !== 201 && signupRes.status !== 200) {
-			console.error("Signup failed:", await signupRes.text());
+	afterAll(async () => {
+		if (env?.cleanup) {
+			await env.cleanup();
 		}
-
-		console.log("Logging in...");
-		const loginRes = await app.handle(
-			new Request("http://localhost/api/v1/auth/login", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
-			}),
-		);
-		console.log("Login status:", loginRes.status);
-
-		const loginData = await loginRes.json();
-		authToken = loginData.data.accessToken;
-		console.log("Auth token obtained");
 	});
 
 	it("should create a person", async () => {
-		const response = await app.handle(
+		const response = await env.app.handle(
 			new Request("http://localhost/api/v1/people", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${authToken}`,
+					Authorization: `Bearer ${env.authToken}`,
 				},
 				body: JSON.stringify({ name: "John Doe" }),
 			}),
@@ -60,11 +33,11 @@ describe("People API", () => {
 	});
 
 	it("should list people", async () => {
-		const response = await app.handle(
+		const response = await env.app.handle(
 			new Request("http://localhost/api/v1/people", {
 				method: "GET",
 				headers: {
-					Authorization: `Bearer ${authToken}`,
+					Authorization: `Bearer ${env.authToken}`,
 				},
 			}),
 		);

@@ -114,7 +114,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		},
 		{
 			body: t.Object({
-				faceId: t.Number(),
+				faceId: t.Optional(t.Number()),
+				personId: t.Optional(t.String()),
 				albumId: t.Optional(t.String()),
 				threshold: t.Optional(t.Number()),
 				limit: t.Optional(t.Number()),

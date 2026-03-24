@@ -11,21 +11,24 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	faceId: Joi.number().required(),
+	faceId: Joi.number().optional(),
+	personId: Joi.string().uuid().optional(),
 	albumId: Joi.string().uuid(),
 	threshold: Joi.number().min(0).max(1),
 	limit: Joi.number().integer().min(1).max(100),
-});
+}).or("faceId", "personId");
 
 const aliasSpec = {
 	request: {
 		faceId: "faceId",
+		personId: "personId",
 		albumId: "albumId",
 		threshold: "threshold",
 		limit: "limit",
 	},
 	response: {
 		faces: "faces",
+		sourceFace: "sourceFace",
 	},
 };
 
@@ -33,23 +36,34 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	const face = await fetchFaceById(params.faceId);
-	if (!face) {
-		throw new NotFoundError("Face not found.");
+	let sourceFaceData: any = null;
+
+	if (params.faceId) {
+		const face = await fetchFaceById(params.faceId);
+		if (face) {
+			sourceFaceData = {
+				faceId: face.face_id,
+				personId: face.person_id,
+			};
+		} else if (!params.personId) {
+			throw new NotFoundError("Face not found.");
+		}
 	}
 
 	const similarFaces = await searchFaces({
 		faceId: params.faceId,
+		personId: params.personId,
 		albumId: params.albumId,
 		threshold: params.threshold,
 		limit: params.limit,
 	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
-		faces: similarFaces.map((face) => ({
-			...face,
-			imagePath: normalizeImagePath(face.imagePath),
+		faces: similarFaces.map((f) => ({
+			...f,
+			imagePath: normalizeImagePath(f.imagePath),
 		})),
+		sourceFace: sourceFaceData,
 	});
 
 	return aliasRes;

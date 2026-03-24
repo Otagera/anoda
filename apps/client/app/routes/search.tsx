@@ -1,15 +1,26 @@
+import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import TagPersonModal from "~/components/TagPersonModal";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
-import { searchFaces } from "../utils/api";
+import { searchFaces, updateFace } from "../utils/api";
 
 const SearchPage = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [results, setResults] = useState<any[]>([]);
+	const [sourceFace, setSourceFace] = useState<{
+		faceId: number;
+		personId: string | null;
+	} | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [showPossible, setShowPossible] = useState(false);
+	const [taggingFaceId, setTaggingFaceId] = useState<number | null>(null);
+	const [pendingConfirmation, setPendingConfirmation] = useState<number | null>(
+		null,
+	);
 
 	const faceId = searchParams.get("faceId");
 	const albumId = searchParams.get("albumId");
@@ -20,6 +31,15 @@ const SearchPage = () => {
 		if (!selectedImageId || !results.length) return null;
 		return results.find((img: any) => img.imageId === selectedImageId) || null;
 	}, [selectedImageId, results]);
+
+	const { confident, possible } = useMemo(() => {
+		const filtered = results.filter((f) => !f.hidden);
+		const conf = filtered.filter((f) => 1 - (f.distance || 0) >= 0.5);
+		const poss = filtered.filter(
+			(f) => 1 - (f.distance || 0) < 0.5 && 1 - (f.distance || 0) >= 0.2,
+		);
+		return { confident: conf, possible: poss };
+	}, [results]);
 
 	const setSelectedImage = (image: any | null) => {
 		setSearchParams((prev) => {
@@ -50,6 +70,7 @@ const SearchPage = () => {
 
 				if (response?.status === "completed") {
 					setResults(response.data.faces || []);
+					setSourceFace(response.data.sourceFace || null);
 				} else {
 					setError(response?.message || "Failed to fetch search results.");
 				}
@@ -64,121 +85,294 @@ const SearchPage = () => {
 		performSearch();
 	}, [faceId, albumId, shareToken]);
 
-	return (
-		<div className="container mx-auto px-4 py-8">
-			<Link
-				to={shareToken ? `/share/${shareToken}` : "/home"}
-				className="text-blue-600 dark:text-blue-400 hover:underline mb-8 block font-medium transition-colors"
-			>
-				&larr; Back to {shareToken ? "Album" : "Home"}
-			</Link>
+	const handleConfirm = async (face: any) => {
+		if (!sourceFace) return;
 
-			<div className="mb-8">
-				<h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-					Search Results
-				</h1>
-				{faceId && (
-					<p className="text-gray-600 dark:text-gray-400 mt-2">
-						Showing similar faces for face ID: {faceId}
-						{albumId && ` within album ID: ${albumId}`}
-					</p>
-				)}
-			</div>
+		if (!sourceFace.personId) {
+			// If source face doesn't have a person, we need to tag it first
+			setPendingConfirmation(face.faceId);
+			setTaggingFaceId(sourceFace.faceId);
+			return;
+		}
 
-			{loading ? (
-				<div className="flex justify-center items-center py-20">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-				</div>
-			) : error ? (
-				<div
-					className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative"
-					role="alert"
-				>
-					<strong className="font-bold">Error! </strong>
-					<span className="block sm:inline">{error}</span>
-				</div>
-			) : results.length === 0 ? (
-				<div className="text-center py-20">
-					<p className="text-xl text-gray-600 dark:text-gray-400">
-						No matching faces found.
-					</p>
-				</div>
-			) : (
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
-					{results.map((face, index) => {
-						const width = face.originalSize?.width || 0;
-						const height = face.originalSize?.height || 0;
-						const spanClass = getBentoSpanClass(width, height, index);
-						const similarity = ((1 - (face.distance || 0)) * 100).toFixed(1);
+		try {
+			await updateFace(face.faceId, { personId: sourceFace.personId });
+			// Update local state to show it's confirmed
+			setResults((prev) =>
+				prev.map((f) =>
+					f.faceId === face.faceId
+						? { ...f, personId: sourceFace.personId, isConfirmed: true }
+						: f,
+				),
+			);
+		} catch (err) {
+			console.error("Failed to confirm match:", err);
+		}
+	};
 
-						return (
-							<div
-								key={face.faceId || index}
-								className={`relative group ${spanClass}`}
-							>
-								<ImageGridItem
-									image={{
-										id: face.imageId || `face-${index}`,
-										width,
-										height,
-										url: face.imagePath,
-										alt: `Match ${index + 1}`,
-									}}
-									onDelete={() => {}}
-									shared={true}
-									className="w-full h-full object-cover rounded-xl"
-									onClick={() => setSelectedImage(face)}
-								/>
+	const handleReject = (faceId: number) => {
+		setResults((prev) =>
+			prev.map((f) => (f.faceId === faceId ? { ...f, hidden: true } : f)),
+		);
+	};
 
-								{/* Match Info Overlay */}
-								<div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-xl pointer-events-none" />
-								<div className="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent rounded-b-xl pointer-events-none">
-									<div className="flex items-end justify-between">
-										<div className="flex flex-col">
-											<span className="text-white text-xs font-bold drop-shadow-md">
-												{similarity}% Match
-											</span>
-											{face.personName && (
-												<span className="text-white/90 text-[10px] drop-shadow-md truncate max-w-[100px]">
-													{face.personName}
-												</span>
-											)}
-										</div>
-										{face.boundingBox && (
-											<div
-												className="w-3 h-3 rounded-full bg-green-500 border border-white shadow-sm mb-0.5"
-												title="Face Detected"
-											/>
-										)}
-									</div>
+	const onTagComplete = () => {
+		setTaggingFaceId(null);
+		// If we had a pending confirmation, we should probably re-fetch or update sourceFace
+		// For now, let's just re-trigger the search to get updated person info
+		window.location.reload();
+	};
+
+	const renderFaceGrid = (faces: any[], startIndex: number) => (
+		<div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full auto-rows-[200px] md:auto-rows-[250px] grid-flow-dense">
+			{faces.map((face, index) => {
+				const width = face.originalSize?.width || 0;
+				const height = face.originalSize?.height || 0;
+				const spanClass = getBentoSpanClass(width, height, startIndex + index);
+				const similarity = ((1 - (face.distance || 0)) * 100).toFixed(1);
+				const isConfirmed =
+					face.isConfirmed || face.personId === sourceFace?.personId;
+
+				return (
+					<div
+						key={face.faceId || index}
+						className={`relative group rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/50 transition-all hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] ${spanClass}`}
+					>
+						<ImageGridItem
+							image={{
+								id: face.imageId || `face-${index}`,
+								width,
+								height,
+								url: face.imagePath,
+								alt: `Match ${index + 1}`,
+							}}
+							onDelete={() => {}}
+							shared={true}
+							className="w-full h-full object-cover"
+							onClick={() => setSelectedImage(face)}
+						/>
+
+						{/* Match Info Overlay */}
+						<div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/20 to-transparent opacity-100 transition-opacity" />
+
+						<div className="absolute bottom-0 left-0 w-full p-4 pointer-events-none">
+							<div className="flex flex-col gap-1">
+								<div className="flex items-center gap-2">
+									<span
+										className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+											Number(similarity) > 70
+												? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+												: Number(similarity) > 50
+													? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+													: "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"
+										}`}
+									>
+										{similarity}% Match
+									</span>
+									{isConfirmed && (
+										<span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+											<Check size={10} /> Confirmed
+										</span>
+									)}
 								</div>
-
-								{/* Bounding Box (Only on hover to keep it clean?) Or maybe subtle? */}
-								{face.boundingBox && width > 0 && height > 0 && (
-									<div
-										className="absolute border border-white/50 bg-white/10 rounded-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-										style={{
-											left: `${(face.boundingBox.left / width) * 100}%`,
-											top: `${(face.boundingBox.top / height) * 100}%`,
-											width: `${((face.boundingBox.right - face.boundingBox.left) / width) * 100}%`,
-											height: `${((face.boundingBox.bottom - face.boundingBox.top) / height) * 100}%`,
-										}}
-									/>
+								{face.personName && (
+									<span className="text-white text-sm font-medium truncate drop-shadow-md">
+										{face.personName}
+									</span>
 								)}
 							</div>
-						);
-					})}
-				</div>
-			)}
+						</div>
 
-			<ImageModal
-				image={selectedImage}
-				images={results}
-				albumId={albumId || undefined}
-				shareToken={shareToken || undefined}
-				onClose={() => setSelectedImage(null)}
-				onNavigate={(img) => setSelectedImage(img)}
-			/>
+						{/* Feedback Actions */}
+						{!isConfirmed && !shareToken && (
+							<div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										handleConfirm(face);
+									}}
+									className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95"
+									title="Correct Match"
+								>
+									<Check size={16} />
+								</button>
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										handleReject(face.faceId);
+									}}
+									className="p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95"
+									title="Not a Match"
+								>
+									<X size={16} />
+								</button>
+							</div>
+						)}
+
+						{/* Bounding Box */}
+						{face.boundingBox && width > 0 && height > 0 && (
+							<div
+								className="absolute border-2 border-indigo-500/50 bg-indigo-500/10 rounded-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+								style={{
+									left: `${(face.boundingBox.left / width) * 100}%`,
+									top: `${(face.boundingBox.top / height) * 100}%`,
+									width: `${((face.boundingBox.right - face.boundingBox.left) / width) * 100}%`,
+									height: `${((face.boundingBox.bottom - face.boundingBox.top) / height) * 100}%`,
+								}}
+							/>
+						)}
+					</div>
+				);
+			})}
+		</div>
+	);
+
+	return (
+		<div className="min-h-screen bg-zinc-950 text-zinc-100">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<Link
+					to={shareToken ? `/share/${shareToken}` : "/home"}
+					className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors group"
+				>
+					<span className="group-hover:-translate-x-1 transition-transform">
+						&larr;
+					</span>
+					Back to {shareToken ? "Album" : "Dashboard"}
+				</Link>
+
+				<div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+					<div>
+						<h1 className="text-4xl font-black tracking-tight text-white mb-2">
+							Search Results
+						</h1>
+						{faceId && (
+							<p className="text-zinc-500 font-medium">
+								Displaying matches for face{" "}
+								<span className="text-indigo-400">#{faceId}</span>
+								{sourceFace?.personId && (
+									<>
+										{" "}
+										linked to{" "}
+										<span className="text-indigo-400">
+											Person ID {sourceFace.personId.split("-")[0]}...
+										</span>
+									</>
+								)}
+							</p>
+						)}
+					</div>
+
+					{!loading && (
+						<div className="flex gap-4">
+							<div className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl">
+								<span className="text-zinc-500 text-sm block">
+									Total Matches
+								</span>
+								<span className="text-xl font-bold">
+									{confident.length + possible.length}
+								</span>
+							</div>
+							<div className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl">
+								<span className="text-zinc-500 text-sm block">Accuracy</span>
+								<span className="text-xl font-bold text-emerald-400">High</span>
+							</div>
+						</div>
+					)}
+				</div>
+
+				{loading ? (
+					<div className="flex flex-col justify-center items-center py-32 gap-4">
+						<div className="relative w-16 h-16">
+							<div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full" />
+							<div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+						</div>
+						<p className="text-zinc-500 font-medium animate-pulse">
+							Analyzing neural patterns...
+						</p>
+					</div>
+				) : error ? (
+					<div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-6 rounded-2xl flex items-center gap-4">
+						<div className="p-3 bg-rose-500/20 rounded-xl">
+							<X size={24} />
+						</div>
+						<div>
+							<h3 className="font-bold text-lg">Search Failed</h3>
+							<p className="opacity-80">{error}</p>
+						</div>
+					</div>
+				) : confident.length === 0 && possible.length === 0 ? (
+					<div className="text-center py-32 bg-zinc-900/30 border border-dashed border-zinc-800 rounded-3xl">
+						<p className="text-xl text-zinc-500 font-medium">
+							No matches found with current parameters.
+						</p>
+					</div>
+				) : (
+					<div className="space-y-16">
+						{/* Confident Matches Section */}
+						{confident.length > 0 && (
+							<section>
+								<div className="flex items-center gap-3 mb-6">
+									<div className="w-2 h-8 bg-emerald-500 rounded-full" />
+									<h2 className="text-2xl font-bold">Confident Matches</h2>
+									<span className="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2 py-1 rounded-md">
+										HIGH ACCURACY
+									</span>
+								</div>
+								{renderFaceGrid(confident, 0)}
+							</section>
+						)}
+
+						{/* Possible Matches Section */}
+						{possible.length > 0 && (
+							<section className="pt-8 border-t border-zinc-900">
+								<div className="flex flex-col gap-8">
+									<div className="flex items-center justify-between">
+										<div className="flex items-center gap-3">
+											<div className="w-2 h-8 bg-amber-500 rounded-full" />
+											<h2 className="text-2xl font-bold text-zinc-300">
+												Possible Matches
+											</h2>
+											<span className="bg-amber-500/10 text-amber-400 text-xs font-bold px-2 py-1 rounded-md">
+												LOW CONFIDENCE
+											</span>
+										</div>
+
+										<button
+											onClick={() => setShowPossible(!showPossible)}
+											className="flex items-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-bold transition-all border border-zinc-800"
+										>
+											{showPossible ? (
+												<>
+													Hide Suggestions <ChevronUp size={20} />
+												</>
+											) : (
+												<>
+													Want to see more? <ChevronDown size={20} />
+												</>
+											)}
+										</button>
+									</div>
+
+									{showPossible && renderFaceGrid(possible, confident.length)}
+								</div>
+							</section>
+						)}
+					</div>
+				)}
+
+				<ImageModal
+					image={selectedImage}
+					images={results}
+					albumId={albumId || undefined}
+					shareToken={shareToken || undefined}
+					onClose={() => setSelectedImage(null)}
+					onNavigate={(img) => setSelectedImage(img)}
+				/>
+
+				{taggingFaceId && (
+					<TagPersonModal faceId={taggingFaceId} onClose={onTagComplete} />
+				)}
+			</div>
 		</div>
 	);
 };
