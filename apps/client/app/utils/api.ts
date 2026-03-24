@@ -1,8 +1,15 @@
 import axiosAPI from "./axios";
 
-export const fetchImages = async () => {
+export const fetchImages = async ({
+	pageParam = null,
+}: {
+	pageParam?: string | null;
+} = {}) => {
 	try {
-		const response = await axiosAPI.get("/images");
+		const url = pageParam
+			? `/images?paginationType=cursor&limit=25&nextCursor=${pageParam}`
+			: "/images?paginationType=cursor&limit=25";
+		const response = await axiosAPI.get(url);
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching images:", error);
@@ -26,11 +33,13 @@ export const uploadImages = async (formData: FormData) => {
 		});
 		const uploadResponseData = uploadResponse.data;
 
-		await axiosAPI.post(`/albums/${albumId}/images`, {
-			imageIds: uploadResponseData.data.images.map(
-				(image: any) => image.imageId,
-			),
-		});
+		if (albumId && albumId !== "undefined" && albumId !== "null") {
+			await axiosAPI.post(`/albums/${albumId}/images`, {
+				imageIds: uploadResponseData.data.images.map(
+					(image: any) => image.imageId,
+				),
+			});
+		}
 
 		return uploadResponseData;
 	} catch (error) {
@@ -57,9 +66,18 @@ export const fetchAlbums = async () => {
 	}
 };
 
-export const fetchImagesInAlbum = async (albumId: string) => {
+export const fetchImagesInAlbum = async ({
+	albumId,
+	pageParam = null,
+}: {
+	albumId: string;
+	pageParam?: string | null;
+}) => {
 	try {
-		const response = await axiosAPI.get(`/albums/${albumId}/images`);
+		const url = pageParam
+			? `/albums/${albumId}/images?paginationType=cursor&limit=25&nextCursor=${pageParam}`
+			: `/albums/${albumId}/images?paginationType=cursor&limit=25`;
+		const response = await axiosAPI.get(url);
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching images in album:", error);
@@ -130,6 +148,26 @@ export const deleteAlbum = async (albumId: string) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error deleting album:", error);
+	}
+};
+
+export const triggerClustering = async (albumId: string) => {
+	try {
+		const response = await axiosAPI.post(`/albums/${albumId}/cluster`);
+		return response.data;
+	} catch (error) {
+		console.error("Error triggering clustering:", error);
+		throw error;
+	}
+};
+
+export const reprocessImage = async (imageId: string) => {
+	try {
+		const response = await axiosAPI.post(`/images/${imageId}/reprocess`);
+		return response.data;
+	} catch (error) {
+		console.error("Error reprocessing image:", error);
+		throw error;
 	}
 };
 

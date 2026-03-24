@@ -64,7 +64,7 @@ mock.module("node:child_process", () => ({
 }));
 
 // Use let for common variables and require them in beforeAll
-let AlbumImages,
+let _AlbumImages,
 	Albums,
 	baseURL,
 	closeServerAsync,
@@ -86,12 +86,12 @@ let agent;
 let server;
 let authToken;
 let testUserId;
-let testAlbumId;
+let _testAlbumId;
 
 beforeAll(async () => {
 	const common = require("../../common.ts");
 	({
-		AlbumImages,
+		_AlbumImages,
 		Albums,
 		baseURL,
 		closeServerAsync,
@@ -135,7 +135,7 @@ beforeAll(async () => {
 	if (albumRes.status !== HTTP_STATUS_CODES.CREATED || !albumRes.body.data.id) {
 		throw new Error("Failed to create test album for image tests.");
 	}
-	testAlbumId = albumRes.body.data.id;
+	_testAlbumId = albumRes.body.data.id;
 });
 
 afterAll(async () => {

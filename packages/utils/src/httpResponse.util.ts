@@ -4,7 +4,7 @@ export const GoodResponse = (data, status_code, message) => {
 	return {
 		response: {
 			status: "success",
-			message: (data && data.message) || message,
+			message: data?.message || message,
 			data,
 		},
 		status_code: status_code || HTTP_STATUS_CODES.OK,

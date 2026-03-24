@@ -7,4 +7,8 @@ const redisClient = new RedisClient(config[config.env].redis_url, {
 	showFriendlyErrorStack: true,
 });
 
+redisClient.on("error", (err) => {
+	console.error("Redis Connection Error:", err.message);
+});
+
 export default redisClient;

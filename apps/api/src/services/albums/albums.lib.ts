@@ -164,11 +164,11 @@ export const getAlbumLinksNoError = async (where) => {
 	return album;
 };
 
-export const getAlbumLinks = async (where) => {
+export const getAlbumLinks = async (where, options = {}) => {
 	await albumLinkValidation(where, { check_image_id: false });
 
 	const { image_id, album_id } = where;
-	const album = await fetchAlbumImages({ album_id, image_id });
+	const album = await fetchAlbumImages({ album_id, image_id }, options);
 
 	if (!album || !album.length) {
 		return [];

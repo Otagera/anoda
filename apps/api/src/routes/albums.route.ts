@@ -186,10 +186,9 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				albumId: t.String(), // Assuming albumId is a string/UUID
 			}),
 			query: t.Object({
-				// Assuming query parameters for filtering/pagination
-				// Add specific query params here, e.g.,
-				// limit: t.Optional(t.Numeric()),
-				// page: t.Optional(t.Numeric()),
+				limit: t.Optional(t.String()),
+				nextCursor: t.Optional(t.String()),
+				paginationType: t.Optional(t.String()),
 			}),
 		},
 	)
@@ -270,6 +269,58 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 			body: t.Object({
 				imageIds: t.Array(t.String()), // Assuming imageIds is an array of strings/UUIDs
+			}),
+		},
+	)
+	.post(
+		"/:albumId/cluster",
+		async ({ params, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				console.log(
+					`[CLUSTER] Triggered for album ${albumId} by user ${userId}`,
+				);
+
+				// Dynamic import to ensure queueServices is ready and avoid circular deps
+				const { queueServices: localQueueServices } = await import(
+					"../../../worker/src/queue/queue.service.ts"
+				);
+
+				if (!localQueueServices) {
+					throw new Error("Queue services not initialized");
+				}
+
+				// We first verify the album exists and belongs to the user
+				await fetchAlbumService({ userId, albumId });
+
+				await localQueueServices.faceClusteringQueueLib.addJob(
+					"faceClustering",
+					{
+						albumId,
+						worker: "faceClustering",
+					},
+					{ removeOnComplete: true, removeOnFail: true },
+				);
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: `Face clustering initiated for album: ${albumId}`,
+					data: null,
+				};
+			} catch (error: any) {
+				console.error("[CLUSTER] Route Error:", error.message);
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				albumId: t.String(),
 			}),
 		},
 	)

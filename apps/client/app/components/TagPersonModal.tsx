@@ -152,7 +152,6 @@ const TagPersonModal = ({
 						) : (
 							<form onSubmit={handleCreatePerson} className="flex gap-2">
 								<input
-									autoFocus
 									type="text"
 									value={newName}
 									onChange={(e) => setNewName(e.target.value)}

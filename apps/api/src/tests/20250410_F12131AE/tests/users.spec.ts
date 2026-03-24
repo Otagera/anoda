@@ -25,7 +25,7 @@ const users = [
 let agent;
 
 beforeAll(async () => {
-	const common = require("../../common");
+	const _common = require("../../common");
 	agent = request.agent();
 });
 

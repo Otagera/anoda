@@ -20,9 +20,9 @@ Anoda Facematch is a photo management application that allows users to upload ph
 ## Installation
 
 ### Prerequisites
-- [Bun](https://bun.sh/) (v1.0+)
-- [Node.js](https://nodejs.org/) (v18+)
-- [Docker](https://www.docker.com/) (for Database & Redis)
+- [Bun](https://bun.sh/) (v1.2+)
+- [Node.js](https://nodejs.org/) (v20+)
+- [Docker](https://www.docker.com/) (for full stack deployment)
 
 To set up the project locally, follow these steps:
 
@@ -33,7 +33,9 @@ To set up the project locally, follow these steps:
    ```
 
 2. **Start Infrastructure (Postgres & Redis):**
-   Ensure you have a `docker-compose.yml` or running instances of PostgreSQL and Redis.
+   ```bash
+   docker-compose up -d db redis
+   ```
    
 3. **Install Dependencies:**
    ```bash
@@ -42,25 +44,24 @@ To set up the project locally, follow these steps:
 
 ### Running the Application
 
-You can start the different parts of the application using the following commands:
+The easiest way to run the entire stack is from the root directory:
 
-**1. Server (API):**
+**Start All Services (Client, API, Worker, AI):**
 ```bash
-cd apps/api
-bun run dev
+bun run dev:all
 ```
 
-**2. Worker (Background Processing):**
-```bash
-cd apps/worker
-bun run dev
-```
+**Alternatively, start services individually:**
+- **API (Elysia):** `bun run dev:api`
+- **Frontend (React):** `bun run dev`
+- **Worker:** `bun run dev:worker`
+- **AI Service:** `bun run dev:ai`
 
-**3. Client (Frontend):**
+### Docker Deployment
+
+To build and start the entire application in containers:
 ```bash
-cd apps/client
-npm install
-npm run dev
+docker-compose up --build
 ```
 
 ## Usage

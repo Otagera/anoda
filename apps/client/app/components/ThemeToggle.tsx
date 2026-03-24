@@ -3,46 +3,58 @@ import { useEffect, useState } from "react";
 export const ThemeToggle = () => {
 	const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
+	// 1. Initial Load: Check localStorage and matchMedia
 	useEffect(() => {
 		const saved = localStorage.getItem("theme") as "light" | "dark" | null;
-		const initialTheme =
-			saved ||
-			(window.matchMedia("(prefers-color-scheme: dark)").matches
-				? "dark"
-				: "light");
-		setTheme(initialTheme);
+		if (saved) {
+			setTheme(saved);
+		} else {
+			const prefersDark = window.matchMedia(
+				"(prefers-color-scheme: dark)",
+			).matches;
+			setTheme(prefersDark ? "dark" : "light");
+		}
 	}, []);
 
+	// 2. State Sync: Update document classes and localStorage
 	useEffect(() => {
-		if (theme) {
-			const root = window.document.documentElement;
-			if (theme === "dark") {
-				root.classList.add("dark");
-			} else {
-				root.classList.remove("dark");
-			}
-			localStorage.setItem("theme", theme);
-		}
-	}, [theme]);
+		if (!theme) return;
 
-	const toggleTheme = () => {
-		const newTheme = theme === "light" ? "dark" : "light";
-		setTheme(newTheme);
 		const root = window.document.documentElement;
-		if (newTheme === "dark") {
+		if (theme === "dark") {
 			root.classList.add("dark");
 		} else {
 			root.classList.remove("dark");
 		}
-		localStorage.setItem("theme", newTheme);
+		localStorage.setItem("theme", theme);
+	}, [theme]);
+
+	// 3. System Preference Watcher: Only update if user hasn't set a preference
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+		const handleChange = (e: MediaQueryListEvent) => {
+			const hasUserPreference = localStorage.getItem("theme");
+			if (!hasUserPreference) {
+				setTheme(e.matches ? "dark" : "light");
+			}
+		};
+
+		mediaQuery.addEventListener("change", handleChange);
+		return () => mediaQuery.removeEventListener("change", handleChange);
+	}, []);
+
+	const toggleTheme = () => {
+		setTheme((prev) => (prev === "light" ? "dark" : "light"));
 	};
 
+	// On the server and during initial hydration, theme is null.
+	// We render a placeholder that matches what the server produces.
 	if (!theme) return <div className="p-2 w-9 h-9" />;
 
 	return (
 		<button
 			onClick={toggleTheme}
-			className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none bg-gray-100 dark:bg-gray-800"
+			className="p-2 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all focus:outline-none bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 group"
 			aria-label="Toggle theme"
 		>
 			{theme === "light" ? (
@@ -52,7 +64,7 @@ export const ThemeToggle = () => {
 					viewBox="0 0 24 24"
 					strokeWidth={1.5}
 					stroke="currentColor"
-					className="w-5 h-5 text-gray-700"
+					className="w-5 h-5 text-zinc-700 group-hover:text-indigo-500 transition-colors"
 				>
 					<path
 						strokeLinecap="round"
@@ -67,7 +79,7 @@ export const ThemeToggle = () => {
 					viewBox="0 0 24 24"
 					strokeWidth={1.5}
 					stroke="currentColor"
-					className="w-5 h-5 text-yellow-400"
+					className="w-5 h-5 text-indigo-400 group-hover:text-yellow-400 transition-colors"
 				>
 					<path
 						strokeLinecap="round"

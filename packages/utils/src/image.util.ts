@@ -3,7 +3,19 @@ import config from "../../config/src/index.config.ts";
 
 const getImageSize = async (imagePath) => {
 	const metadata = await sharp(imagePath).metadata();
-	return { width: metadata.width, height: metadata.height };
+
+	// Respect EXIF orientation
+	// Orientations 5, 6, 7, 8 mean the image is rotated 90 or 270 degrees.
+	// In these cases, the visual width is the metadata height, and vice versa.
+	let width = metadata.width;
+	let height = metadata.height;
+
+	if (metadata.orientation && metadata.orientation >= 5) {
+		width = metadata.height;
+		height = metadata.width;
+	}
+
+	return { width, height };
 };
 
 const isImageCorrupted = async (imagePath) => {
@@ -16,7 +28,7 @@ const isImageCorrupted = async (imagePath) => {
 };
 
 const normalizeImagePath = (image_path) => {
-	if (config.env === "test" || "development") {
+	if (config.env === "test" || config.env === "development") {
 		const imagePathSplit = image_path.split("/");
 		const strucImagePath = image_path
 			? `http://localhost:${config[config.env].elysia_port}/api/uploads/${

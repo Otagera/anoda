@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import ImageGridItem from "~/Images/ImageGridItem";
+import ImageModal from "~/Images/ImageModal";
+import { getBentoSpanClass } from "~/utils/bento";
 import { searchFaces } from "../utils/api";
 
 const SearchPage = () => {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [results, setResults] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -11,6 +14,23 @@ const SearchPage = () => {
 	const faceId = searchParams.get("faceId");
 	const albumId = searchParams.get("albumId");
 	const shareToken = searchParams.get("shareToken");
+
+	const selectedImageId = searchParams.get("imageId");
+	const selectedImage = useMemo(() => {
+		if (!selectedImageId || !results.length) return null;
+		return results.find((img: any) => img.imageId === selectedImageId) || null;
+	}, [selectedImageId, results]);
+
+	const setSelectedImage = (image: any | null) => {
+		setSearchParams((prev) => {
+			if (image) {
+				prev.set("imageId", image.imageId);
+			} else {
+				prev.delete("imageId");
+			}
+			return prev;
+		});
+	};
 
 	useEffect(() => {
 		const performSearch = async () => {
@@ -84,48 +104,81 @@ const SearchPage = () => {
 					</p>
 				</div>
 			) : (
-				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-					{results.map((face, index) => (
-						<div key={face.faceId || index} className="block group">
-							<div className="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white dark:bg-gray-800">
-								<div className="relative">
-									<img
-										src={face.imagePath}
-										alt={`Match ${index + 1}`}
-										className="w-full h-48 object-cover"
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
+					{results.map((face, index) => {
+						const width = face.originalSize?.width || 0;
+						const height = face.originalSize?.height || 0;
+						const spanClass = getBentoSpanClass(width, height, index);
+						const similarity = ((1 - (face.distance || 0)) * 100).toFixed(1);
+
+						return (
+							<div
+								key={face.faceId || index}
+								className={`relative group ${spanClass}`}
+							>
+								<ImageGridItem
+									image={{
+										id: face.imageId || `face-${index}`,
+										width,
+										height,
+										url: face.imagePath,
+										alt: `Match ${index + 1}`,
+									}}
+									onDelete={() => {}}
+									shared={true}
+									className="w-full h-full object-cover rounded-xl"
+									onClick={() => setSelectedImage(face)}
+								/>
+
+								{/* Match Info Overlay */}
+								<div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-xl pointer-events-none" />
+								<div className="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent rounded-b-xl pointer-events-none">
+									<div className="flex items-end justify-between">
+										<div className="flex flex-col">
+											<span className="text-white text-xs font-bold drop-shadow-md">
+												{similarity}% Match
+											</span>
+											{face.personName && (
+												<span className="text-white/90 text-[10px] drop-shadow-md truncate max-w-[100px]">
+													{face.personName}
+												</span>
+											)}
+										</div>
+										{face.boundingBox && (
+											<div
+												className="w-3 h-3 rounded-full bg-green-500 border border-white shadow-sm mb-0.5"
+												title="Face Detected"
+											/>
+										)}
+									</div>
+								</div>
+
+								{/* Bounding Box (Only on hover to keep it clean?) Or maybe subtle? */}
+								{face.boundingBox && width > 0 && height > 0 && (
+									<div
+										className="absolute border border-white/50 bg-white/10 rounded-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+										style={{
+											left: `${(face.boundingBox.left / width) * 100}%`,
+											top: `${(face.boundingBox.top / height) * 100}%`,
+											width: `${((face.boundingBox.right - face.boundingBox.left) / width) * 100}%`,
+											height: `${((face.boundingBox.bottom - face.boundingBox.top) / height) * 100}%`,
+										}}
 									/>
-									{face.boundingBox && (
-										<div
-											className="absolute border-2 border-blue-500 pointer-events-none"
-											style={{
-												left: `${face.boundingBox.left}%`, // Note: Backend might return % or pixels. Assuming pixels for now based on previous code, but wait.
-												top: `${face.boundingBox.top}%`,
-												// Actually, the previous code used pixels.
-												// Let's keep it simple for now and just show the image.
-											}}
-										/>
-									)}
-								</div>
-								<div className="p-4">
-									<p className="text-sm text-gray-600 dark:text-gray-400">
-										Similarity: {((1 - (face.distance || 0)) * 100).toFixed(2)}%
-									</p>
-									<Link
-										to={
-											shareToken
-												? `/share/${shareToken}/images/${face.imageId}`
-												: `/images/${face.imageId}`
-										}
-										className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium inline-block transition-colors"
-									>
-										View Full Image
-									</Link>
-								</div>
+								)}
 							</div>
-						</div>
-					))}
+						);
+					})}
 				</div>
 			)}
+
+			<ImageModal
+				image={selectedImage}
+				images={results}
+				albumId={albumId || undefined}
+				shareToken={shareToken || undefined}
+				onClose={() => setSelectedImage(null)}
+				onNavigate={(img) => setSelectedImage(img)}
+			/>
 		</div>
 	);
 };

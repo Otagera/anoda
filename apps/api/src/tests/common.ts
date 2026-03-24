@@ -38,42 +38,38 @@ const request = {
 			const promise = {
 				async then(onFulfilled, onRejected) {
 					const execute = async () => {
-						try {
-							const options: any = {
-								method,
-								headers: {
-									...headers,
-								},
-							};
+						const options: any = {
+							method,
+							headers: {
+								...headers,
+							},
+						};
 
-							if (attachmentTasks.length > 0) {
-								if (!formData) formData = new FormData();
-								for (const task of attachmentTasks) {
-									await task();
-								}
+						if (attachmentTasks.length > 0) {
+							if (!formData) formData = new FormData();
+							for (const task of attachmentTasks) {
+								await task();
 							}
-
-							if (formData) {
-								options.body = formData;
-							} else {
-								options.headers["content-type"] = "application/json";
-								if (
-									body &&
-									(method === "POST" || method === "PUT" || method === "DELETE")
-								) {
-									options.body = JSON.stringify(body);
-								}
-							}
-
-							const response = await elysiaApp.handle(
-								new Request(`http://localhost${url}`, options),
-							);
-							const status = response.status;
-							const responseBody = await response.json().catch(() => ({}));
-							return { status, body: responseBody };
-						} catch (e) {
-							throw e;
 						}
+
+						if (formData) {
+							options.body = formData;
+						} else {
+							options.headers["content-type"] = "application/json";
+							if (
+								body &&
+								(method === "POST" || method === "PUT" || method === "DELETE")
+							) {
+								options.body = JSON.stringify(body);
+							}
+						}
+
+						const response = await elysiaApp.handle(
+							new Request(`http://localhost${url}`, options),
+						);
+						const status = response.status;
+						const responseBody = await response.json().catch(() => ({}));
+						return { status, body: responseBody };
 					};
 					return execute().then(onFulfilled, onRejected);
 				},

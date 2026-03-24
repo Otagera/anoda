@@ -1,6 +1,9 @@
 /* Tailwind v4 imports */
 @import "tailwindcss";
 
+/* Force Tailwind to use the .dark class instead of system media queries */
+@custom-variant dark (&:where(.dark, .dark *));
+
 .logo {
 	height: 6em;
 	padding: 1.5em;

@@ -1,4 +1,5 @@
 import prisma from "../../config/src/db.config.ts";
+import { deleteFile } from "../../utils/src/file.util.ts";
 
 const createNewAlbum = async (data) => {
 	return await prisma.albums.create({
@@ -38,6 +39,22 @@ const fetchAlbumsByUserids = async (userIds) => {
 			created_by: {
 				in: userIds,
 			},
+		},
+		include: {
+			album_images: {
+				take: 4,
+				include: {
+					images: true,
+				},
+				orderBy: {
+					images: {
+						upload_date: "desc",
+					},
+				},
+			},
+		},
+		orderBy: {
+			creation_date: "desc",
 		},
 	});
 };

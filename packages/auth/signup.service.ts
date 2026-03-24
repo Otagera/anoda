@@ -30,7 +30,7 @@ const aliasSpec = {
 		password: "password",
 	},
 	response: {
-		_id: "id",
+		user_id: "id",
 		email: "email",
 		accessToken: "accessToken",
 		refreshToken: "refreshToken",
@@ -38,19 +38,28 @@ const aliasSpec = {
 };
 
 const service = async (data) => {
+	console.log("Signup service started with data:", {
+		...data,
+		password: "***",
+	});
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const { email, password } = validateSpec(spec, aliasReq);
 
 	const existingUser = await getUser({ email });
 
 	if (existingUser) {
+		console.log("Signup failed: Email in use", email);
 		throw new ResourceInUseError("Email is in use");
 	}
 
 	const encryptedPassword = await encryptPassword(password);
+	console.log("Password encrypted");
+
 	const user = await createUser({ email, password: encryptedPassword });
+	console.log("User created in DB:", user.user_id);
 
 	const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
+	console.log("Tokens created");
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		...user,

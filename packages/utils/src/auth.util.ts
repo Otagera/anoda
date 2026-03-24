@@ -1,15 +1,12 @@
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import config from "../../config/src/index.config.ts";
 
 const encryptPassword = async (password) => {
-	const hash = await bcrypt.hash(password, 10);
-	return hash;
+	return await Bun.password.hash(password);
 };
 
 const comparePasswords = async (password, userPassword) => {
-	const match = await bcrypt.compare(password, userPassword);
-	return match;
+	return await Bun.password.verify(password, userPassword);
 };
 
 const createAdminToken = (adminId) => {
@@ -77,10 +74,13 @@ const createCompanyResetPasswordToken = (email, companyId) => {
 	return token;
 };
 
-const hashToken = async (token) => bcrypt.hash(token, 10);
+const hashToken = async (token) => {
+	return await Bun.password.hash(token);
+};
 
-const compareTokens = async (token, hashedToken) =>
-	bcrypt.compare(token, hashedToken);
+const compareTokens = async (token, hashedToken) => {
+	return await Bun.password.verify(token, hashedToken);
+};
 
 export {
 	encryptPassword,

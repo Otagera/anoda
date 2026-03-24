@@ -1,6 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
 import { Worker } from "bullmq";
-import fs from "fs";
-import path from "path";
 import logger from "../../../../packages/utils/src/logger.util.ts";
 import { queueConnectionConfig } from "./queue.service";
 

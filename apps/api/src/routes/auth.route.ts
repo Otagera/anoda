@@ -18,6 +18,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 					data,
 				};
 			} catch (error) {
+				console.error("Signup Error:", error);
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -45,6 +46,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 					data,
 				};
 			} catch (error) {
+				console.log("error", error);
 				set.status = error?.statusCode || HTTP_STATUS_CODES.UNAUTHORIZED;
 				return {
 					status: "error",

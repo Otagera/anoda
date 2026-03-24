@@ -5,6 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Anoda Facematch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <script>
       (() => {
         try {
@@ -12,11 +15,11 @@
           var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
           if (!theme && supportDarkMode) theme = 'dark';
           if (theme === 'dark') document.documentElement.classList.add('dark');
-        } catch (e) {}
+        } catch (_e) {}
       })();
     </script>
   </head>
-  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+  <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 antialiased font-sans">
     <div id="root"></div>
     <script type="module" src="/app/entry.client.tsx"></script>
   </body>

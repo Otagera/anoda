@@ -1,4 +1,3 @@
-import path from "node:path";
 import Joi from "joi";
 import {
 	getImageSize,
@@ -17,7 +16,7 @@ const fileSchema = Joi.object({
 	originalname: Joi.string().required(),
 	encoding: Joi.string().required(),
 	mimetype: Joi.string()
-		.valid("image/jpeg", "image/png", "image/gif")
+		.valid("image/jpeg", "image/png", "image/gif", "image/webp")
 		.required(),
 	destination: Joi.string().required(),
 	filename: Joi.string().required(),
@@ -82,12 +81,12 @@ const service = async (data) => {
 	}
 
 	for (const imageInfo of imagesToProcess) {
-		await queueServices.faceRecognitionQueueLib.addJob(
-			"faceRecognition",
+		await queueServices.imageOptimizationQueueLib.addJob(
+			"imageOptimization",
 			{
 				imageId: imageInfo.imageId,
 				imagePath: imageInfo.imagePath,
-				worker: "faceRecognition",
+				worker: "imageOptimization",
 			},
 			{ removeOnComplete: true, removeOnFail: true },
 		);

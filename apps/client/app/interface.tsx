@@ -39,13 +39,6 @@ export interface UploadImagesProps {
 	};
 }
 
-export interface DisplayImageProps extends HTMLAttributes<HTMLImageElement> {
-	imgSrcFP: string;
-	imageSizeFP: ImageSize;
-	facesFP?: Face[];
-	alt: string;
-}
-
 export interface ImageFromDB {
 	faces: Face[];
 	imageId: string;

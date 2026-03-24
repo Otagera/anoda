@@ -28,8 +28,10 @@ export const createElysiaApp = async () => {
 		createBullBoard({
 			queues: [
 				new BullMQAdapter(queueServices.defaultQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.imageOptimizationQueueLib.getQueue()),
 				new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
 				new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
 			],
 			serverAdapter: serverAdapter,
 		});
@@ -37,10 +39,22 @@ export const createElysiaApp = async () => {
 		bullBoardPlugin = await serverAdapter.registerPlugin();
 	}
 
+	eventEmitter.setMaxListeners(100);
+
 	const app = new Elysia()
+		.onBeforeHandle(({ request, body }) => {
+			console.log(
+				`[${new Date().toISOString()}] ${request.method} ${request.url}`,
+			);
+			if (body && request.url.includes("/auth/signup")) {
+				const debugBody = { ...(body as any) };
+				if (debugBody.password) debugBody.password = "***";
+				console.log("Request Body:", debugBody);
+			}
+		})
 		.onAfterHandle(({ request, set }) => {
-			if (set.status === 500) {
-				console.log(`[500] ${request.method} ${request.url}`);
+			if (set.status >= 400) {
+				console.log(`[${set.status}] ${request.method} ${request.url}`);
 			}
 		})
 		.use(cors())
@@ -55,8 +69,19 @@ export const createElysiaApp = async () => {
 		.error({
 			AUTH_ERROR: AuthError,
 		})
-		.onError(({ code, error, set }) => {
-			console.error(`Elysia Error [${code}]:`, error);
+		.onError(({ code, error, set, request }) => {
+			console.error(`!!! Elysia Error Catch !!!`);
+			console.error(`Route: ${request.method} ${request.url}`);
+			console.error(`Code: ${code}`);
+			console.error(`Error Name: ${error.name}`);
+			console.error(`Error Message: ${error.message}`);
+			if (error.stack) {
+				console.error("Stack Trace:");
+				console.error(error.stack);
+			} else {
+				console.error("No stack trace available for this error.");
+				console.error("Error Object:", error);
+			}
 
 			if (code === "AUTH_ERROR" || error instanceof AuthError) {
 				set.status = 401;
@@ -106,18 +131,59 @@ export const createElysiaApp = async () => {
 				.use(peopleRoutes),
 		)
 		.get("/", () => "Face Search Backend is running with Elysia!")
-		.get("/api/v1/events", () => {
-			return sse((stream) => {
-				const handler = (data: any) => {
-					stream.send(data);
-				};
+		.get(
+			"/api/v1/events",
+			({ signal, set }) => {
+				set.headers["Content-Type"] = "text/event-stream";
+				set.headers["Cache-Control"] = "no-cache";
+				set.headers.Connection = "keep-alive";
 
-				eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+				return sse(
+					new ReadableStream({
+						start(controller) {
+							const handler = (data: any) => {
+								try {
+									const sseData = `data: ${JSON.stringify(data)}\n\n`;
+									controller.enqueue(new TextEncoder().encode(sseData));
+								} catch (_e) {
+									// Controller might be closed
+								}
+							};
 
-				// In Elysia, cleanup is often handled via stream.close or automatic detection
-				// For now, we remove the incorrect .on('close') which was causing the 500 error
-			});
-		});
+							eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+
+							const heartbeat = setInterval(() => {
+								handler({
+									type: "heartbeat",
+									timestamp: new Date().toISOString(),
+								});
+							}, 30000);
+
+							const cleanup = () => {
+								clearInterval(heartbeat);
+								eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
+								try {
+									controller.close();
+								} catch (_e) {}
+								console.log("SSE connection cleaned up.");
+							};
+
+							if (signal.aborted) {
+								cleanup();
+							} else {
+								signal.addEventListener("abort", cleanup, { once: true });
+							}
+						},
+					}),
+				);
+			},
+			{
+				detail: {
+					summary: "SSE Events Stream",
+					description: "Real-time updates for image processing",
+				},
+			},
+		);
 
 	return app;
 };

@@ -3,7 +3,6 @@ import {
 	AlbumImages,
 	Albums,
 	baseURL,
-	closeServerAsync,
 	Faces,
 	HTTP_STATUS_CODES,
 	Images,
@@ -30,7 +29,7 @@ let testUserId;
 let testAlbumId;
 
 beforeAll(async () => {
-	const common = require("../../common");
+	const _common = require("../../common");
 	agent = request.agent();
 
 	// Cleanup existing test user if present

@@ -2,7 +2,6 @@ import {
 	AlbumImages,
 	Albums,
 	baseURL,
-	closeServerAsync,
 	HTTP_STATUS_CODES,
 	Images,
 	request,
@@ -19,7 +18,7 @@ let authToken;
 let testUserId;
 
 beforeAll(async () => {
-	const common = require("../../common");
+	const _common = require("../../common");
 	agent = request.agent();
 
 	// Cleanup existing test user if present

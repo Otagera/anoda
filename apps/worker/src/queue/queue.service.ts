@@ -14,6 +14,14 @@ const faceSearchQueue = new Queue(
 	BULL_QUEUE_NAMES.FACE_SEARCH,
 	queueConnectionConfig,
 );
+const imageOptimizationQueue = new Queue(
+	BULL_QUEUE_NAMES.IMAGE_OPTIMIZATION,
+	queueConnectionConfig,
+);
+const faceClusteringQueue = new Queue(
+	BULL_QUEUE_NAMES.FACE_CLUSTERING,
+	queueConnectionConfig,
+);
 
 // The lib that contain adding the job and getting the queue
 export class QueueLib {
@@ -35,11 +43,15 @@ class QueueServices {
 	defaultQueueLib;
 	faceRecognitionQueueLib;
 	faceSearchQueueLib;
+	imageOptimizationQueueLib;
+	faceClusteringQueueLib;
 
 	constructor() {
 		this.defaultQueueLib = new QueueLib(defaultQueue);
 		this.faceRecognitionQueueLib = new QueueLib(faceRecognitionQueue);
 		this.faceSearchQueueLib = new QueueLib(faceSearchQueue);
+		this.imageOptimizationQueueLib = new QueueLib(imageOptimizationQueue);
+		this.faceClusteringQueueLib = new QueueLib(faceClusteringQueue);
 	}
 }
 

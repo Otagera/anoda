@@ -124,12 +124,14 @@ Redis will be used as a caching layer to improve query performance.
 ### Implementation Details
 
 -   **Tech Stack:**
-    -   Server: TypeScript (Bun, ElysiaJS)
+    -   Server: TypeScript (Bun, ElysiaJS) - **Fully Migrated from Express**
     -   Client: TypeScript, ReactJS, React Router DOM, Tailwind CSS
 - **Python**:
-    - Python will be used for the face recognition script.
+    - Python (FastAPI/Uvicorn) is used for the face recognition service.
 -   **Configuration:**
-    -   Docker will be used to deploy the application. There will be two main containers: one for the server application (Bun with ElysiaJS) and one for the client application (React). Both containers will be initialized when the docker application is deployed. The python application will be available in the server container, so the face recognition script can be used.
+    -   Docker (Compose) is used to deploy the entire stack.
+    -   **Base Image:** `oven/bun:1.2` for optimized monorepo support.
+    -   **Services:** `db` (pgvector), `redis`, `ai_service` (Python), `api` (Elysia), `worker` (Bun), and `client` (Vite/React).
 
 ### Project Milestones
 
@@ -229,7 +231,7 @@ Redis will be used as a caching layer to improve query performance.
     * 10.2 Face search Frontend: Implement face search on the frontend.
     * 10.3 Face search Endpoints: Test all face search endpoints.
     * 10.4 Face search UI: test all face search views.
-* Status: Done
+* Status: Done.
 
 **Milestone 11: Framework Migration (Express.js to ElysiaJS)**
 
@@ -240,9 +242,10 @@ Redis will be used as a caching layer to improve query performance.
     * 11.4 Migrate Album Management routes: Done.
     * 11.5 Migrate Image Management routes: Done.
     * 11.6 Migrate Face Management routes: Done.
-    * 11.7 Replace Joi with TypeBox for validation: Pending.
-    * 11.8 Verify all migrated endpoints with tests: Pending.
-* Status: In Progress.
+    * 11.7 Replace Joi with TypeBox for validation: Pending (Standardized Joi usage within Elysia context for now).
+    * 11.8 Verify all migrated endpoints with tests: Done.
+    * 11.9 Retire legacy Express entry points (`index.ts`, `app.ts`): **Done**.
+* Status: Done.
 
 **Milestone 12: Advanced Features**
 
@@ -252,6 +255,20 @@ Redis will be used as a caching layer to improve query performance.
     * 12.3 Real-time Updates: Implement SSE for live status updates. Done.
     * 12.4 Background Uploads: Implement persistent uploads with IndexedDB. Done.
     * 12.5 Image Optimization: Implement WebP conversion worker. Done.
+    * 12.6 Selfie Search: Implement camera-based guest search for shared albums. Done.
+    * 12.7 Improved Auth UI: Redesign Login/Signup and add Forgot Password flow. Done.
+    * 12.8 Fix Album Pagination: Ensure infinite scroll respects limits. Done.
+* Status: Done.
+* Status: Done.
+
+**Milestone 13: UI/UX Overhaul & Finalization**
+
+* Tasks:
+    * 13.1 Cinematic & Stealth Design: Standardize Zinc-950/Indigo-500 palette. Done.
+    * 13.2 Intelligent Bento Grid: Implement content-aware layout using resolution and aspect ratio. Done.
+    * 13.3 Theatre Mode: Major refactor of Image Modal with carousel, side panel, and keyboard navigation. Done.
+    * 13.4 Feature Parity: Bring shared views up to the same quality as owner views. Done.
+    * 13.5 Data Integrity: Fix nested data access across all main views. **Done**.
 * Status: Done.
 
 ### Expected Deliverables

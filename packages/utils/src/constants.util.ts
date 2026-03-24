@@ -22,6 +22,8 @@ export const BULL_QUEUE_NAMES = {
 	DEFAULT: "default",
 	FACE_RECOGNITION: "face_recognition",
 	FACE_SEARCH: "face_search",
+	IMAGE_OPTIMIZATION: "image_optimization",
+	FACE_CLUSTERING: "face_clustering",
 };
 export const DEGREES = ["Bsc.", "B.A", "LLB.", "MSc.", "M.A."];
 export const LEVELS = ["Undergraduate", "Postgraduate"];

@@ -9,16 +9,23 @@ import { getAlbumLinks } from "./albums.lib";
 const spec = joi.object({
 	album_id: joi.string().required(),
 	user_id: joi.string().required(),
+	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
+	nextCursor: joi.string().optional(),
+	paginationType: joi.string().optional(),
 });
 
 const aliasSpec = {
 	request: {
 		albumId: "album_id",
 		userId: "user_id",
+		limit: "limit",
+		nextCursor: "nextCursor",
+		paginationType: "paginationType",
 	},
 	response: {
 		album_id: "albumId",
 		imagesInAlbum: "imagesInAlbum",
+		pagination: "pagination",
 	},
 	image: {
 		image_id: "imageId",
@@ -37,12 +44,23 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	const imagesInAlbum = await getAlbumLinks(params);
+	const { limit, nextCursor, paginationType, ...where } = params;
+	const take = limit ? Number.parseInt(String(limit), 10) : undefined;
+	const options = {
+		take,
+		cursor: nextCursor ? { album_images_id: nextCursor } : undefined,
+		skip: nextCursor ? 1 : undefined,
+	};
+
+	const imagesInAlbum = await getAlbumLinks(where, options);
 
 	if (!imagesInAlbum || imagesInAlbum.length === 0) {
 		return aliaserSpec(aliasSpec.response, {
 			imagesInAlbum: [],
 			album_id: params.album_id,
+			pagination: {
+				nextCursor: null,
+			},
 		});
 	}
 
@@ -64,9 +82,19 @@ const service = async (data) => {
 		};
 	});
 
+	// Determine next cursor
+	let newNextCursor = null;
+	if (take && imagesInAlbum.length === take) {
+		const lastItem = imagesInAlbum[imagesInAlbum.length - 1];
+		newNextCursor = lastItem.album_images_id;
+	}
+
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		imagesInAlbum: aliasImagesInAlbum,
 		album_id: params.album_id,
+		pagination: {
+			nextCursor: newNextCursor,
+		},
 	});
 	return aliasRes;
 };

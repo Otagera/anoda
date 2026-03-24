@@ -8,7 +8,7 @@ export const PaginationTypeEnum = {
 	OFFSET: "offset",
 };
 
-const paginationAbstract = async (model, { _page, _limit, filter }) => {
+const _paginationAbstract = async (model, { _page, _limit, filter }) => {
 	const page = parseInt(_page, 10) || 1;
 	const limit = parseInt(_limit, 10) || 25;
 	const startIndex = (page - 1) * limit;
@@ -45,7 +45,7 @@ const buildQuery = (params) => {
 		const to_date = dayjs.utc(params.to);
 
 		// Check if 'to' date is in the past
-		if (to_date && to_date.isBefore(from_date, "day")) {
+		if (to_date?.isBefore(from_date, "day")) {
 			throw new ValidationError('The "to" date must not be in the past');
 		}
 

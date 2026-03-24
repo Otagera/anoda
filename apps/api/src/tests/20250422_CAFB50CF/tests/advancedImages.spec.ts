@@ -2,7 +2,6 @@ import path from "node:path";
 import {
 	Albums,
 	baseURL,
-	closeServerAsync,
 	Faces,
 	HTTP_STATUS_CODES,
 	Images,
@@ -26,10 +25,10 @@ const sampleImagePath = path.join(__dirname, "..", "assets", "sample.jpg");
 let agent;
 let authToken;
 let testUserId;
-let testAlbumId;
+let _testAlbumId;
 
 beforeAll(async () => {
-	const common = require("../../common");
+	const _common = require("../../common");
 	agent = request.agent();
 
 	// Cleanup existing test user if present
@@ -58,7 +57,7 @@ beforeAll(async () => {
 	if (albumRes.status !== HTTP_STATUS_CODES.CREATED || !albumRes.body.data.id) {
 		throw new Error("Failed to create test album for image tests.");
 	}
-	testAlbumId = albumRes.body.data.id;
+	_testAlbumId = albumRes.body.data.id;
 });
 
 afterAll(async () => {

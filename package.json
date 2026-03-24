@@ -6,12 +6,18 @@
 		"packages/*"
 	],
 	"scripts": {
-		"dev": "npm run dev --workspace=apps/client",
-		"dev:api": "npm run dev --workspace=apps/api",
-		"dev:worker": "npm run dev --workspace=apps/worker"
+		"start": "bun run --cwd apps/client start",
+		"start:api": "bun run --cwd apps/api start",
+		"start:worker": "bun run --cwd apps/worker start",
+		"dev": "bun run --cwd apps/client dev",
+		"dev:api": "bun run --cwd apps/api dev",
+		"dev:worker": "bun run --cwd apps/worker dev",
+		"dev:ai": "./venv/bin/uvicorn ai_service:app --port 8000 --reload --app-dir apps/ai",
+		"dev:all": "concurrently -c \"blue,green,magenta,yellow\" -n \"CLIENT,API,WORKER,AI\" \"bun run dev\" \"bun run dev:api\" \"bun run dev:worker\" \"bun run dev:ai\""
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.11"
+		"@biomejs/biome": "2.3.11",
+		"concurrently": "^9.2.1"
 	},
 	"dependencies": {
 		"@bull-board/elysia": "^6.16.2",

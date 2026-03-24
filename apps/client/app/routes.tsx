@@ -2,12 +2,11 @@ import type { RouteObject } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 import App, { ErrorBoundary as AppErrorBoundary } from "./root";
 import Album from "./routes/album";
+import ForgotPassword from "./routes/forgot-password";
 import Home from "./routes/home";
-import ImageDetail from "./routes/imageDetail";
 import Login from "./routes/login";
 import Search from "./routes/search";
 import SharedAlbum from "./routes/sharedAlbum";
-import SharedImageDetail from "./routes/sharedImageDetail";
 import Signup from "./routes/signup";
 import Welcome from "./welcome/Welcome";
 
@@ -30,12 +29,12 @@ export default [
 				element: <Signup />,
 			},
 			{
-				path: "share/:token",
-				element: <SharedAlbum />,
+				path: "forgot-password",
+				element: <ForgotPassword />,
 			},
 			{
-				path: "share/:token/images/:imageId",
-				element: <SharedImageDetail />,
+				path: "share/:token",
+				element: <SharedAlbum />,
 			},
 			{
 				element: <PrivateRoute />,
@@ -51,10 +50,6 @@ export default [
 					{
 						path: "search",
 						element: <Search />,
-					},
-					{
-						path: "images/:imageId",
-						element: <ImageDetail />,
 					},
 				],
 			},

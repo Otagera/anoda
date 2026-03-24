@@ -1,5 +1,5 @@
+import path from "node:path";
 import dotenv from "dotenv";
-import path from "path";
 
 dotenv.config();
 const config = {
@@ -56,6 +56,7 @@ const config = {
 			"bin",
 			"python",
 		),
+		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
 	},
 	test: {
 		db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,
@@ -90,6 +91,7 @@ const config = {
 			"bin",
 			"python",
 		),
+		ai_service_url: process.env.TEST_AI_SERVICE_URL || "http://localhost:8000",
 	},
 	production: {
 		db_url: process.env.DB_URL,
@@ -122,6 +124,7 @@ const config = {
 			app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
 			api_secret: process.env.CHATTERBOX_API_SECRET,
 		},
+		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
 	},
 };
 

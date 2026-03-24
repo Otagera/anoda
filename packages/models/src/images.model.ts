@@ -301,8 +301,6 @@ const deleteImagesByIdsQuery = async (imageIds) => {
 			prisma.$queryRaw`DELETE FROM "faces" WHERE image_id = ANY(${imageIds}) RETURNING *;`,
 			prisma.$queryRaw`DELETE FROM "images" WHERE image_id = ANY(${imageIds}) RETURNING *;`,
 		]);
-	} catch (e) {
-		throw e;
 	} finally {
 	}
 };
@@ -313,8 +311,6 @@ const deleteAllImagesQuery = async () => {
 			prisma.$queryRaw`DELETE FROM "faces" RETURNING imageId;`,
 			prisma.$queryRaw`DELETE FROM "images" RETURNING imageId;`,
 		]);
-	} catch (e) {
-		throw e;
 	} finally {
 	}
 };

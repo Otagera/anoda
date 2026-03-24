@@ -1,4 +1,4 @@
-import React, {
+import {
 	createContext,
 	type ReactNode,
 	useContext,
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		try {
 			const response = await apiLogin(credentials);
 
-			if (response && response.data && response.data.accessToken) {
+			if (response?.data?.accessToken) {
 				localStorage.setItem("token", response.data.accessToken);
 				setToken(response.data.accessToken);
 				// Optionally, fetch user data here if your API returns it separately
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const signup = async (credentials: { email: string; password: string }) => {
 		try {
 			const response = await apiSignup(credentials);
-			if (response && response.data && response.data.accessToken) {
+			if (response?.data?.accessToken) {
 				localStorage.setItem("token", response.data.accessToken);
 				setToken(response.data.accessToken);
 				// Optionally, fetch user data here

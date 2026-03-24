@@ -2,9 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
 import { uploadImages } from "~/utils/api";
-// import type { ActionFunctionArgs } from "react-router";
-// import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
-import api from "~/utils/axios";
 
 // export const action = async ({ request }: ActionFunctionArgs) => {
 // 	const uploadHandler = async (fileUpload: FileUpload) => {

@@ -58,7 +58,7 @@ const searchFaces = async ({
       SELECT
         f.face_id,
         (
-          SELECT sqrt(sum(pow(u1.val - u2.val, 2)))
+          SELECT 1.0 - (SUM(u1.val * u2.val) / (SQRT(SUM(u1.val * u1.val)) * SQRT(SUM(u2.val * u2.val))))
           FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
           JOIN unnest($2::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
         ) as distance
@@ -114,6 +114,81 @@ const searchFaces = async ({
 	return (await prisma.$queryRawUnsafe(query, ...params)) as any[];
 };
 
+const searchFacesByEmbedding = async ({
+	embedding,
+	albumId,
+	threshold = 0.8,
+	limit = 10,
+	imageIds,
+}: {
+	embedding: number[];
+	albumId?: string;
+	threshold?: number;
+	limit?: number;
+	imageIds?: string[];
+}) => {
+	const params = [embedding, threshold, limit];
+
+	let query = `
+    WITH distances AS (
+      SELECT
+        f.face_id,
+        (
+          SELECT 1.0 - (SUM(u1.val * u2.val) / (SQRT(SUM(u1.val * u1.val)) * SQRT(SUM(u2.val * u2.val))))
+          FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
+          JOIN unnest($1::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
+        ) as distance
+      FROM
+        faces f
+    ),
+    ranked_faces AS (
+      SELECT
+        f.face_id,
+        f.image_id,
+        i.image_path,
+        f.bounding_box,
+        d.distance,
+        ROW_NUMBER() OVER (PARTITION BY f.image_id ORDER BY d.distance ASC) as rn
+      FROM
+        faces f
+      JOIN
+        images i ON f.image_id = i.image_id
+      JOIN
+        distances d ON f.face_id = d.face_id
+  `;
+
+	const whereClauses = ["d.distance <= $2"];
+	if (albumId) {
+		params.push(albumId);
+		whereClauses.push(
+			`i.image_id IN (SELECT image_id FROM album_images WHERE album_id = $${params.length}::uuid)`,
+		);
+	}
+
+	if (imageIds && imageIds.length > 0) {
+		params.push(imageIds);
+		whereClauses.push(`i.image_id = ANY($${params.length}::uuid[])`);
+	}
+
+	query += ` WHERE ${whereClauses.join(" AND ")}`;
+
+	query += `
+    )
+    SELECT
+      face_id as "faceId",
+      image_id as "imageId",
+      image_path as "imagePath",
+      bounding_box as "boundingBox",
+      distance
+    FROM ranked_faces
+    WHERE rn = 1
+    ORDER BY distance ASC
+    LIMIT $3;
+  `;
+
+	return (await prisma.$queryRawUnsafe(query, ...params)) as any[];
+};
+
 const updateFacePerson = async (face_id: number, person_id: string | null) => {
 	return await prisma.faces.update({
 		where: {
@@ -128,6 +203,7 @@ const updateFacePerson = async (face_id: number, person_id: string | null) => {
 export {
 	fetchFaceById,
 	searchFaces,
+	searchFacesByEmbedding,
 	createNewFace,
 	deleteFacesByImageId,
 	updateFacePerson,

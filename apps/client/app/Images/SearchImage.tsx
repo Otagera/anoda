@@ -17,7 +17,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 const SearchImage = ({ actionData }: Route.ComponentProps) => {
-	const [file, setFile] = useState<File | null>(null);
+	const [_file, setFile] = useState<File | null>(null);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files) {

@@ -1,5 +1,6 @@
 import type React from "react";
-import { type UploadTask, useUpload } from "../utils/UploadContext";
+import { useEffect } from "react";
+import { useUpload } from "../utils/UploadContext";
 
 export const UploadManager: React.FC = () => {
 	const {
@@ -18,34 +19,49 @@ export const UploadManager: React.FC = () => {
 	const activeCount = tasks.filter(
 		(t) => t.status === "uploading" || t.status === "pending",
 	).length;
-	const errorCount = tasks.filter((t) => t.status === "error").length;
+	const _errorCount = tasks.filter((t) => t.status === "error").length;
+
+	useEffect(() => {
+		if (activeCount === 0) {
+			const timeout = setTimeout(() => {
+				setIsManagerOpen(false);
+			}, 3000);
+			return () => clearTimeout(timeout);
+		}
+	}, [activeCount, setIsManagerOpen]);
+
+	const clearCompleted = () => {
+		tasks
+			.filter((t) => t.status === "completed")
+			.forEach((t) => removeTask(t.id));
+	};
 
 	return (
 		<div
-			className={`fixed bottom-4 right-4 z-[60] w-80 bg-white dark:bg-gray-800 shadow-2xl rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${isManagerOpen ? "max-h-[32rem]" : "max-h-14"}`}
+			className={`fixed bottom-6 right-6 z-[60] w-80 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-2xl rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-500 overflow-hidden ${isManagerOpen ? "max-h-[32rem]" : "max-h-14"}`}
 		>
 			{/* Header */}
 			<div
-				className="flex items-center justify-between p-4 cursor-pointer border-b border-gray-100 dark:border-gray-700"
+				className="flex items-center justify-between p-4 cursor-pointer border-b border-zinc-100/50 dark:border-zinc-800/50 hover:bg-black/5 transition-colors"
 				onClick={() => setIsManagerOpen(!isManagerOpen)}
 			>
 				<div className="flex items-center space-x-2">
 					<div
-						className={`w-2 h-2 rounded-full ${activeCount > 0 ? "bg-blue-500 animate-pulse" : "bg-green-500"}`}
+						className={`w-2 h-2 rounded-full ${activeCount > 0 ? "bg-indigo-500 animate-pulse" : "bg-green-500"}`}
 					/>
-					<span className="font-semibold text-sm text-gray-900 dark:text-white">
+					<span className="font-semibold text-sm text-zinc-900 dark:text-white">
 						{activeCount > 0
 							? `Uploading ${activeCount} photos...`
 							: "Uploads Complete"}
 					</span>
 				</div>
 				<div className="flex items-center space-x-2">
-					<span className="text-xs text-gray-500 dark:text-gray-400">
+					<span className="text-xs text-zinc-500 dark:text-zinc-400">
 						{completedCount}/{tasks.length}
 					</span>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						className={`h-4 w-4 transition-transform ${isManagerOpen ? "rotate-180" : ""}`}
+						className={`h-4 w-4 text-zinc-400 transition-transform ${isManagerOpen ? "rotate-180" : ""}`}
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -58,6 +74,25 @@ export const UploadManager: React.FC = () => {
 						/>
 					</svg>
 				</div>
+				<button
+					onClick={() => clearCompleted()}
+					className="text-xs text-zinc-500 hover:text-red-500 transition-colors"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={2}
+							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+						/>
+					</svg>
+				</button>
 			</div>
 
 			{/* Task List */}
@@ -66,17 +101,17 @@ export const UploadManager: React.FC = () => {
 					{tasks.map((task) => (
 						<div
 							key={task.id}
-							className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg group"
+							className="p-3 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-xl group hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-colors"
 						>
 							<div className="flex items-center justify-between mb-1">
-								<span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[140px]">
+								<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[140px]">
 									{task.fileName}
 								</span>
 								<div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
 									{task.status === "uploading" && (
 										<button
 											onClick={() => pauseUpload(task.id)}
-											className="p-1 text-gray-500 hover:text-blue-600"
+											className="p-1 text-zinc-500 hover:text-indigo-500"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +132,7 @@ export const UploadManager: React.FC = () => {
 									{task.status === "paused" && (
 										<button
 											onClick={() => resumeUpload(task.id)}
-											className="p-1 text-gray-500 hover:text-green-600"
+											className="p-1 text-zinc-500 hover:text-green-500"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -118,7 +153,7 @@ export const UploadManager: React.FC = () => {
 									{task.status === "error" && (
 										<button
 											onClick={() => retryUpload(task.id)}
-											className="p-1 text-gray-500 hover:text-blue-600"
+											className="p-1 text-zinc-500 hover:text-indigo-500"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +173,7 @@ export const UploadManager: React.FC = () => {
 									)}
 									<button
 										onClick={() => removeTask(task.id)}
-										className="p-1 text-gray-500 hover:text-red-600"
+										className="p-1 text-zinc-500 hover:text-red-500"
 									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
@@ -160,16 +195,16 @@ export const UploadManager: React.FC = () => {
 
 							{/* Status indicator */}
 							<div className="flex items-center space-x-2">
-								<div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+								<div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
 									<div
-										className={`h-full transition-all duration-300 ${task.status === "error" ? "bg-red-500" : task.status === "completed" ? "bg-green-500" : "bg-blue-500"}`}
+										className={`h-full transition-all duration-300 ${task.status === "error" ? "bg-red-500" : task.status === "completed" ? "bg-green-500" : "bg-indigo-500"}`}
 										style={{
 											width: `${task.status === "completed" ? 100 : task.status === "uploading" ? 45 : 0}%`,
 										}}
 									/>
 								</div>
 								<span
-									className={`text-[10px] uppercase font-bold ${task.status === "error" ? "text-red-500" : task.status === "completed" ? "text-green-500" : "text-blue-500"}`}
+									className={`text-[10px] uppercase font-bold ${task.status === "error" ? "text-red-500" : task.status === "completed" ? "text-green-500" : "text-indigo-500"}`}
 								>
 									{task.status}
 								</span>

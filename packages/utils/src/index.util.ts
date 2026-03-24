@@ -1,4 +1,4 @@
-import url from "url"; // Renamed from 'url' to 'urlModule' to avoid conflict with 'url' variable in generate_login_url
+import url from "node:url"; // Renamed from 'url' to 'urlModule' to avoid conflict with 'url' variable in generate_login_url
 import { v4 as uuidv4 } from "uuid";
 import config from "../../config/src/index.config.ts";
 

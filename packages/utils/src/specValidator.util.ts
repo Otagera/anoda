@@ -1,5 +1,4 @@
 import type { ObjectSchema, ValidationOptions } from "joi";
-import mongoose from "mongoose";
 
 export const validateSpec = (
 	spec: ObjectSchema,
@@ -37,8 +36,4 @@ export const aliaserSpec = (
 	});
 
 	return mappedObj;
-};
-
-export const isValidObjectId = (id: string) => {
-	return mongoose.Types.ObjectId.isValid(id);
 };

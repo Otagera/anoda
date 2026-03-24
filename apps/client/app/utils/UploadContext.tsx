@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { del, get, set } from "idb-keyval";
+import { get, set } from "idb-keyval";
 import type React from "react";
 import {
 	createContext,

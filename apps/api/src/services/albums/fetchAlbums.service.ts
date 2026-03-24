@@ -1,4 +1,5 @@
 import joi from "joi";
+import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
@@ -22,6 +23,7 @@ const aliasSpec = {
 		created_by: "userId",
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
+		coverImages: "coverImages",
 	},
 };
 
@@ -31,8 +33,21 @@ const service = async (data) => {
 
 	const albums = await getAlbums(created_by);
 
+	const mappedAlbums = albums.map((album: any) => {
+		const coverImages =
+			album.album_images
+				?.map((ai: any) => ai.images?.image_path)
+				.filter(Boolean)
+				.map(normalizeImagePath) || [];
+
+		return {
+			...album,
+			coverImages,
+		};
+	});
+
 	const aliasRes = aliaserSpec(aliasSpec.response, {
-		albums: albums.map((album) => aliaserSpec(aliasSpec.album, album)),
+		albums: mappedAlbums.map((album) => aliaserSpec(aliasSpec.album, album)),
 	});
 	return aliasRes;
 };
