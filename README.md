@@ -17,6 +17,16 @@ Anoda Facematch is a photo management application that allows users to upload ph
 - **Image Optimization:** Automatically generates optimized WebP versions of images for fast display.
 - **Responsive UI:** Modern, responsive interface built with React and Tailwind CSS.
 
+## Project Structure
+
+Anoda Facematch is a monorepo managed with [Bun Workspaces](https://bun.sh/docs/install/workspaces).
+- **`apps/`**: Contains the runnable services.
+  - `api`: The core backend built with Elysia JS.
+  - `client`: The frontend built with React, Vite, and Tailwind CSS.
+  - `ai`: The Python/FastAPI service for generating face embeddings.
+  - `worker`: The Bun background processor for image optimization and queues.
+- **`packages/`**: Contains shared libraries and domain models (e.g., `@anoda/models`, `@anoda/auth`) to separate database logic and utilities from the application layer.
+
 ## Installation
 
 ### Prerequisites

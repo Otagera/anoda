@@ -1,50 +1,57 @@
-# React + TypeScript + Vite
+# Anoda Facematch - Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend application for Anoda Facematch, built with React, Vite, and Tailwind CSS. It provides the user interface for uploading, managing, and searching through photos and recognized faces.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Responsive Design**: Built with Tailwind CSS, utilizing a "Cinematic & Stealth" design system (Zinc-950/Indigo-500).
+- **Intelligent Bento Grid**: Content-aware layout adapting to image aspect ratios.
+- **Theatre Mode**: Immersive image viewing with carousel and side panel.
+- **Background Upload Manager**: A persistent queue (via IndexedDB) allows uploads to continue in the background, surviving page reloads.
+- **Real-time Updates**: Integrates Server-Sent Events (SSE) to update the UI instantly when the backend finishes processing an image.
+- **Shared Album Views**: Provides both owner-level and guest-level views for public shared albums.
+- **Selfie Search**: Uses the device camera to search for faces within a shared album.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Framework**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Routing**: [React Router](https://reactrouter.com/)
+- **Data Fetching & State**: Custom hooks utilizing the Fetch API and Context.
+- **Icons**: Lucide React
 
-- Configure the top-level `parserOptions` property like this:
+## Getting Started
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Prerequisites
+
+Ensure you have [Bun](https://bun.sh/) installed. This app is part of the Anoda Facematch monorepo, so dependencies should be installed from the root.
+
+### Development
+
+To start the Vite development server for the client app:
+
+```bash
+bun run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Alternatively, you can start it from the root of the monorepo:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+bun run dev:client
 ```
+
+This will run the frontend on port `5173` (by default). Ensure your API server is also running so that the client can communicate with it.
+
+### Build
+
+To create a production build:
+
+```bash
+bun run build
+```
+
+This will generate optimized static assets in the `dist` folder.
+
+## Environment Variables
+
+Make sure to configure the `.env` file appropriately (if applicable, typically falling back to the API on localhost:3000 during development).

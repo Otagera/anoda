@@ -80,7 +80,8 @@ Redis will be used as a caching layer to improve query performance.
 | Column Name       | Data Type       | Description                                                                     |
 | ------------------ | --------------- | ------------------------------------------------------------------------------- |
 | image\_id         | UUID (Primary)  | Unique identifier for the image                                                |
-| image\_path       | TEXT            | Path to the image (local or cloud)                                             |
+| image\_path       | TEXT            | Path to the original image (local or cloud)                                    |
+| optimized\_path   | TEXT            | Path to the optimized WebP image                                               |
 | upload\_date      | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)            |
 | update\_date      | TIMESTAMPTZ     | Date and time the image was last updated (default: `CURRENT_TIMESTAMP`)        |
 | original\_width   | INT             | Original width of the image                                                   |
@@ -92,9 +93,18 @@ Redis will be used as a caching layer to improve query performance.
 | ------------------ | --------------- | ------------------------------------------------------------------------------- |
 | face\_id          | SERIAL (Primary)| Unique identifier for the face                                                 |
 | image\_id         | UUID (Foreign)  | ID of the image containing this face (references `images.image_id`)            |
+| person\_id        | UUID (Foreign)  | ID of the person tagged in this face (references `people.person_id`)           |
 | embedding         | REAL[]          | Vector representation of the face                                              |
 | bounding\_box     | JSONB           | JSON object containing bounding box coordinates for the face                   |
 | processed\_time   | TIMESTAMPTZ     | Date and time the face was processed (default: `CURRENT_TIMESTAMP`)            |
+
+**Table: `people`**
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| person\_id        | UUID (Primary)  | Unique identifier for the person                                               |
+| name              | TEXT            | Name assigned to the person                                                    |
+| created\_at       | TIMESTAMPTZ     | Date and time the person was created (default: `CURRENT_TIMESTAMP`)            |
+| updated\_at       | TIMESTAMPTZ     | Date and time the person was last updated (default: `CURRENT_TIMESTAMP`)       |
 
 **Table: `albums`**
 | Column Name       | Data Type       | Description                                                                     |
@@ -104,6 +114,7 @@ Redis will be used as a caching layer to improve query performance.
 | created\_by       | UUID (Foreign)  | ID of the user who created the album (references `users.user_id`)              |
 | creation\_date    | TIMESTAMPTZ     | Date and time the album was created (default: `CURRENT_TIMESTAMP`)             |
 | shared\_link      | TEXT            | The generated link to share the album                                          |
+| share\_token      | TEXT (Unique)   | Token used to authenticate public access to shared albums                      |
 
 **Table: `album_images`**
 | Column Name       | Data Type       | Description                                                                     |
@@ -132,6 +143,16 @@ Redis will be used as a caching layer to improve query performance.
     -   Docker (Compose) is used to deploy the entire stack.
     -   **Base Image:** `oven/bun:1.2` for optimized monorepo support.
     -   **Services:** `db` (pgvector), `redis`, `ai_service` (Python), `api` (Elysia), `worker` (Bun), and `client` (Vite/React).
+
+### Monorepo Architecture
+
+The project has transitioned to a monorepo structure utilizing Bun workspaces to separate concerns and improve maintainability:
+-   **`apps/`**: Contains the runnable services.
+    -   `apps/api`: The core ElysiaJS backend.
+    -   `apps/client`: The React/Vite frontend.
+    -   `apps/ai`: The Python FastAPI face recognition service.
+    -   `apps/worker`: The Bun worker for background processing (e.g., image optimization).
+-   **`packages/`**: Contains shared libraries and domain logic used across apps (e.g., `@anoda/models`, `@anoda/auth`, `@anoda/utils`, `@anoda/config`). This architecture isolates database models and shared utility functions from the application layers.
 
 ### Project Milestones
 
