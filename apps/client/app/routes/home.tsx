@@ -116,20 +116,19 @@ const Home = () => {
 	};
 
 	return (
-		<MainContainer className="space-y-16">
+		<MainContainer className="space-y-14">
 			{/* Albums Section */}
 			<section>
 				<div className="flex justify-between items-center mb-8">
-					<h1 className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight flex items-center space-x-3">
-						<span className="w-2 h-8 bg-indigo-500 rounded-full" />
-						<span>My Albums</span>
+					<h1 className="text-xl md:text-2xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
+						Albums
 					</h1>
 					<button
 						type="button"
-						className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 transition-all font-bold shadow-lg shadow-indigo-500/25 active:scale-95 text-sm"
+						className="px-4 py-2 text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-sm"
 						onClick={() => setIsCreateModalOpen(true)}
 					>
-						Create New Album
+						New
 					</button>
 				</div>
 
@@ -138,32 +137,29 @@ const Home = () => {
 						<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
 					</div>
 				) : (
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+					<div className="grid grid-cols-2 md:grid-cols-3 gap-5">
 						{albumsData?.data?.albums?.map((album: any) => (
 							<div
 								key={album.id}
-								className="group relative bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl hover:border-indigo-500/30 transition-all duration-300"
+								className="group relative overflow-hidden"
 							>
 								<Link to={`/album/${album.id}`} className="block">
-									<div className="aspect-video bg-zinc-100 dark:bg-zinc-950 overflow-hidden relative">
+									<div className="aspect-square bg-zinc-100 dark:bg-zinc-900 overflow-hidden relative rounded-md">
 										<AlbumCover album={album} />
-										<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+										<div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 									</div>
-									<div className="p-5">
-										<h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-500 transition-colors truncate">
+									<div className="pt-2">
+										<h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 transition-colors truncate">
 											{album.albumName}
 										</h2>
-										<p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">
-											View Photos &rarr;
-										</p>
 									</div>
 								</Link>
 
 								{/* Album Actions Overlay */}
-								<div className="absolute top-3 right-3 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+								<div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
 									<button
 										type="button"
-										className="p-2 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 rounded-xl hover:text-indigo-500 transition-colors shadow-lg border border-zinc-200 dark:border-zinc-700"
+										className="p-1.5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-500 dark:text-zinc-300 rounded-md hover:text-zinc-900 dark:hover:text-white transition-colors"
 										onClick={() => {
 											setSelectedAlbum(album);
 											setAlbumName(album.albumName);
@@ -191,7 +187,7 @@ const Home = () => {
 									</button>
 									<button
 										type="button"
-										className="p-2 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 rounded-xl hover:text-red-500 transition-colors shadow-lg border border-zinc-200 dark:border-zinc-700"
+										className="p-1.5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-500 dark:text-zinc-300 rounded-md hover:text-red-500 transition-colors"
 										onClick={() => setConfirmDeleteAlbumId(album.id)}
 										title="Delete Album"
 									>
@@ -221,7 +217,7 @@ const Home = () => {
 			</section>
 
 			{/* All Photos Section */}
-			<section className="pt-8 border-t border-zinc-100 dark:border-zinc-800">
+			<section className="pt-10 border-t border-zinc-100 dark:border-zinc-900">
 				<ImagesList />
 			</section>
 

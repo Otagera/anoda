@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import JSZip from "jszip";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
 import { useSearchParams } from "react-router-dom";
 import { AddToAlbumModal } from "~/components/AddToAlbumModal";
@@ -10,7 +11,6 @@ import { CompactListView } from "~/components/CompactListView";
 import type { ImageFromDB } from "~/interface";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
-import { getBentoSpanClass } from "~/utils/bento";
 import ImageGridItem from "./ImageGridItem";
 import ImageModal from "./ImageModal";
 
@@ -187,23 +187,22 @@ const ImagesList: FC = () => {
 		);
 
 	return (
-		<div className="w-full space-y-6">
+		<div className="w-full space-y-8">
 			{/* View Controls */}
-			<div className="flex justify-between items-center px-4">
-				<h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center space-x-2">
-					<span className="w-1.5 h-5 bg-indigo-500 rounded-full" />
-					<span>All Photos</span>
-					<span className="ml-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] rounded-full border border-zinc-200 dark:border-zinc-700">
+			<div className="flex justify-between items-center">
+				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100 flex items-center space-x-2">
+					<span>Photos</span>
+					<span className="ml-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-[10px] rounded-full">
 						{images?.length || 0}
 					</span>
 				</h2>
-				<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-sm">
+				<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-full flex items-center">
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
 						className={`p-2 rounded-xl transition-all ${
 							viewMode === "grid"
-								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
+								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
 						}`}
 						title="Bento Grid"
@@ -225,7 +224,7 @@ const ImagesList: FC = () => {
 						onClick={() => setViewMode("list")}
 						className={`p-2 rounded-xl transition-all ${
 							viewMode === "list"
-								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
+								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
 						}`}
 						title="List View"
@@ -250,24 +249,16 @@ const ImagesList: FC = () => {
 			</div>
 
 			{viewMode === "grid" ? (
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
-					{images?.map((image, index) => {
+				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+					{images?.map((image) => {
 						const width = image.originalSize?.width || 0;
 						const height = image.originalSize?.height || 0;
 
-						// Determine if this specific image should be featured (e.g. exceptionally high res)
-						const area = width * height;
-						const isFeatured = area > 2000000;
-
-						const spanClass = getBentoSpanClass(
-							width,
-							height,
-							index,
-							isFeatured,
-						);
-
 						return (
-							<div key={image.imageId} className={`relative ${spanClass}`}>
+							<div
+								key={image.imageId}
+								className="relative aspect-square overflow-hidden rounded-md"
+							>
 								<ImageGridItem
 									image={{
 										id: image.imageId,
@@ -279,7 +270,7 @@ const ImagesList: FC = () => {
 									isSelected={selectedIds.has(image.imageId)}
 									onToggleSelect={toggleSelect}
 									selectionMode={selectedIds.size > 0}
-									className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
+									className="cursor-pointer rounded-md transition-opacity duration-300 hover:opacity-90 w-full h-full object-cover"
 									onClick={() => handleImageClick(image)}
 									onDelete={handleDeleteImage}
 								/>
@@ -288,7 +279,7 @@ const ImagesList: FC = () => {
 					})}
 				</div>
 			) : (
-				<div className="p-4">
+				<div>
 					<CompactListView
 						images={images || []}
 						selectedIds={selectedIds}
