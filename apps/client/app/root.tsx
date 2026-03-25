@@ -33,10 +33,10 @@ const Navbar = () => {
 
 	return (
 		<nav className="sticky top-0 z-50 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-200">
-			<div className="container mx-auto px-4 py-4 flex justify-between items-center">
-				<Link to="/" className="text-2xl font-bold text-indigo-500">
-					Anoda Facematch
-				</Link>
+			<div className="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex justify-between items-center">
+					<Link to="/" className="text-2xl font-bold text-indigo-500">
+						Anoda Facematch
+					</Link>
 				<div className="flex items-center space-x-4">
 					<ThemeToggle />
 					{isHydrated && isAuthenticated && (
@@ -79,11 +79,12 @@ export default function App() {
 							position="bottom-center"
 							toastOptions={{
 								style: {
-									background: "#18181b", // zinc-900
-									color: "#f4f4f5", // zinc-50
-									border: "1px solid #27272a", // zinc-800
+									background: "rgba(24, 24, 27, 0.62)",
+									color: "#f4f4f5",
+									border: "1px solid rgba(255,255,255,0.18)",
 									borderRadius: "1rem",
-									boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+									boxShadow: "0 20px 45px -14px rgba(0, 0, 0, 0.48)",
+									backdropFilter: "blur(14px) saturate(140%)",
 								},
 							}}
 						/>

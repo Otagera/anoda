@@ -11,6 +11,7 @@ import { CompactListView } from "~/components/CompactListView";
 import type { ImageFromDB } from "~/interface";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
+import { getBentoSpanClass } from "~/utils/bento";
 import ImageGridItem from "./ImageGridItem";
 import ImageModal from "./ImageModal";
 
@@ -189,14 +190,14 @@ const ImagesList: FC = () => {
 	return (
 		<div className="w-full space-y-8">
 			{/* View Controls */}
-			<div className="flex justify-between items-center">
+			<div className="flex justify-between items-center px-1">
 				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100 flex items-center space-x-2">
 					<span>Photos</span>
 					<span className="ml-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-[10px] rounded-full">
 						{images?.length || 0}
 					</span>
 				</h2>
-				<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-full flex items-center">
+				<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-full flex items-center gap-1">
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
@@ -249,15 +250,23 @@ const ImagesList: FC = () => {
 			</div>
 
 			{viewMode === "grid" ? (
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
-					{images?.map((image) => {
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 w-full auto-rows-[140px] md:auto-rows-[180px] grid-flow-dense">
+					{images?.map((image, index) => {
 						const width = image.originalSize?.width || 0;
 						const height = image.originalSize?.height || 0;
+						const area = width * height;
+						const isFeatured = area > 2000000;
+						const spanClass = getBentoSpanClass(
+							width,
+							height,
+							index,
+							isFeatured,
+						);
 
 						return (
 							<div
 								key={image.imageId}
-								className="relative aspect-square overflow-hidden rounded-md"
+								className={`relative overflow-hidden rounded-md ${spanClass}`}
 							>
 								<ImageGridItem
 									image={{
@@ -270,7 +279,7 @@ const ImagesList: FC = () => {
 									isSelected={selectedIds.has(image.imageId)}
 									onToggleSelect={toggleSelect}
 									selectionMode={selectedIds.size > 0}
-									className="cursor-pointer rounded-md transition-opacity duration-300 hover:opacity-90 w-full h-full object-cover"
+									className="cursor-pointer rounded-md transition-transform duration-300 hover:scale-[1.015] w-full h-full object-cover"
 									onClick={() => handleImageClick(image)}
 									onDelete={handleDeleteImage}
 								/>
