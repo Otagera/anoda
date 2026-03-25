@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
+import { MainContainer } from "~/components/MainContainer";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -130,19 +131,19 @@ const SharedAlbumPage = () => {
 
 	if (isLoading) {
 		return (
-			<div className="flex justify-center items-center h-screen bg-zinc-50 dark:bg-zinc-950">
+			<MainContainer className="flex justify-center items-center h-[60vh]">
 				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-			</div>
+			</MainContainer>
 		);
 	}
 
 	if (!albumResponse?.data) {
 		return (
-			<div className="flex flex-col items-center justify-center h-screen px-4 bg-zinc-50 dark:bg-zinc-950">
+			<MainContainer className="flex flex-col items-center justify-center h-[60vh] text-center">
 				<h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-4">
 					Album Not Found
 				</h1>
-				<p className="text-zinc-600 dark:text-zinc-400 mb-8 text-center max-w-md leading-relaxed">
+				<p className="text-zinc-600 dark:text-zinc-400 mb-8 max-w-md leading-relaxed">
 					This shared link may have expired or is invalid. Please contact the
 					album owner for a new link.
 				</p>
@@ -152,124 +153,122 @@ const SharedAlbumPage = () => {
 				>
 					Return Home
 				</Link>
-			</div>
+			</MainContainer>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 antialiased font-sans">
-			<div className="container mx-auto px-4 py-12">
-				<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
-					<div className="space-y-2">
-						<div className="flex items-center space-x-2">
-							<span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
-								Shared Album
-							</span>
-							{filteredImageIds && (
-								<button
-									type="button"
-									onClick={() => setFilteredIds(null)}
-									className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded text-[10px] font-bold uppercase hover:bg-zinc-200 transition-colors cursor-pointer"
-								>
-									Clear Filter &times;
-								</button>
-							)}
-						</div>
-						<h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
-							{albumData.albumName}
-						</h1>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-							{filteredImageIds
-								? `Showing ${displayedImages.length} photos of you`
-								: "Organized by the owner for you"}
-						</p>
-					</div>
-
-					<div className="flex items-center space-x-3 w-full md:w-auto">
-						<button
-							type="button"
-							className={`flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl border transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl ${
-								filteredImageIds
-									? "bg-indigo-600 text-white border-indigo-500"
-									: "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
-							}`}
-							onClick={() => setIsSelfieModalOpen(true)}
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								className={`h-5 w-5 ${filteredImageIds ? "text-white" : "text-indigo-500"}`}
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								role="img"
-								aria-label="Find My Face"
+		<MainContainer>
+			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
+				<div className="space-y-2">
+					<div className="flex items-center space-x-2">
+						<span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+							Shared Album
+						</span>
+						{filteredImageIds && (
+							<button
+								type="button"
+								onClick={() => setFilteredIds(null)}
+								className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded text-[10px] font-bold uppercase hover:bg-zinc-200 transition-colors cursor-pointer"
 							>
-								<title>Find My Face</title>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-								/>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-								/>
-							</svg>
-							<span>{filteredImageIds ? "Change Photo" : "Find My Face"}</span>
-						</button>
+								Clear Filter &times;
+							</button>
+						)}
 					</div>
+					<h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+						{albumData.albumName}
+					</h1>
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+						{filteredImageIds
+							? `Showing ${displayedImages.length} photos of you`
+							: "Organized by the owner for you"}
+					</p>
 				</div>
 
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
-					{displayedImages.map((image: any, index: number) => {
-						const width = image.originalSize?.width || 0;
-						const height = image.originalSize?.height || 0;
-
-						// Determine if this specific image should be featured (e.g. exceptionally high res)
-						const area = width * height;
-						const isFeatured = area > 2000000;
-
-						const spanClass = getBentoSpanClass(
-							width,
-							height,
-							index,
-							isFeatured,
-						);
-
-						return (
-							<div key={image.imageId} className={`relative ${spanClass}`}>
-								<ImageGridItem
-									image={{
-										id: image.imageId,
-										width: width,
-										height: height,
-										url: image.imagePath,
-										alt: image.imageId,
-									}}
-									onDelete={() => {}}
-									onToggleSelect={toggleSelect}
-									isSelected={selectedIds.has(image.imageId)}
-									selectionMode={selectedIds.size > 0}
-									shared={true}
-									className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
-									onClick={() => setSelectedImage(image)}
-								/>
-							</div>
-						);
-					})}
+				<div className="flex items-center space-x-3 w-full md:w-auto">
+					<button
+						type="button"
+						className={`flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl border transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl ${
+							filteredImageIds
+								? "bg-indigo-600 text-white border-indigo-500"
+								: "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
+						}`}
+						onClick={() => setIsSelfieModalOpen(true)}
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							className={`h-5 w-5 ${filteredImageIds ? "text-white" : "text-indigo-500"}`}
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							role="img"
+							aria-label="Find My Face"
+						>
+							<title>Find My Face</title>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+							/>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+							/>
+						</svg>
+						<span>{filteredImageIds ? "Change Photo" : "Find My Face"}</span>
+					</button>
 				</div>
-
-				{displayedImages.length === 0 && (
-					<div className="text-center py-32">
-						<p className="text-zinc-500 font-medium">
-							No photos found matching this filter.
-						</p>
-					</div>
-				)}
 			</div>
+
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
+				{displayedImages.map((image: any, index: number) => {
+					const width = image.originalSize?.width || 0;
+					const height = image.originalSize?.height || 0;
+
+					// Determine if this specific image should be featured (e.g. exceptionally high res)
+					const area = width * height;
+					const isFeatured = area > 2000000;
+
+					const spanClass = getBentoSpanClass(
+						width,
+						height,
+						index,
+						isFeatured,
+					);
+
+					return (
+						<div key={image.imageId} className={`relative ${spanClass}`}>
+							<ImageGridItem
+								image={{
+									id: image.imageId,
+									width: width,
+									height: height,
+									url: image.imagePath,
+									alt: image.imageId,
+								}}
+								onDelete={() => {}}
+								onToggleSelect={toggleSelect}
+								isSelected={selectedIds.has(image.imageId)}
+								selectionMode={selectedIds.size > 0}
+								shared={true}
+								className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
+								onClick={() => setSelectedImage(image)}
+							/>
+						</div>
+					);
+				})}
+			</div>
+
+			{displayedImages.length === 0 && (
+				<div className="text-center py-32">
+					<p className="text-zinc-500 font-medium">
+						No photos found matching this filter.
+					</p>
+				</div>
+			)}
 
 			<ImageModal
 				image={selectedImage}
@@ -296,7 +295,7 @@ const SharedAlbumPage = () => {
 				onClear={() => setSelectedIds(new Set())}
 				onDownload={handleBulkDownload}
 			/>
-		</div>
+		</MainContainer>
 	);
 };
 

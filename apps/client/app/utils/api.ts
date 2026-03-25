@@ -244,3 +244,23 @@ export const updateFace = async (
 		console.error("Error updating face:", error);
 	}
 };
+
+export const ignoreFace = async (faceId: number, personId: string) => {
+	try {
+		const response = await axiosAPI.post(`/faces/${faceId}/ignore`, { personId });
+		return response.data;
+	} catch (error) {
+		console.error("Error ignoring face:", error);
+		throw error;
+	}
+};
+
+export const unignoreFace = async (faceId: number, personId: string) => {
+	try {
+		const response = await axiosAPI.post(`/faces/${faceId}/unignore`, { personId });
+		return response.data;
+	} catch (error) {
+		console.error("Error un-ignoring face:", error);
+		throw error;
+	}
+};

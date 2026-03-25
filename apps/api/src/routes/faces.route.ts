@@ -121,6 +121,68 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				limit: t.Optional(t.Number()),
 			}),
 		},
+	)
+	.post(
+		"/:faceId/ignore",
+		async ({ params, body, set }) => {
+			try {
+				const faceId = parseInt(params.faceId, 10);
+				if (Number.isNaN(faceId)) {
+					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+					return { status: "error", message: "Invalid face ID format." };
+				}
+
+				// We need personId from the body to ignore it for that specific person search
+				const { personId } = body;
+
+				// Import inline to avoid circular dependency issues if they arise, or just rely on global import if you added it
+				const { ignoreFace } = await import(
+					"../../../../packages/models/src/faces.model.ts"
+				);
+				await ignoreFace(personId, faceId);
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return { status: "completed", message: "Face ignored successfully." };
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return { status: "error", message: error?.message || "Internal error" };
+			}
+		},
+		{
+			params: t.Object({ faceId: t.String() }),
+			body: t.Object({ personId: t.String() }),
+		},
+	)
+	.post(
+		"/:faceId/unignore",
+		async ({ params, body, set }) => {
+			try {
+				const faceId = parseInt(params.faceId, 10);
+				if (Number.isNaN(faceId)) {
+					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+					return { status: "error", message: "Invalid face ID format." };
+				}
+
+				const { personId } = body;
+				const { unignoreFace } = await import(
+					"../../../../../packages/models/src/faces.model.ts"
+				);
+				await unignoreFace(personId, faceId);
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Face un-ignored successfully.",
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return { status: "error", message: error?.message || "Internal error" };
+			}
+		},
+		{
+			params: t.Object({ faceId: t.String() }),
+			body: t.Object({ personId: t.String() }),
+		},
 	);
 
 export default facesRoutes;

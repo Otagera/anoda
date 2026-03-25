@@ -36,6 +36,7 @@ model faces {
   person_id      String?   @db.Uuid
   images         images?   @relation(fields: [image_id], references: [image_id], onDelete: SetNull)
   people         people?   @relation(fields: [person_id], references: [person_id], onDelete: SetNull)
+  ignored_faces  ignored_faces[]
 }
 
 model people {
@@ -44,6 +45,18 @@ model people {
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
   updated_at  DateTime? @default(now()) @db.Timestamptz(6)
   faces       faces[]
+  ignored_faces ignored_faces[]
+}
+
+model ignored_faces {
+  id         Int      @id @default(autoincrement())
+  person_id  String   @db.Uuid
+  face_id    Int
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  people     people   @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  faces      faces    @relation(fields: [face_id], references: [face_id], onDelete: Cascade)
+
+  @@unique([person_id, face_id])
 }
 
 model images {

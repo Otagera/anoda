@@ -5,6 +5,9 @@ const fetchFaceById = async (face_id) => {
 		where: {
 			face_id,
 		},
+		include: {
+			images: true,
+		},
 	});
 };
 
@@ -18,6 +21,30 @@ const deleteFacesByImageId = async (image_id) => {
 	return await prisma.faces.deleteMany({
 		where: {
 			image_id,
+		},
+	});
+};
+
+const ignoreFace = async (personId: string, faceId: number) => {
+	try {
+		return await prisma.ignored_faces.create({
+			data: {
+				person_id: personId,
+				face_id: faceId,
+			},
+		});
+	} catch (e: any) {
+		// Ignore if it already exists (Unique constraint violation)
+		if (e.code === 'P2002') return;
+		throw e;
+	}
+};
+
+const unignoreFace = async (personId: string, faceId: number) => {
+	return await prisma.ignored_faces.deleteMany({
+		where: {
+			person_id: personId,
+			face_id: faceId,
 		},
 	});
 };
@@ -56,6 +83,7 @@ const searchFaces = async ({
 
 	const params: any[] = [];
 	let distanceQuery = "";
+	let ignoredJoin = "";
 
 	if (targetPersonId) {
 		// If we have a personId, find the minimum distance to ANY of their confirmed faces
@@ -68,9 +96,11 @@ const searchFaces = async ({
           JOIN unnest(p_faces.embedding) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
         ))
         FROM faces p_faces
-        WHERE p_faces.person_id = $1
+        WHERE p_faces.person_id = $1::uuid
       )
     `;
+		ignoredJoin =
+			"LEFT JOIN ignored_faces ig ON ig.face_id = f.face_id AND ig.person_id = $1::uuid";
 	} else {
 		// Single face search
 		params.push(targetEmbedding);
@@ -81,6 +111,8 @@ const searchFaces = async ({
         JOIN unnest($1::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
       )
     `;
+		// No ignored faces possible if no person is identified
+		ignoredJoin = "LEFT JOIN (SELECT NULL::int as id) ig ON false";
 	}
 
 	// Add faceId to avoid returning the same face if searching by faceId
@@ -104,10 +136,13 @@ const searchFaces = async ({
         f.face_id,
         f.image_id,
         i.image_path,
+        i.original_width as "originalWidth",
+        i.original_height as "originalHeight",
         f.bounding_box,
         d.distance,
         p.name as "personName",
         f.person_id as "personId",
+        CASE WHEN ig.id IS NOT NULL THEN true ELSE false END as is_ignored,
         ROW_NUMBER() OVER (PARTITION BY f.image_id ORDER BY d.distance ASC) as rn
       FROM
         faces f
@@ -117,6 +152,7 @@ const searchFaces = async ({
         distances d ON f.face_id = d.face_id
       LEFT JOIN
         people p ON f.person_id = p.person_id
+      ${ignoredJoin}
   `;
 
 	const thresholdParamIdx = params.length + 1;
@@ -143,10 +179,13 @@ const searchFaces = async ({
       face_id as "faceId",
       image_id as "imageId",
       image_path as "imagePath",
+      "originalWidth",
+      "originalHeight",
       bounding_box as "boundingBox",
       distance,
       "personName",
-      "personId"
+      "personId",
+      is_ignored as "isIgnored"
     FROM ranked_faces
     WHERE rn = 1
     ORDER BY distance ASC
@@ -189,6 +228,8 @@ const searchFacesByEmbedding = async ({
         f.face_id,
         f.image_id,
         i.image_path,
+        i.original_width as "originalWidth",
+        i.original_height as "originalHeight",
         f.bounding_box,
         d.distance,
         ROW_NUMBER() OVER (PARTITION BY f.image_id ORDER BY d.distance ASC) as rn
@@ -221,6 +262,8 @@ const searchFacesByEmbedding = async ({
       face_id as "faceId",
       image_id as "imageId",
       image_path as "imagePath",
+      "originalWidth",
+      "originalHeight",
       bounding_box as "boundingBox",
       distance
     FROM ranked_faces
@@ -250,4 +293,6 @@ export {
 	createNewFace,
 	deleteFacesByImageId,
 	updateFacePerson,
+	ignoreFace,
+	unignoreFace,
 };

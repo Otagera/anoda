@@ -9,10 +9,12 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { AddToAlbumModal } from "~/components/AddToAlbumModal";
+import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
+import { MainContainer } from "~/components/MainContainer";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -236,14 +238,8 @@ const AlbumPage = () => {
 	};
 
 	return (
-		<div className="container mx-auto px-4 py-8 antialiased font-sans">
-			<Link
-				to="/home"
-				className="text-indigo-500 hover:text-indigo-400 mb-8 inline-flex items-center space-x-2 font-medium transition-colors"
-			>
-				<span>&larr;</span>
-				<span>Back to Albums</span>
-			</Link>
+		<MainContainer>
+			<BackButton label="Back to Dashboard" to="/home" />
 
 			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
 				<div>
@@ -265,11 +261,10 @@ const AlbumPage = () => {
 						<button
 							type="button"
 							onClick={() => setViewMode("grid")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "grid"
-									? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
-									: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+							className={`p-2 rounded-xl transition-all ${viewMode === "grid"
+								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
+								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -286,11 +281,10 @@ const AlbumPage = () => {
 						<button
 							type="button"
 							onClick={() => setViewMode("list")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "list"
-									? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
-									: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+							className={`p-2 rounded-xl transition-all ${viewMode === "list"
+								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
+								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -515,7 +509,7 @@ const AlbumPage = () => {
 					</div>
 				</div>
 			)}
-		</div>
+		</MainContainer>
 	);
 };
 

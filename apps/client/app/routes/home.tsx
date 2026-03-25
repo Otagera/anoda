@@ -3,6 +3,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { ConfirmModal } from "~/components/ConfirmModal";
+import { MainContainer } from "~/components/MainContainer";
 import ImagesList from "~/Images/ImageGallery";
 import { createAlbum, deleteAlbum, editAlbum, fetchAlbums } from "../utils/api";
 
@@ -115,7 +116,7 @@ const Home = () => {
 	};
 
 	return (
-		<div className="container mx-auto px-4 py-8 space-y-16 antialiased font-sans">
+		<MainContainer className="space-y-16">
 			{/* Albums Section */}
 			<section>
 				<div className="flex justify-between items-center mb-8">
@@ -315,7 +316,7 @@ const Home = () => {
 					</div>
 				</div>
 			)}
-		</div>
+		</MainContainer>
 	);
 };
 

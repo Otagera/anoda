@@ -44,6 +44,10 @@ const service = async (data) => {
 			sourceFaceData = {
 				faceId: face.face_id,
 				personId: face.person_id,
+				imagePath: face.images ? normalizeImagePath(face.images.image_path) : null,
+				boundingBox: face.bounding_box,
+				originalWidth: face.images?.original_width || null,
+				originalHeight: face.images?.original_height || null,
 			};
 		} else if (!params.personId) {
 			throw new NotFoundError("Face not found.");

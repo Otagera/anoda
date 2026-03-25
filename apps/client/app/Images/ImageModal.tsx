@@ -13,6 +13,7 @@ interface ImageModalProps {
 	onDelete?: (imageId: string) => void;
 	onNavigate?: (image: any) => void;
 	onFaceSearch?: (faceId: number) => void;
+	isSearchMode?: boolean;
 }
 
 const ImageModal = ({
@@ -24,6 +25,7 @@ const ImageModal = ({
 	onDelete,
 	onNavigate,
 	onFaceSearch,
+	isSearchMode = false,
 }: ImageModalProps) => {
 	const imgRef = useRef<HTMLImageElement>(null);
 	const navigate = useNavigate();
@@ -34,7 +36,11 @@ const ImageModal = ({
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const [isReprocessing, setIsReprocessing] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [showFaces, setShowFaces] = useState(false);
+	const [showFaces, setShowFaces] = useState(isSearchMode);
+
+	useEffect(() => {
+		if (isSearchMode) setShowFaces(true);
+	}, [isSearchMode]);
 
 	// Carousel Logic
 	const currentIndex = images.findIndex(
