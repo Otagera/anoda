@@ -9,11 +9,11 @@ interface MainContainerProps {
 export const MainContainer: React.FC<MainContainerProps> = ({
 	children,
 	className = "",
-	maxWidth = "container",
+	maxWidth = "max-w-[1600px]",
 }) => {
 	return (
 		<div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300 antialiased font-sans">
-			<div className={`${maxWidth} mx-auto px-4 sm:px-6 lg:px-8 py-12 ${className}`}>
+			<div className={`${maxWidth} mx-auto px-4 sm:px-6 lg:px-10 py-8 ${className}`}>
 				{children}
 			</div>
 		</div>
