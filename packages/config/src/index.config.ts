@@ -1,7 +1,15 @@
 import path from "node:path";
 import dotenv from "dotenv";
 
+// 1. Try loading from the current working directory
 dotenv.config();
+
+// 2. Try loading from the monorepo root (relative to this file in packages/config/src/)
+dotenv.config({ path: path.join(import.meta.dir, "../../../.env") });
+
+// 3. Try loading from apps/api/.env (where it currently resides)
+dotenv.config({ path: path.join(import.meta.dir, "../../../apps/api/.env") });
+
 const config = {
 	env: process.env.NODE_ENV || "development",
 	app_name: process.env.APP_NAME || "Anoda Facematch",

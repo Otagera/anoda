@@ -1,5 +1,5 @@
-import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Check, ChevronDown, ChevronUp, Focus, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { BackButton } from "~/components/BackButton";
@@ -14,6 +14,117 @@ import {
 	unignoreFace,
 	updateFace,
 } from "../utils/api";
+
+/**
+ * A high-performance face zoom component that uses ResizeObserver to 
+ * perfectly center and spotlight a detected face within a fluid container.
+ */
+const FaceZoomView = ({
+	face,
+	width,
+	height,
+	onClick,
+	padFactor = 4.0
+}: {
+	face: any;
+	width: number;
+	height: number;
+	onClick: () => void;
+	padFactor?: number;
+}) => {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
+
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el) return;
+		const ro = new ResizeObserver(([entry]) => {
+			setContainerSize({
+				w: entry.contentRect.width,
+				h: entry.contentRect.height
+			});
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, []);
+
+	const { imgStyle, boxStyle } = useMemo(() => {
+		if (!containerSize || !face.boundingBox) return { imgStyle: {}, boxStyle: {} };
+
+		const { w: cW, h: cH } = containerSize;
+		const { left, top, right, bottom } = face.boundingBox;
+
+		const boxW = right - left;
+		const boxH = bottom - top;
+
+		// Padded region around the face to show context
+		const padW = boxW * padFactor;
+		const padH = boxH * padFactor;
+
+		// Scale the image so the padded region fills the container
+		const scale = Math.max(cW / padW, cH / padH);
+
+		// Center of the detected face
+		const faceCX = (left + right) / 2;
+		const faceCY = (top + bottom) / 2;
+
+		return {
+			imgStyle: {
+				position: 'absolute' as const,
+				width: `${width * scale}px`,
+				height: `${height * scale}px`,
+				left: `${cW / 2 - faceCX * scale}px`,
+				top: `${cH / 2 - faceCY * scale}px`,
+				transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+			},
+			boxStyle: {
+				position: 'absolute' as const,
+				left: `${(cW / 2 - faceCX * scale) + left * scale}px`,
+				top: `${(cH / 2 - faceCY * scale) + top * scale}px`,
+				width: `${boxW * scale}px`,
+				height: `${boxH * scale}px`,
+				transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+			}
+		};
+	}, [containerSize, face.boundingBox, width, height, padFactor]);
+
+	return (
+		<div
+			ref={containerRef}
+			className="w-full h-full overflow-hidden relative cursor-pointer bg-zinc-900 shadow-inner"
+			onClick={onClick}
+		>
+			{containerSize && (
+				<>
+					<img
+						src={face.imagePath}
+						alt=""
+						style={imgStyle}
+						className="max-w-none"
+						draggable={false}
+					/>
+					{/* Spotlight Overlay */}
+					<div className="absolute inset-0 bg-black/30 dark:bg-black/50 pointer-events-none transition-opacity duration-500" />
+
+					{/* The bright bounding box */}
+					{face.boundingBox && (
+						<div
+							className="border-[3px] border-indigo-500 rounded-2xl pointer-events-none z-10"
+							style={{
+								...boxStyle,
+								boxShadow: '0 0 0 9999px rgba(0,0,0,0.3), 0 0 30px rgba(99,102,241,0.6) inset, 0 0 20px rgba(99,102,241,0.4)'
+							}}
+						>
+							<div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-black uppercase tracking-widest py-1 px-2 rounded-md shadow-lg">
+								Matched Face
+							</div>
+						</div>
+					)}
+				</>
+			)}
+		</div>
+	);
+};
 
 const SearchPage = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -188,19 +299,30 @@ const SearchPage = () => {
 						key={face.faceId || index}
 						className={`relative group rounded-3xl overflow-hidden border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 transition-all hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-xl dark:hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] ${spanClass}`}
 					>
-						<ImageGridItem
-							image={{
-								id: face.imageId || `face-${index}`,
-								width,
-								height,
-								url: face.imagePath,
-								alt: `Match ${index + 1}`,
-							}}
-							onDelete={() => {}}
-							shared={true}
-							className="w-full h-full object-cover cursor-pointer"
-							onClick={() => setSelectedImage(face)}
-						/>
+						{/* Spotlight / Full Image Rendering */}
+						{showFacesInGrid && face.boundingBox && width > 0 && height > 0 ? (
+							<FaceZoomView
+								face={face}
+								width={width}
+								height={height}
+								onClick={() => setSelectedImage(face)}
+								padFactor={4.0}
+							/>
+						) : (
+							<ImageGridItem
+								image={{
+									id: face.imageId || `face-${index}`,
+									width,
+									height,
+									url: face.imagePath,
+									alt: `Match ${index + 1}`,
+								}}
+								onDelete={() => { }}
+								shared={true}
+								className="w-full h-full object-cover cursor-pointer"
+								onClick={() => setSelectedImage(face)}
+							/>
+						)}
 
 						{/* Match Info Overlay */}
 						<div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 dark:from-black/90 via-transparent to-transparent opacity-100 transition-opacity pointer-events-none" />
@@ -209,20 +331,26 @@ const SearchPage = () => {
 							<div className="flex flex-col gap-2">
 								<div className="flex flex-wrap items-center gap-2">
 									<span
-										className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border backdrop-blur-md ${
-											Number(similarity) > 70
-												? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30"
-												: Number(similarity) > 50
-													? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/30"
-													: "bg-gray-500/20 text-gray-600 dark:text-zinc-300 border-gray-500/30"
-										}`}
+										className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border backdrop-blur-md ${Number(similarity) > 70
+											? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30"
+											: Number(similarity) > 50
+												? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/30"
+												: "bg-gray-500/20 text-gray-600 dark:text-zinc-300 border-gray-500/30"
+											}`}
 									>
 										{similarity}% Match
 									</span>
 									{isConfirmed && (
-										<span className="bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1 backdrop-blur-md">
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												setTaggingFaceId(face.faceId);
+											}}
+											className="bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1 backdrop-blur-md hover:bg-emerald-500/40 transition-colors pointer-events-auto"
+										>
 											<Check size={12} strokeWidth={3} /> Confirmed
-										</span>
+										</button>
 									)}
 								</div>
 
@@ -306,18 +434,6 @@ const SearchPage = () => {
 							</div>
 						)}
 
-						{/* Bounding Box Indicator */}
-						{showFacesInGrid && face.boundingBox && width > 0 && height > 0 && (
-							<div
-								className="absolute border-[3px] border-indigo-500 bg-indigo-500/10 rounded-xl pointer-events-none transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.5)] z-20"
-								style={{
-									left: `${(face.boundingBox.left / width) * 100}%`,
-									top: `${(face.boundingBox.top / height) * 100}%`,
-									width: `${((face.boundingBox.right - face.boundingBox.left) / width) * 100}%`,
-									height: `${((face.boundingBox.bottom - face.boundingBox.top) / height) * 100}%`,
-								}}
-							/>
-						)}
 					</div>
 				);
 			})}
@@ -359,13 +475,13 @@ const SearchPage = () => {
 							<div className="flex items-center gap-4 bg-gray-100 dark:bg-zinc-900/60 p-2 pr-6 rounded-[2rem] border border-gray-200 dark:border-zinc-800/50 shadow-xl group">
 								<div className="w-16 h-16 rounded-[1.25rem] overflow-hidden bg-gray-200 dark:bg-zinc-800 relative shadow-inner">
 									{sourceFace.boundingBox &&
-									sourceFace.originalWidth &&
-									sourceFace.originalHeight ? (
+										sourceFace.originalWidth &&
+										sourceFace.originalHeight ? (
 										<div
 											className="w-full h-full bg-no-repeat transition-transform duration-500 group-hover:scale-110"
 											style={{
 												backgroundImage: `url(${sourceFace.imagePath})`,
-												backgroundSize: `${(sourceFace.originalWidth / (sourceFace.boundingBox.right - sourceFace.boundingBox.left)) * 100}% ${(sourceFace.originalHeight / (sourceFace.boundingBox.bottom - sourceFace.boundingBox.top)) * 100}%`,
+												backgroundSize: `${(sourceFace.originalWidth / (sourceFace.boundingBox.right - sourceFace.boundingBox.left)) * 400}% ${(sourceFace.originalHeight / (sourceFace.boundingBox.bottom - sourceFace.boundingBox.top)) * 400}%`,
 												backgroundPosition: `${(sourceFace.boundingBox.left / (sourceFace.originalWidth - (sourceFace.boundingBox.right - sourceFace.boundingBox.left))) * 100}% ${(sourceFace.boundingBox.top / (sourceFace.originalHeight - (sourceFace.boundingBox.bottom - sourceFace.boundingBox.top))) * 100}%`,
 											}}
 										/>
@@ -427,50 +543,31 @@ const SearchPage = () => {
 						<button
 							type="button"
 							onClick={() => setShowFacesInGrid(!showFacesInGrid)}
-							className={`flex items-center gap-2 px-5 py-4 rounded-[2rem] font-black transition-all border shadow-lg ${
-								showFacesInGrid
-									? "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white"
-									: "bg-gray-50 dark:bg-zinc-900/60 border-gray-200 dark:border-zinc-800/50 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
-							}`}
+							className={`flex items-center gap-2 px-5 py-4 rounded-[2rem] font-black transition-all border shadow-lg ${showFacesInGrid
+								? "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white"
+								: "bg-gray-50 dark:bg-zinc-900/60 border-gray-200 dark:border-zinc-800/50 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
+								}`}
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<title>Highlight Faces</title>
-								<path d="M3 7V5a2 2 0 0 1 2-2h2" />
-								<path d="M17 3h2a2 2 0 0 1 2 2v2" />
-								<path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-								<path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-								<circle cx="12" cy="12" r="3" />
-								<path d="m19 19-2-2" />
-							</svg>
+							<Focus size={20} strokeWidth={2.5} />
 							<span className="hidden sm:inline">Highlight Faces</span>
 						</button>
 
 						<div className="flex gap-3">
-							<div className="px-6 py-3 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
-								<span className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1">
+							<div className="px-2 py-2 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
+								<p className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1 text-center">
 									Matches
-								</span>
-								<span className="text-2xl font-black text-gray-900 dark:text-white">
+								</p>
+								<p className="text-xl font-black text-gray-900 dark:text-white text-center">
 									{confident.length + possible.length}
-								</span>
+								</p>
 							</div>
-							<div className="px-6 py-3 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
-								<span className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1">
+							<div className="px-2 py-2 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
+								<p className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1 text-center">
 									Precision
-								</span>
-								<span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+								</p>
+								<p className="text-xl font-black text-emerald-600 dark:text-emerald-400 text-center">
 									High
-								</span>
+								</p>
 							</div>
 						</div>
 					</div>
@@ -572,11 +669,10 @@ const SearchPage = () => {
 									<button
 										type="button"
 										onClick={() => setShowPossible(!showPossible)}
-										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${
-											showPossible
-												? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
-												: "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-500 hover:shadow-indigo-500/30 active:scale-95"
-										}`}
+										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${showPossible
+											? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
+											: "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-500 hover:shadow-indigo-500/30 active:scale-95"
+											}`}
 									>
 										{showPossible ? (
 											<>
@@ -628,11 +724,10 @@ const SearchPage = () => {
 									<button
 										type="button"
 										onClick={() => setShowIgnored(!showIgnored)}
-										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${
-											showIgnored
-												? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
-												: "bg-gray-800 dark:bg-zinc-800 border-gray-700 dark:border-zinc-700 text-white hover:bg-gray-700 dark:hover:bg-zinc-700 hover:shadow-gray-500/30 active:scale-95"
-										}`}
+										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${showIgnored
+											? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
+											: "bg-gray-800 dark:bg-zinc-800 border-gray-700 dark:border-zinc-700 text-white hover:bg-gray-700 dark:hover:bg-zinc-700 hover:shadow-gray-500/30 active:scale-95"
+											}`}
 									>
 										{showIgnored ? (
 											<>

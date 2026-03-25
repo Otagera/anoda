@@ -41,7 +41,9 @@ export const createElysiaApp = async () => {
 
 	eventEmitter.setMaxListeners(100);
 
-	const app = new Elysia()
+	const app = new Elysia({
+		bodyLimit: 500 * 1024 * 1024, // 500MB limit for bulk uploads
+	})
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
 				`[${new Date().toISOString()}] ${request.method} ${request.url}`,

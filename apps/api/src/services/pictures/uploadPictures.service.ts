@@ -22,13 +22,13 @@ const fileSchema = Joi.object({
 	filename: Joi.string().required(),
 	path: Joi.string().required(),
 	size: Joi.number()
-		.max(5 * 1024 * 1024)
-		.required(), // 5MB limit
+		.max(50 * 1024 * 1024)
+		.required(), // 50MB limit
 });
 
 const spec = Joi.object({
 	uploaded_by: Joi.string().required(),
-	files: Joi.array().items(fileSchema).min(1).max(10).required(),
+	files: Joi.array().items(fileSchema).min(1).max(50).required(),
 });
 
 const aliasSpec = {
