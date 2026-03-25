@@ -45,7 +45,7 @@ const LoginPage = () => {
 			</div>
 
 			<div className="w-full max-w-md relative">
-				<div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 space-y-8">
+				<div className="glass-panel p-8 rounded-3xl space-y-8">
 					<div className="text-center space-y-2">
 						<h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
 							Welcome <span className="text-indigo-600">Back</span>
@@ -63,7 +63,7 @@ const LoginPage = () => {
 							<input
 								type="email"
 								placeholder="name@example.com"
-								className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all dark:text-white placeholder:text-zinc-400"
+								className="input-soft"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								required
@@ -86,7 +86,7 @@ const LoginPage = () => {
 								<input
 									type={showPassword ? "text" : "password"}
 									placeholder="••••••••"
-									className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all dark:text-white placeholder:text-zinc-400 pr-12"
+									className="input-soft pr-12"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									required
@@ -137,7 +137,7 @@ const LoginPage = () => {
 
 						<button
 							type="submit"
-							className="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
+							className="w-full py-4 px-6 btn-primary flex items-center justify-center space-x-2"
 							disabled={mutation.isPending}
 						>
 							{mutation.isPending ? (
