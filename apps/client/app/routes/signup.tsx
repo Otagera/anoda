@@ -22,6 +22,7 @@ const SignupPage = () => {
 	const mutation = useMutation({
 		mutationFn: signup,
 		onSuccess: () => {
+			localStorage.setItem("anoda:first-signup-guide", "show");
 			toast.success("Account created successfully!");
 			navigate("/home");
 		},
