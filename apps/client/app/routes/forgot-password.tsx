@@ -30,15 +30,15 @@ const ForgotPasswordPage = () => {
 	return (
 		<div className="min-h-[calc(100vh-73px)] flex items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
+				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-sage/10 blur-[120px] rounded-full" />
+				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-plum/10 blur-[120px] rounded-full" />
 			</div>
 
 			<div className="w-full max-w-md relative">
 				<div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 space-y-8">
 					<div className="text-center space-y-2">
 						<h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-							Reset <span className="text-indigo-600">Password</span>
+							Reset <span className="text-sage">Password</span>
 						</h1>
 						<p className="text-zinc-500 dark:text-zinc-400 font-medium">
 							{isSubmitted
@@ -56,7 +56,7 @@ const ForgotPasswordPage = () => {
 								<input
 									type="email"
 									placeholder="name@example.com"
-									className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all dark:text-white placeholder:text-zinc-400"
+									className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all dark:text-white placeholder:text-zinc-400"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 									required
@@ -65,7 +65,7 @@ const ForgotPasswordPage = () => {
 
 							<button
 								type="submit"
-								className="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
+								className="w-full py-4 px-6 bg-sage hover:bg-sage/90 text-white font-bold rounded-2xl transition-all shadow-lg shadow-sage/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
 								disabled={isLoading}
 							>
 								{isLoading ? (
@@ -94,44 +94,45 @@ const ForgotPasswordPage = () => {
 									</>
 								) : (
 									"Send Reset Link"
-								)}
-							</button>
-						</form>
-					) : (
-						<div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800/50 text-center space-y-4">
-							<div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-indigo-600/20">
-								<svg
+									)}
+									</button>
+									</form>
+									) : (
+									<div className="bg-sage/10 dark:bg-sage/20 p-6 rounded-2xl border border-sage/20 dark:border-sage/50 text-center space-y-4">
+									<div className="w-12 h-12 bg-sage text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-sage/20">
+									<svg
 									className="w-6 h-6"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
-								>
+									>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
 										strokeWidth={2}
 										d="M5 13l4 4L19 7"
 									/>
-								</svg>
-							</div>
-							<p className="text-zinc-700 dark:text-zinc-300 font-medium">
-								We've sent a password reset link to{" "}
-								<span className="font-bold text-indigo-600">{email}</span>.
-								Please check your inbox.
-							</p>
-							<button
-								onClick={() => setIsSubmitted(false)}
-								className="text-sm font-bold text-indigo-600 hover:text-indigo-500 transition-colors"
-							>
-								Didn't receive it? Try again
-							</button>
-						</div>
-					)}
+									</svg>
+									</div>
+									<p className="text-zinc-700 dark:text-zinc-300 font-medium">
+									We've sent a password reset link to{" "}
+									<span className="font-bold text-sage">{email}</span>.
+									Please check your inbox.
+									</p>
+									<button
+									onClick={() => setIsSubmitted(false)}
+									className="text-sm font-bold text-sage hover:text-sage/80 transition-colors"
+									>
+									Didn't receive it? Try again
+									</button>
+									</div>
+									)
+}
 
 					<div className="pt-4 text-center">
 						<Link
 							to="/login"
-							className="text-zinc-500 hover:text-indigo-600 font-bold transition-colors flex items-center justify-center space-x-2"
+							className="text-zinc-500 hover:text-sage font-bold transition-colors flex items-center justify-center space-x-2"
 						>
 							<svg
 								className="w-4 h-4"

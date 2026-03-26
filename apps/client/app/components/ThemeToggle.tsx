@@ -64,7 +64,7 @@ export const ThemeToggle = () => {
 					viewBox="0 0 24 24"
 					strokeWidth={1.5}
 					stroke="currentColor"
-					className="w-5 h-5 text-zinc-700 group-hover:text-indigo-500 transition-colors"
+					className="w-5 h-5 text-zinc-700 group-hover:text-sage transition-colors"
 				>
 					<path
 						strokeLinecap="round"
@@ -79,7 +79,7 @@ export const ThemeToggle = () => {
 					viewBox="0 0 24 24"
 					strokeWidth={1.5}
 					stroke="currentColor"
-					className="w-5 h-5 text-indigo-400 group-hover:text-yellow-400 transition-colors"
+					className="w-5 h-5 text-zinc-400 group-hover:text-yellow-400 transition-colors"
 				>
 					<path
 						strokeLinecap="round"

@@ -50,7 +50,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 							<tr
 								key={image.imageId}
 								className={`group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer ${
-									isSelected ? "bg-indigo-500/5" : ""
+									isSelected ? "bg-sage/10" : ""
 								}`}
 								onClick={() => onImageClick(image)}
 							>
@@ -66,7 +66,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 											type="checkbox"
 											checked={isSelected}
 											readOnly
-											className="w-5 h-5 rounded-lg accent-indigo-600 cursor-pointer"
+											className="w-5 h-5 rounded-lg accent-sage cursor-pointer"
 										/>
 									</div>
 								</td>
@@ -91,7 +91,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 								</td>
 								<td className="p-4 hidden md:table-cell">
 									<div className="flex items-center space-x-1">
-										<span className="text-sm font-bold text-indigo-500">
+										<span className="text-sm font-bold text-sage">
 											{image.faces?.length || 0}
 										</span>
 										<span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">
@@ -106,7 +106,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 								</td>
 								<td className="p-4 text-right">
 									<button
-										className="p-2 text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+										className="p-2 text-zinc-400 hover:text-sage transition-colors"
 										onClick={(e) => {
 											e.stopPropagation();
 											onImageClick(image);

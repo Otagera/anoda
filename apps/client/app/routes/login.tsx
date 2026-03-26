@@ -40,15 +40,15 @@ const LoginPage = () => {
 	return (
 		<div className="min-h-[calc(100vh-73px)] flex items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
+				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-sage/10 blur-[120px] rounded-full" />
+				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-plum/10 blur-[120px] rounded-full" />
 			</div>
 
 			<div className="w-full max-w-md relative">
 				<div className="glass-panel p-8 rounded-3xl space-y-8">
 					<div className="text-center space-y-2">
 						<h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-							Welcome <span className="text-indigo-600">Back</span>
+							Welcome <span className="text-sage">Back</span>
 						</h1>
 						<p className="text-zinc-500 dark:text-zinc-400 font-medium">
 							Please enter your details to sign in
@@ -77,7 +77,7 @@ const LoginPage = () => {
 								</label>
 								<Link
 									to="/forgot-password"
-									className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors"
+									className="text-xs font-bold text-sage hover:text-sage/80 transition-colors"
 								>
 									Forgot Password?
 								</Link>
@@ -94,7 +94,7 @@ const LoginPage = () => {
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-indigo-600 transition-colors cursor-pointer"
+									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
 								>
 									{showPassword ? (
 										<svg
@@ -185,7 +185,7 @@ const LoginPage = () => {
 						New here?{" "}
 						<Link
 							to="/signup"
-							className="text-indigo-600 hover:text-indigo-500 font-bold underline decoration-2 underline-offset-4 transition-colors"
+							className="text-sage hover:text-sage/80 font-bold underline decoration-2 underline-offset-4 transition-colors"
 						>
 							Create an account
 						</Link>

@@ -7,6 +7,7 @@ const fetchFaceById = async (face_id) => {
 		},
 		include: {
 			images: true,
+			people: true,
 		},
 	});
 };

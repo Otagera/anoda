@@ -5,22 +5,27 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import JSZip from "jszip";
-import type React from "react";
+import { Edit2, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AddToAlbumModal } from "~/components/AddToAlbumModal";
 import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
+import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
+import { Button } from "~/components/standard/Button";
+import { Heading } from "~/components/standard/Heading";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
 import { ShareModal } from "../components/ShareModal";
 import {
+	deleteAlbum,
 	deleteImage,
+	editAlbum,
 	fetchAlbum,
 	fetchImagesInAlbum,
 	uploadImages,
@@ -30,11 +35,15 @@ import { useUpload } from "../utils/UploadContext";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();
+	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { addUploads } = useUpload();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [confirmDeleteAlbum, setConfirmDeleteAlbum] = useState(false);
+	const [editAlbumName, setEditAlbumName] = useState("");
 	const [files, setFiles] = useState<FileList | null>(null);
 
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -108,6 +117,29 @@ const AlbumPage = () => {
 		},
 	});
 
+	const editAlbumMutation = useMutation({
+		mutationFn: editAlbum,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			setIsEditModalOpen(false);
+			toast.success("Album updated");
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to update album");
+		},
+	});
+
+	const deleteAlbumMutation = useMutation({
+		mutationFn: deleteAlbum,
+		onSuccess: () => {
+			toast.success("Album deleted");
+			navigate("/home");
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to delete album");
+		},
+	});
+
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			setFiles(e.target.files);
@@ -120,6 +152,22 @@ const AlbumPage = () => {
 			setIsUploadModalOpen(false);
 			setFiles(null);
 		}
+	};
+
+	const handleEditAlbum = () => {
+		if (!editAlbumName.trim() || !albumId) return;
+		editAlbumMutation.mutate({ albumId, albumName: editAlbumName });
+	};
+
+	const handleDeleteAlbum = () => {
+		if (albumId) {
+			deleteAlbumMutation.mutate(albumId);
+		}
+	};
+
+	const openEditModal = () => {
+		setEditAlbumName(albumData?.data?.albumName || "");
+		setIsEditModalOpen(true);
 	};
 
 	const handleDeleteImage = async (imageId: string) => {
@@ -169,10 +217,10 @@ const AlbumPage = () => {
 			queryClient.invalidateQueries({ queryKey: ["images", targetAlbumId] });
 			setIsAddToAlbumOpen(false);
 			setSelectedIds(new Set());
-			alert(`Successfully moved ${ids.length} photos.`);
+			toast.success(`Successfully moved ${ids.length} photos.`);
 		} catch (error) {
 			console.error("Batch add to album failed:", error);
-			alert("Failed to move photos. Please try again.");
+			toast.error("Failed to move photos. Please try again.");
 		} finally {
 			setIsBatchProcessing(false);
 		}
@@ -238,32 +286,56 @@ const AlbumPage = () => {
 	};
 
 	return (
-		<MainContainer>
+		<MainContainer className="space-y-12">
 			<BackButton label="Back to Dashboard" to="/home" />
 
-			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-				<div>
-					<h1 className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-						{albumData?.data?.albumName}
-					</h1>
-					<div className="flex items-center space-x-2 mt-2">
-						<span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded text-[10px] font-bold uppercase tracking-wider border border-zinc-200 dark:border-zinc-700">
+			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+				<div className="flex-1">
+					<div className="flex items-center space-x-3 mb-4">
+						<span className="px-3 py-1 bg-sage/10 text-sage rounded-full text-[10px] font-bold uppercase tracking-widest border border-sage/20">
 							Album
 						</span>
-						<p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+						<p className="text-xs text-zinc-400 font-mono tracking-tighter opacity-50">
 							{albumId}
 						</p>
 					</div>
+					<div className="flex items-center gap-4 group">
+						<Heading level={1} className="text-5xl md:text-6xl">
+							{albumData?.data?.albumName}
+						</Heading>
+						<div className="flex gap-2">
+							<button
+								type="button"
+								onClick={openEditModal}
+								className="p-2 text-zinc-400 hover:text-sage transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+								title="Edit Album"
+							>
+								<Edit2 size={20} />
+							</button>
+							<button
+								type="button"
+								onClick={() => setConfirmDeleteAlbum(true)}
+								className="p-2 text-zinc-400 hover:text-plum transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+								title="Delete Album"
+							>
+								<Trash2 size={20} />
+							</button>
+						</div>
+					</div>
+					<p className="text-zinc-500 dark:text-zinc-400 mt-4 max-w-2xl">
+						{images.length} photos curated in this collection. Organize, share, and rediscover your memories.
+					</p>
 				</div>
-				<div className="flex items-center space-x-3 w-full md:w-auto">
+				
+				<div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
 					{/* View Toggle */}
-					<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-sm mr-2">
+					<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
 						<button
 							type="button"
 							onClick={() => setViewMode("grid")}
 							className={`p-2 rounded-xl transition-all ${viewMode === "grid"
-								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
-								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
 								}`}
 						>
 							<svg
@@ -271,10 +343,7 @@ const AlbumPage = () => {
 								className="h-5 w-5"
 								viewBox="0 0 20 20"
 								fill="currentColor"
-								role="img"
-								aria-label="Grid View"
 							>
-								<title>Grid View</title>
 								<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
 							</svg>
 						</button>
@@ -282,8 +351,8 @@ const AlbumPage = () => {
 							type="button"
 							onClick={() => setViewMode("list")}
 							className={`p-2 rounded-xl transition-all ${viewMode === "list"
-								? "bg-white dark:bg-zinc-800 text-indigo-500 shadow-sm"
-								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
 								}`}
 						>
 							<svg
@@ -291,10 +360,7 @@ const AlbumPage = () => {
 								className="h-5 w-5"
 								viewBox="0 0 20 20"
 								fill="currentColor"
-								role="img"
-								aria-label="List View"
 							>
-								<title>List View</title>
 								<path
 									fillRule="evenodd"
 									d="M3 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1z"
@@ -304,21 +370,18 @@ const AlbumPage = () => {
 						</button>
 					</div>
 
-					<button
-						type="button"
-						className="flex-1 md:flex-none px-5 py-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm active:scale-95"
+					<Button
+						variant="outline"
 						onClick={handleTriggerClustering}
+						className="flex-1 md:flex-none"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							className="h-4 w-4"
+							className="h-4 w-4 mr-2"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
-							role="img"
-							aria-label="Group Similar Faces"
 						>
-							<title>Group Similar Faces</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -326,24 +389,21 @@ const AlbumPage = () => {
 								d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
 							/>
 						</svg>
-						<span className="text-sm font-semibold">Group Faces</span>
-					</button>
+						Group Faces
+					</Button>
 
-					<button
-						type="button"
-						className="flex-1 md:flex-none px-5 py-2.5 text-zinc-700 dark:text-zinc-300 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm active:scale-95"
+					<Button
+						variant="outline"
 						onClick={() => setIsShareModalOpen(true)}
+						className="flex-1 md:flex-none"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							className="h-4 w-4"
+							className="h-4 w-4 mr-2"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
-							role="img"
-							aria-label="Share"
 						>
-							<title>Share</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -351,31 +411,29 @@ const AlbumPage = () => {
 								d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
 							/>
 						</svg>
-						<span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-							Share
-						</span>
-					</button>
-					<button
-						type="button"
-						className="flex-1 md:flex-none px-6 py-2.5 text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 transition-all cursor-pointer shadow-lg shadow-indigo-500/25 active:scale-95 text-sm font-semibold"
+						Share
+					</Button>
+					
+					<Button
+						variant="primary"
 						onClick={() => setIsUploadModalOpen(true)}
+						className="flex-1 md:flex-none"
 					>
 						Upload Photos
-					</button>
+					</Button>
 				</div>
 			</div>
 
 			{isImagesDataLoading && isAlbumDataLoading ? (
 				<div className="flex justify-center py-20">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 				</div>
 			) : viewMode === "grid" ? (
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full auto-rows-[150px] md:auto-rows-[250px] grid-flow-dense">
 					{images.map((image: any, index: number) => {
 						const width = image.originalSize?.width || 0;
 						const height = image.originalSize?.height || 0;
 
-						// Determine if this specific image should be featured (e.g. exceptionally high res)
 						const area = width * height;
 						const isFeatured = area > 2000000;
 
@@ -387,7 +445,7 @@ const AlbumPage = () => {
 						);
 
 						return (
-							<div key={image.imageId} className={`relative ${spanClass}`}>
+							<div key={image.imageId} className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`} style={{ animationDelay: `${index * 50}ms` }}>
 								<ImageGridItem
 									image={{
 										id: image.imageId,
@@ -399,7 +457,7 @@ const AlbumPage = () => {
 									isSelected={selectedIds.has(image.imageId)}
 									onToggleSelect={toggleSelect}
 									selectionMode={selectedIds.size > 0}
-									className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
+									className="cursor-pointer rounded-3xl transition-all duration-500 hover:scale-[1.02] shadow-sm w-full h-full object-cover"
 									onClick={() => setSelectedImage(image)}
 									onDelete={handleDeleteImage}
 								/>
@@ -417,9 +475,9 @@ const AlbumPage = () => {
 			)}
 
 			{/* Infinite Scroll Trigger */}
-			<div ref={ref} className="w-full flex justify-center py-8">
+			<div ref={ref} className="w-full flex justify-center py-12">
 				{isFetchingNextPage && (
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 				)}
 			</div>
 
@@ -457,32 +515,83 @@ const AlbumPage = () => {
 				/>
 			)}
 
-			{isUploadModalOpen && (
-				<div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-					<div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800">
-						<h2 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-50">
-							Upload Photos
-						</h2>
+			<ConfirmModal
+				isOpen={confirmDeleteAlbum}
+				title="Delete Album"
+				message="Are you sure you want to delete this album? All photo associations will be removed."
+				confirmText="Delete Album"
+				onConfirm={handleDeleteAlbum}
+				onCancel={() => setConfirmDeleteAlbum(false)}
+				isDestructive={true}
+				isLoading={deleteAlbumMutation.isPending}
+			/>
+
+			{isEditModalOpen && (
+				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+					<div className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
+						<Heading level={2} className="mb-2">Edit Album</Heading>
 						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">
-							Select images to add to this album.
+							Update the name of your album.
+						</p>
+						<input
+							type="text"
+							className="w-full px-6 py-4 rounded-2xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition-all placeholder:text-zinc-400"
+							placeholder="e.g. Summer Vacation 2025"
+							value={editAlbumName}
+							onChange={(e) => setEditAlbumName(e.target.value)}
+							autoFocus
+						/>
+						<div className="flex items-center space-x-3 mt-10">
+							<Button
+								className="flex-1"
+								onClick={handleEditAlbum}
+								disabled={editAlbumMutation.isPending || !editAlbumName.trim()}
+							>
+								{editAlbumMutation.isPending ? "Saving..." : "Save Changes"}
+							</Button>
+							<Button
+								variant="ghost"
+								onClick={() => {
+									setIsEditModalOpen(false);
+									setEditAlbumName("");
+								}}
+							>
+								Cancel
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{isUploadModalOpen && (
+				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+					<div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
+						<Heading level={2} className="mb-2">
+							Upload Photos
+						</Heading>
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-10">
+							Select high-quality images to add to your album.
 						</p>
 
-						<input
-							type="file"
-							multiple
-							onChange={handleFileChange}
-							className="mb-8 w-full text-sm text-zinc-500 dark:text-zinc-400
-								file:mr-4 file:py-2.5 file:px-6
-								file:rounded-xl file:border-0
-								file:text-xs file:font-bold file:uppercase file:tracking-wider
-								file:bg-indigo-50 file:text-indigo-600
-								hover:file:bg-indigo-100
-								dark:file:bg-zinc-800 dark:file:text-indigo-400
-								cursor-pointer"
-						/>
+						<div className="relative group mb-10">
+							<input
+								type="file"
+								multiple
+								onChange={handleFileChange}
+								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+							/>
+							<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:border-sage group-hover:bg-sage/5">
+								<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-zinc-300 group-hover:text-sage mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+								</svg>
+								<p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+									{files ? `${files.length} files selected` : "Drop photos or click to browse"}
+								</p>
+							</div>
+						</div>
 
 						{uploadImagesMutation.isError && (
-							<div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
+							<div className="mb-8 p-4 bg-plum/10 border border-plum/20 text-plum rounded-2xl text-sm">
 								{(uploadImagesMutation.error as any).response?.data?.message ||
 									uploadImagesMutation.error.message ||
 									"Failed to upload images"}
@@ -490,21 +599,19 @@ const AlbumPage = () => {
 						)}
 
 						<div className="flex items-center space-x-3">
-							<button
-								type="button"
-								className="flex-1 px-6 py-3 text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 transition-all disabled:opacity-50 font-bold shadow-lg shadow-indigo-500/25"
+							<Button
+								className="flex-1"
 								onClick={handleUpload}
 								disabled={uploadImagesMutation.isPending || !files}
 							>
-								{uploadImagesMutation.isPending ? "Uploading..." : "Upload"}
-							</button>
-							<button
-								type="button"
-								className="px-6 py-3 text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-xl font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all font-bold"
+								{uploadImagesMutation.isPending ? "Uploading..." : "Start Upload"}
+							</Button>
+							<Button
+								variant="ghost"
 								onClick={() => setIsUploadModalOpen(false)}
 							>
 								Cancel
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>

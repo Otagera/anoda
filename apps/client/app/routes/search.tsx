@@ -1,13 +1,18 @@
-import { Check, ChevronDown, ChevronUp, Focus, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Focus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { BackButton } from "~/components/BackButton";
 import { MainContainer } from "~/components/MainContainer";
 import TagPersonModal from "~/components/TagPersonModal";
+import { Button } from "~/components/standard/Button";
+import { Card } from "~/components/standard/Card";
+import { EmptyState } from "~/components/standard/EmptyState";
+import { Heading } from "~/components/standard/Heading";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
+import { cn } from "~/utils/cn";
 import {
 	ignoreFace,
 	searchFaces,
@@ -91,7 +96,7 @@ const FaceZoomView = ({
 	return (
 		<div
 			ref={containerRef}
-			className="w-full h-full overflow-hidden relative cursor-pointer bg-zinc-900 shadow-inner"
+			className="w-full h-full overflow-hidden relative cursor-pointer bg-zinc-950"
 			onClick={onClick}
 		>
 			{containerSize && (
@@ -100,22 +105,22 @@ const FaceZoomView = ({
 						src={face.imagePath}
 						alt=""
 						style={imgStyle}
-						className="max-w-none"
+						className="max-w-none transition-all duration-700"
 						draggable={false}
 					/>
-					{/* Spotlight Overlay */}
-					<div className="absolute inset-0 bg-black/30 dark:bg-black/50 pointer-events-none transition-opacity duration-500" />
+					{/* Spotlight Overlay - Much lighter and more natural */}
+					<div className="absolute inset-0 bg-black/5 pointer-events-none transition-opacity duration-500" />
 
 					{/* The bright bounding box */}
 					{face.boundingBox && (
 						<div
-							className="border-[3px] border-indigo-500 rounded-2xl pointer-events-none z-10"
+							className="border-2 border-sage/80 rounded-xl pointer-events-none z-10"
 							style={{
 								...boxStyle,
-								boxShadow: '0 0 0 9999px rgba(0,0,0,0.3), 0 0 30px rgba(99,102,241,0.6) inset, 0 0 20px rgba(99,102,241,0.4)'
+								boxShadow: '0 0 0 9999px rgba(0,0,0,0.25), 0 0 30px rgba(182, 186, 68, 0.3) inset'
 							}}
 						>
-							<div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-black uppercase tracking-widest py-1 px-2 rounded-md shadow-lg">
+							<div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-sage/90 backdrop-blur-md text-zinc-950 text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap">
 								Matched Face
 							</div>
 						</div>
@@ -132,6 +137,7 @@ const SearchPage = () => {
 	const [sourceFace, setSourceFace] = useState<{
 		faceId: number;
 		personId: string | null;
+		personName?: string;
 		imagePath?: string;
 		boundingBox?: { top: number; left: number; right: number; bottom: number };
 		originalWidth?: number;
@@ -215,14 +221,12 @@ const SearchPage = () => {
 		if (!sourceFace) return;
 
 		if (!sourceFace.personId) {
-			// If source face doesn't have a person, we need to tag it first
 			setTaggingFaceId(sourceFace.faceId);
 			return;
 		}
 
 		try {
 			await updateFace(face.faceId, { personId: sourceFace.personId });
-			// Update local state to show it's confirmed
 			setResults((prev) =>
 				prev.map((f) =>
 					f.faceId === face.faceId
@@ -252,7 +256,6 @@ const SearchPage = () => {
 				toast.error("Failed to ignore match");
 			}
 		} else {
-			// Fallback for when there is no person context
 			setResults((prev) =>
 				prev.map((f) => (f.faceId === faceId ? { ...f, hidden: true } : f)),
 			);
@@ -278,481 +281,338 @@ const SearchPage = () => {
 
 	const onTagComplete = () => {
 		setTaggingFaceId(null);
-		// If we had a pending confirmation, we should probably re-fetch or update sourceFace
-		// For now, let's just re-trigger the search to get updated person info
 		window.location.reload();
 	};
 
-	const renderFaceGrid = (faces: any[], startIndex: number) => (
-		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full auto-rows-[300px] md:auto-rows-[350px] grid-flow-dense">
+	const renderFaceGrid = (faces: any[]) => (
+		<div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full auto-rows-[160px] md:auto-rows-[280px] grid-flow-dense">
 			{faces.map((face, index) => {
 				const width = face.originalWidth || 0;
 				const height = face.originalHeight || 0;
-				const spanClass = getBentoSpanClass(width, height, startIndex + index);
 				const similarity = ((1 - (face.distance || 0)) * 100).toFixed(1);
 				const isConfirmed =
 					face.isConfirmed ||
 					(!!face.personId && face.personId === sourceFace?.personId);
 
+				const area = width * height;
+				const isFeatured = area > 2000000;
+
+				const spanClass = getBentoSpanClass(
+					width,
+					height,
+					index,
+					isFeatured,
+				);
+
 				return (
-					<div
-						key={face.faceId || index}
-						className={`relative group rounded-3xl overflow-hidden border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 transition-all hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-xl dark:hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] ${spanClass}`}
-					>
-						{/* Spotlight / Full Image Rendering */}
-						{showFacesInGrid && face.boundingBox && width > 0 && height > 0 ? (
-							<FaceZoomView
-								face={face}
-								width={width}
-								height={height}
-								onClick={() => setSelectedImage(face)}
-								padFactor={4.0}
-							/>
-						) : (
-							<ImageGridItem
-								image={{
-									id: face.imageId || `face-${index}`,
-									width,
-									height,
-									url: face.imagePath,
-									alt: `Match ${index + 1}`,
-								}}
-								onDelete={() => { }}
-								shared={true}
-								className="w-full h-full object-cover cursor-pointer"
-								onClick={() => setSelectedImage(face)}
-							/>
-						)}
+					<div key={face.faceId || index} className={cn("relative animate-in fade-in slide-in-from-bottom-4 duration-500", spanClass)} style={{ animationDelay: `${index * 50}ms` }}>
+						<Card
+							className="w-full h-full p-0 group overflow-hidden"
+						>
+							{/* Spotlight / Full Image Rendering */}
+							{showFacesInGrid && face.boundingBox && width > 0 && height > 0 ? (
+								<FaceZoomView
+									face={face}
+									width={width}
+									height={height}
+									onClick={() => setSelectedImage(face)}
+									padFactor={4.0}
+								/>
+							) : (
+								<ImageGridItem
+									image={{
+										id: face.imageId || `face-${index}`,
+										width,
+										height,
+										url: face.imagePath,
+										alt: `Match ${index + 1}`,
+									}}
+									onDelete={() => { }}
+									shared={true}
+									className="w-full h-full object-cover cursor-pointer"
+									onClick={() => setSelectedImage(face)}
+								/>
+							)}
 
-						{/* Match Info Overlay */}
-						<div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 dark:from-black/90 via-transparent to-transparent opacity-100 transition-opacity pointer-events-none" />
-
-						<div className="absolute bottom-0 left-0 w-full p-5 pointer-events-none">
-							<div className="flex flex-col gap-2">
-								<div className="flex flex-wrap items-center gap-2">
-									<span
-										className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border backdrop-blur-md ${Number(similarity) > 70
-											? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30"
-											: Number(similarity) > 50
-												? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/30"
-												: "bg-gray-500/20 text-gray-600 dark:text-zinc-300 border-gray-500/30"
-											}`}
-									>
-										{similarity}% Match
-									</span>
-									{isConfirmed && (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												setTaggingFaceId(face.faceId);
-											}}
-											className="bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1 backdrop-blur-md hover:bg-emerald-500/40 transition-colors pointer-events-auto"
+							{/* Match Info Overlay */}
+							<div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-zinc-950/90 via-zinc-950/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+								<div className="flex flex-col gap-3">
+									<div className="flex flex-wrap items-center gap-2">
+										<span
+											className={cn(
+												"px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border backdrop-blur-md shadow-sm",
+												Number(similarity) > 70
+													? "bg-sage text-zinc-950 border-sage"
+													: Number(similarity) > 50
+														? "bg-slate-blue text-white border-slate-blue"
+														: "bg-zinc-800 text-zinc-100 border-zinc-700"
+											)}
 										>
-											<Check size={12} strokeWidth={3} /> Confirmed
-										</button>
-									)}
-								</div>
-
-								<div className="flex flex-col gap-0.5">
-									{face.personName ? (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												setTaggingFaceId(face.faceId);
-											}}
-											className="text-white font-bold truncate drop-shadow-lg text-lg text-left hover:text-indigo-300 hover:underline decoration-2 underline-offset-4 transition-all pointer-events-auto"
-										>
-											{face.personName}
-										</button>
-									) : (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												setTaggingFaceId(face.faceId);
-											}}
-											className="flex items-center gap-1.5 text-white/90 hover:text-white transition-colors pointer-events-auto w-fit"
-										>
-											<span className="text-sm font-black italic drop-shadow-md underline decoration-indigo-500/50 underline-offset-4">
-												Name this person
-											</span>
-										</button>
-									)}
-									{width > 0 && height > 0 && (
-										<span className="text-white/60 text-[10px] font-black tracking-[0.2em] mt-1">
-											{width} × {height} PX
+											{similarity}% Match
 										</span>
-									)}
+										{isConfirmed && (
+											<span className="bg-emerald-500 text-white border border-emerald-400 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest flex items-center gap-1 backdrop-blur-md shadow-sm">
+												<Check size={12} strokeWidth={4} /> Confirmed
+											</span>
+										)}
+									</div>
+
+									<div>
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												setTaggingFaceId(face.faceId);
+											}}
+											className="text-white font-bold truncate text-xl text-left hover:text-sage transition-all pointer-events-auto underline decoration-sage/0 hover:decoration-sage/50 decoration-2 underline-offset-4"
+										>
+											{face.personName || "Name this person"}
+										</button>
+									</div>
 								</div>
 							</div>
-						</div>
 
-						{/* Feedback Actions */}
-						{!isConfirmed && !shareToken && !face.isIgnored && (
-							<div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0 pointer-events-auto">
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										handleConfirm(face);
-									}}
-									className="p-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl shadow-xl transition-all hover:scale-110 active:scale-90 border border-emerald-400/20"
-									title="Correct Match"
-								>
-									<Check size={20} strokeWidth={2.5} />
-								</button>
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										handleReject(face.faceId);
-									}}
-									className="p-3 bg-rose-500 hover:bg-rose-400 text-white rounded-2xl shadow-xl transition-all hover:scale-110 active:scale-90 border border-rose-400/20"
-									title="Not a Match"
-								>
-									<X size={20} strokeWidth={2.5} />
-								</button>
-							</div>
-						)}
+							{/* Feedback Actions */}
+							{!isConfirmed && !shareToken && !face.isIgnored && (
+								<div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0 pointer-events-auto">
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleConfirm(face);
+										}}
+										className="p-3 bg-sage hover:bg-sage/90 text-zinc-950 rounded-2xl shadow-xl transition-all hover:scale-110 active:scale-90"
+										title="Correct Match"
+									>
+										<Check size={20} strokeWidth={2.5} />
+									</button>
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleReject(face.faceId);
+										}}
+										className="p-3 bg-plum hover:bg-plum/90 text-white rounded-2xl shadow-xl transition-all hover:scale-110 active:scale-90"
+										title="Not a Match"
+									>
+										<X size={20} strokeWidth={2.5} />
+									</button>
+								</div>
+							)}
 
-						{/* Restore Action for Ignored Faces */}
-						{face.isIgnored && !shareToken && (
-							<div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0 pointer-events-auto">
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										handleRestore(face.faceId);
-									}}
-									className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95 border border-zinc-700/50 font-bold text-sm flex items-center gap-2"
-									title="Restore Match"
-								>
-									Restore
-								</button>
-							</div>
-						)}
-
+							{/* Restore Action for Ignored Faces */}
+							{face.isIgnored && !shareToken && (
+								<div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0 pointer-events-auto">
+									<Button
+										size="sm"
+										variant="secondary"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleRestore(face.faceId);
+										}}
+									>
+										Restore Match
+									</Button>
+								</div>
+							)}
+						</Card>
 					</div>
 				);
 			})}
 		</div>
 	);
 
+	const SourceFaceThumbnail = ({ face }: { face: any }) => {
+		if (!face?.imagePath) return null;
+
+		const isCropped = face.boundingBox && face.originalWidth && face.originalHeight;
+
+		return (
+			<div className="relative group">
+				<div className="w-16 h-16 rounded-full overflow-hidden bg-zinc-800 ring-2 ring-sage/30 border border-white/5 transition-all duration-500 group-hover:ring-sage group-hover:shadow-[0_0_20px_rgba(182,186,68,0.3)]">
+					{isCropped ? (
+						<div
+							className="w-full h-full bg-no-repeat transition-transform duration-700 group-hover:scale-110"
+							style={{
+								backgroundImage: `url(${face.imagePath})`,
+								backgroundSize: `${(face.originalWidth / (face.boundingBox.right - face.boundingBox.left)) * 100}% ${(face.originalHeight / (face.boundingBox.bottom - face.boundingBox.top)) * 100}%`,
+								backgroundPosition: `${(face.boundingBox.left / (face.originalWidth - (face.boundingBox.right - face.boundingBox.left))) * 100}% ${(face.boundingBox.top / (face.originalHeight - (face.boundingBox.bottom - face.boundingBox.top))) * 100}%`,
+							}}
+						/>
+					) : (
+						<img src={face.imagePath} alt="Source" className="w-full h-full object-cover" />
+					)}
+				</div>
+			</div>
+		);
+	};
+
+	const StatBlock = ({ label, value, subtext, color = "text-zinc-900 dark:text-white" }: { label: string; value: string | number; subtext?: string; color?: string }) => (
+		<div className="flex flex-col">
+			<span className="text-zinc-500 text-[8px] font-black uppercase tracking-wider mb-0.5">
+				{label}
+			</span>
+			<div className="flex items-baseline gap-1.5">
+				<span className={cn("text-xl font-bold tabular-nums tracking-tight", color)}>
+					{value}
+				</span>
+				{subtext && (
+					<span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+						{subtext}
+					</span>
+				)}
+			</div>
+		</div>
+	);
+
 	return (
-		<MainContainer>
+		<MainContainer className="space-y-12">
 			<BackButton shareToken={shareToken || undefined} />
 
-			<div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-8 border-b border-gray-200 dark:border-zinc-900 pb-12">
-				<div className="flex-1">
-					<div className="flex items-center gap-4 mb-6">
-						<div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm dark:shadow-[0_0_20px_rgba(99,102,241,0.1)]">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<title>Search Icon</title>
-								<circle cx="11" cy="11" r="8" />
-								<path d="m21 21-4.3-4.3" />
-							</svg>
+			<div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+				<div className="flex flex-wrap items-center gap-6">
+					<div className="flex items-center gap-4">
+						<div className="p-2.5 bg-sage text-zinc-950 rounded-xl border border-sage shadow-lg shadow-sage/10">
+							<Search size={20} strokeWidth={3} />
 						</div>
-						<h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 dark:text-white">
-							Search Results
-						</h1>
+						<Heading level={1} className="text-2xl md:text-3xl m-0">Search Results</Heading>
 					</div>
 
-					<div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-						{/* Source Face Prominent Indicator */}
-						{sourceFace?.imagePath && (
-							<div className="flex items-center gap-4 bg-gray-100 dark:bg-zinc-900/60 p-2 pr-6 rounded-[2rem] border border-gray-200 dark:border-zinc-800/50 shadow-xl group">
-								<div className="w-16 h-16 rounded-[1.25rem] overflow-hidden bg-gray-200 dark:bg-zinc-800 relative shadow-inner">
-									{sourceFace.boundingBox &&
-										sourceFace.originalWidth &&
-										sourceFace.originalHeight ? (
-										<div
-											className="w-full h-full bg-no-repeat transition-transform duration-500 group-hover:scale-110"
-											style={{
-												backgroundImage: `url(${sourceFace.imagePath})`,
-												backgroundSize: `${(sourceFace.originalWidth / (sourceFace.boundingBox.right - sourceFace.boundingBox.left)) * 400}% ${(sourceFace.originalHeight / (sourceFace.boundingBox.bottom - sourceFace.boundingBox.top)) * 400}%`,
-												backgroundPosition: `${(sourceFace.boundingBox.left / (sourceFace.originalWidth - (sourceFace.boundingBox.right - sourceFace.boundingBox.left))) * 100}% ${(sourceFace.boundingBox.top / (sourceFace.originalHeight - (sourceFace.boundingBox.bottom - sourceFace.boundingBox.top))) * 100}%`,
-											}}
-										/>
-									) : (
-										<img
-											src={sourceFace.imagePath}
-											alt="Source"
-											className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-										/>
-									)}
-								</div>
-								<div className="flex flex-col gap-0.5">
-									<span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
-										Searching for
-									</span>
-									<div className="flex items-center gap-2">
-										<span className="text-lg font-black text-gray-900 dark:text-white">
-											Face #{faceId}
-										</span>
-										{sourceFace.personId ? (
-											<button
-												type="button"
-												onClick={() => setTaggingFaceId(sourceFace.faceId)}
-												className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
-											>
-												<Check size={8} strokeWidth={3} />{" "}
-												{sourceFace.personId.split("-")[0]}...
-											</button>
-										) : (
-											<button
-												type="button"
-												onClick={() => setTaggingFaceId(sourceFace.faceId)}
-												className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:underline decoration-2 underline-offset-4"
-											>
-												Name person
-											</button>
-										)}
-									</div>
-								</div>
+					{sourceFace?.imagePath && (
+						<div className="flex items-center gap-4 pl-6 border-l border-zinc-200 dark:border-zinc-800">
+							<SourceFaceThumbnail face={sourceFace} />
+							<div className="flex flex-col">
+								<span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Target Subject</span>
+								<button
+									onClick={() => setTaggingFaceId(sourceFace.faceId)}
+									className="text-sm font-bold text-zinc-900 dark:text-white hover:text-sage transition-colors text-left"
+								>
+									{sourceFace?.personName || sourceFace?.personId?.split("-")[0] || "Unknown Subject"}
+								</button>
 							</div>
-						)}
-
-						{!sourceFace?.imagePath && faceId && (
-							<div className="flex flex-wrap items-center gap-3 text-gray-600 dark:text-zinc-400 font-semibold bg-gray-100 dark:bg-zinc-900/40 backdrop-blur-sm px-5 py-3 rounded-2xl border border-gray-200 dark:border-zinc-800/50 shadow-xl">
-								<span className="flex items-center gap-2 text-sm">
-									<div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-500" />
-									Face ID{" "}
-									<span className="text-indigo-600 dark:text-indigo-400 font-black">
-										#{faceId}
-									</span>
-								</span>
-							</div>
-						)}
-					</div>
+						</div>
+					)}
 				</div>
 
-				{!loading && (
-					<div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
-						<button
-							type="button"
-							onClick={() => setShowFacesInGrid(!showFacesInGrid)}
-							className={`flex items-center gap-2 px-5 py-4 rounded-[2rem] font-black transition-all border shadow-lg ${showFacesInGrid
-								? "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white"
-								: "bg-gray-50 dark:bg-zinc-900/60 border-gray-200 dark:border-zinc-800/50 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
-								}`}
-						>
-							<Focus size={20} strokeWidth={2.5} />
-							<span className="hidden sm:inline">Highlight Faces</span>
-						</button>
-
-						<div className="flex gap-3">
-							<div className="px-2 py-2 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
-								<p className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1 text-center">
-									Matches
-								</p>
-								<p className="text-xl font-black text-gray-900 dark:text-white text-center">
-									{confident.length + possible.length}
-								</p>
-							</div>
-							<div className="px-2 py-2 bg-gray-50 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-xl min-w-[110px]">
-								<p className="text-gray-500 dark:text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mb-1 text-center">
-									Precision
-								</p>
-								<p className="text-xl font-black text-emerald-600 dark:text-emerald-400 text-center">
-									High
-								</p>
-							</div>
+				{!loading && !error && results.length > 0 && (
+					<div className="flex items-center gap-8 bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 px-6 backdrop-blur-sm">
+						<div className="flex gap-8">
+							<StatBlock label="Identified" value={confident.length + possible.length} subtext="Matches" />
+							<StatBlock label="Correlation" value="High" color="text-sage" />
 						</div>
+						<div className="w-px h-8 bg-zinc-200 dark:border-zinc-800 mx-2" />
+						<Button
+							variant={showFacesInGrid ? "primary" : "outline"}
+							onClick={() => setShowFacesInGrid(!showFacesInGrid)}
+							className="rounded-full h-10 px-5 text-xs border-zinc-300 dark:border-zinc-700"
+						>
+							<Focus size={16} className="mr-2" />
+							{showFacesInGrid ? "Focus: ON" : "Focus Faces"}
+						</Button>
 					</div>
 				)}
 			</div>
 
 			{loading ? (
-				<div className="flex flex-col justify-center items-center py-40 gap-6">
-					<div className="relative w-20 h-20">
-						<div className="absolute inset-0 border-[8px] border-indigo-100 dark:border-indigo-500/10 rounded-full" />
-						<div className="absolute inset-0 border-[8px] border-indigo-600 dark:border-indigo-500 border-t-transparent rounded-full animate-spin" />
+				<div className="flex flex-col justify-center items-center py-40 gap-8">
+					<div className="relative w-24 h-24">
+						<div className="absolute inset-0 border-[4px] border-sage/10 rounded-full" />
+						<div className="absolute inset-0 border-[4px] border-sage border-t-transparent rounded-full animate-spin" />
 					</div>
 					<div className="text-center">
-						<h2 className="text-xl text-gray-900 dark:text-white font-black tracking-tighter mb-1">
-							Analyzing Biometrics
-						</h2>
-						<p className="text-sm text-gray-500 dark:text-zinc-500 font-medium animate-pulse tracking-wide">
+						<Heading level={2} className="mb-2">Analyzing Biometrics</Heading>
+						<p className="text-zinc-500 animate-pulse font-medium tracking-wide">
 							Scanning neural embeddings...
 						</p>
 					</div>
 				</div>
 			) : error ? (
-				<div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 p-6 rounded-3xl flex items-center gap-5 shadow-sm">
-					<div className="p-4 bg-rose-100 dark:bg-rose-500/20 rounded-2xl">
-						<X size={24} strokeWidth={3} />
+				<div className="bg-plum/5 border border-plum/20 text-plum p-10 rounded-[2.5rem] flex flex-col items-center gap-6 text-center">
+					<div className="p-5 bg-plum text-white rounded-[2rem] shadow-xl shadow-plum/20">
+						<X size={32} strokeWidth={3} />
 					</div>
 					<div>
-						<h3 className="font-black text-lg mb-0.5">Search Failed</h3>
-						<p className="text-sm opacity-80 font-medium">{error}</p>
+						<Heading level={2} className="text-plum mb-2">Search Failed</Heading>
+						<p className="text-plum/80 font-medium">{error}</p>
 					</div>
 				</div>
 			) : confident.length === 0 && possible.length === 0 ? (
-				<div className="text-center py-40 bg-gray-50 dark:bg-zinc-900/30 border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded-[3rem]">
-					<div className="w-16 h-16 mx-auto mb-6 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-gray-400 dark:text-zinc-600">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2.5"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<title>Empty Results</title>
-							<path d="M17 6.1H3" />
-							<path d="M21 12.1H3" />
-							<path d="M15.1 18H3" />
-						</svg>
-					</div>
-					<p className="text-xl text-gray-600 dark:text-zinc-400 font-black tracking-tight">
-						No matches found
-					</p>
-				</div>
+				<EmptyState
+					title="No matches found"
+					description="Try searching with a different face or album context. Our neural engine couldn't find a strong correlation."
+					icon={<Search size={40} className="opacity-20" />}
+				/>
 			) : (
-				<div className="space-y-20">
-					{/* Confident Matches Section */}
+				<div className="space-y-32">
 					{confident.length > 0 && (
 						<section>
-							<div className="flex items-center gap-4 mb-8">
-								<div className="relative h-10 flex items-center">
-									<div className="w-3 h-10 bg-emerald-500/30 dark:bg-emerald-500/40 rounded-full blur-md absolute" />
-									<div className="w-3 h-10 bg-emerald-500 rounded-full relative z-10" />
-								</div>
+							<div className="flex items-center gap-4 mb-10">
+								<div className="w-1.5 h-8 bg-sage rounded-full shadow-[0_0_15px_rgba(182,186,68,0.5)]" />
 								<div>
-									<h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-										Confident Matches
-									</h2>
-									<span className="text-emerald-600 dark:text-emerald-500/80 text-[10px] font-black uppercase tracking-[0.3em] block">
-										HIGH ACCURACY NEURAL MATCH
+									<Heading level={2} className="text-xl">Confident Matches</Heading>
+									<span className="text-sage text-[9px] font-black uppercase tracking-[0.3em] block mt-0.5">
+										Neural Correlation &gt; 95%
 									</span>
 								</div>
 							</div>
-							{renderFaceGrid(confident, 0)}
+							{renderFaceGrid(confident)}
 						</section>
 					)}
 
-					{/* Possible Matches Section */}
 					{possible.length > 0 && (
-						<section className="pt-20 border-t border-gray-200 dark:border-zinc-900">
+						<section>
 							<div className="flex flex-col gap-10">
-								<div className="flex items-center justify-between flex-wrap gap-6">
+								<div className="flex items-center justify-between flex-wrap gap-8">
 									<div className="flex items-center gap-4">
-										<div className="relative h-10 flex items-center">
-											<div className="w-3 h-10 bg-amber-500/30 dark:bg-amber-500/40 rounded-full blur-md absolute" />
-											<div className="w-3 h-10 bg-amber-500 rounded-full relative z-10" />
-										</div>
+										<div className="w-1.5 h-8 bg-terracotta rounded-full" />
 										<div>
-											<h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-												Possible Matches
-											</h2>
-											<span className="text-amber-600 dark:text-amber-500/80 text-[10px] font-black uppercase tracking-[0.3em] block">
-												LOW CONFIDENCE CORRELATION
+											<Heading level={2} className="text-xl">Possible Matches</Heading>
+											<span className="text-terracotta text-[9px] font-black uppercase tracking-[0.2em] block mt-0.5">
+												Probabilistic Suggestions
 											</span>
 										</div>
 									</div>
 
-									<button
-										type="button"
+									<Button
+										variant={showPossible ? "outline" : "secondary"}
 										onClick={() => setShowPossible(!showPossible)}
-										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${showPossible
-											? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
-											: "bg-indigo-600 dark:bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-500 hover:shadow-indigo-500/30 active:scale-95"
-											}`}
+										className="rounded-full px-5 py-2.5 h-auto text-xs"
 									>
-										{showPossible ? (
-											<>
-												Hide Suggestions{" "}
-												<ChevronUp
-													size={20}
-													strokeWidth={3}
-													className="group-hover:-translate-y-1 transition-transform"
-												/>
-											</>
-										) : (
-											<>
-												Want to see more?{" "}
-												<ChevronDown
-													size={20}
-													strokeWidth={3}
-													className="group-hover:translate-y-1 transition-transform animate-bounce"
-												/>
-											</>
-										)}
-									</button>
+										{showPossible ? "Hide Suggestions" : "Show Suggestions"}
+										{showPossible ? <ChevronUp className="ml-2 w-4 h-4" /> : <ChevronDown className="ml-2 w-4 h-4" />}
+									</Button>
 								</div>
 
-								{showPossible && renderFaceGrid(possible, confident.length)}
+								{showPossible && renderFaceGrid(possible)}
 							</div>
 						</section>
 					)}
 
-					{/* Ignored Matches Section */}
 					{ignored.length > 0 && (
-						<section className="pt-20 border-t border-gray-200 dark:border-zinc-900 opacity-60 hover:opacity-100 transition-opacity">
+						<section className="opacity-60 hover:opacity-100 transition-opacity">
 							<div className="flex flex-col gap-10">
-								<div className="flex items-center justify-between flex-wrap gap-6">
+								<div className="flex items-center justify-between flex-wrap gap-8">
 									<div className="flex items-center gap-4">
-										<div className="relative h-10 flex items-center">
-											<div className="w-3 h-10 bg-gray-500/30 dark:bg-zinc-500/40 rounded-full blur-md absolute" />
-											<div className="w-3 h-10 bg-gray-500 dark:bg-zinc-500 rounded-full relative z-10" />
-										</div>
+										<div className="w-1.5 h-8 bg-zinc-500 rounded-full" />
 										<div>
-											<h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-												Ignored Matches
-											</h2>
-											<span className="text-gray-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] block mt-1.5">
-												HIDDEN BY YOU
+											<Heading level={2} className="text-xl">Ignored Matches</Heading>
+											<span className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mt-0.5">
+												Excluded from Results
 											</span>
 										</div>
 									</div>
 
-									<button
-										type="button"
+									<Button
+										variant="outline"
 										onClick={() => setShowIgnored(!showIgnored)}
-										className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all border shadow-lg group ${showIgnored
-											? "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700"
-											: "bg-gray-800 dark:bg-zinc-800 border-gray-700 dark:border-zinc-700 text-white hover:bg-gray-700 dark:hover:bg-zinc-700 hover:shadow-gray-500/30 active:scale-95"
-											}`}
+										className="rounded-full px-5 py-2.5 h-auto text-xs"
 									>
-										{showIgnored ? (
-											<>
-												Hide Ignored{" "}
-												<ChevronUp
-													size={20}
-													strokeWidth={3}
-													className="group-hover:-translate-y-1 transition-transform"
-												/>
-											</>
-										) : (
-											<>
-												Review Ignored{" "}
-												<ChevronDown
-													size={20}
-													strokeWidth={3}
-													className="group-hover:translate-y-1 transition-transform animate-bounce"
-												/>
-											</>
-										)}
-									</button>
+										{showIgnored ? "Hide Ignored" : "Review Ignored"}
+										{showIgnored ? <ChevronUp className="ml-2 w-4 h-4" /> : <ChevronDown className="ml-2 w-4 h-4" />}
+									</Button>
 								</div>
 
-								{showIgnored &&
-									renderFaceGrid(ignored, confident.length + possible.length)}
+								{showIgnored && renderFaceGrid(ignored)}
 							</div>
 						</section>
 					)}
@@ -777,7 +637,8 @@ const SearchPage = () => {
 							? sourceFace.personId
 							: results.find((f) => f.faceId === taggingFaceId)?.personId
 					}
-					onClose={onTagComplete}
+					onClose={() => setTaggingFaceId(null)}
+					onCloseAfterSelection={onTagComplete}
 				/>
 			)}
 		</MainContainer>

@@ -139,10 +139,10 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 
 				<div className="p-8 sm:p-12">
 					<div className="text-center mb-10">
-						<div className="w-16 h-16 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-indigo-500/20">
+						<div className="w-16 h-16 bg-sage/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-sage/20">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								className="h-8 w-8 text-indigo-500"
+								className="h-8 w-8 text-sage"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -168,9 +168,9 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 							<button
 								type="button"
 								onClick={startCamera}
-								className="p-8 bg-zinc-800/50 border border-zinc-700/50 rounded-[32px] hover:border-indigo-500/50 hover:bg-zinc-800 transition-all group flex flex-col items-center"
+								className="p-8 bg-zinc-800/50 border border-zinc-700/50 rounded-[32px] hover:border-sage/50 hover:bg-zinc-800 transition-all group flex flex-col items-center"
 							>
-								<div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+								<div className="w-12 h-12 bg-sage rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										className="h-6 w-6 text-white"
@@ -198,7 +198,7 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 								</span>
 							</button>
 
-							<label className="p-8 bg-zinc-800/50 border border-zinc-700/50 rounded-[32px] hover:border-indigo-500/50 hover:bg-zinc-800 transition-all group flex flex-col items-center cursor-pointer">
+							<label className="p-8 bg-zinc-800/50 border border-zinc-700/50 rounded-[32px] hover:border-sage/50 hover:bg-zinc-800 transition-all group flex flex-col items-center cursor-pointer">
 								<input
 									type="file"
 									className="hidden"
@@ -254,7 +254,7 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 									<button
 										type="button"
 										onClick={capturePhoto}
-										className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95"
+										className="flex-1 py-4 bg-sage text-white font-bold rounded-2xl hover:bg-sage/90 transition-all shadow-lg active:scale-95"
 									>
 										Capture
 									</button>
@@ -264,7 +264,7 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 											type="button"
 											onClick={submitCaptured}
 											disabled={isProcessing}
-											className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+											className="flex-1 py-4 bg-sage text-white font-bold rounded-2xl hover:bg-sage/90 transition-all shadow-lg active:scale-95 disabled:opacity-50"
 										>
 											{isProcessing ? "Searching..." : "Use this photo"}
 										</button>

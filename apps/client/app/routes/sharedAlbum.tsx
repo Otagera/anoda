@@ -132,7 +132,7 @@ const SharedAlbumPage = () => {
 	if (isLoading) {
 		return (
 			<MainContainer className="flex justify-center items-center h-[60vh]">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sage"></div>
 			</MainContainer>
 		);
 	}
@@ -149,7 +149,7 @@ const SharedAlbumPage = () => {
 				</p>
 				<Link
 					to="/"
-					className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/25 active:scale-95"
+					className="px-8 py-3 bg-sage text-white font-bold rounded-xl hover:bg-sage/90 transition-all shadow-lg shadow-sage/25 active:scale-95"
 				>
 					Return Home
 				</Link>
@@ -162,7 +162,7 @@ const SharedAlbumPage = () => {
 			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
 				<div className="space-y-2">
 					<div className="flex items-center space-x-2">
-						<span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+						<span className="px-2 py-0.5 bg-sage/10 text-sage rounded text-[10px] font-black uppercase tracking-widest border border-sage/20">
 							Shared Album
 						</span>
 						{filteredImageIds && (
@@ -190,14 +190,14 @@ const SharedAlbumPage = () => {
 						type="button"
 						className={`flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl border transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl ${
 							filteredImageIds
-								? "bg-indigo-600 text-white border-indigo-500"
+								? "bg-sage text-white border-sage"
 								: "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
 						}`}
 						onClick={() => setIsSelfieModalOpen(true)}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							className={`h-5 w-5 ${filteredImageIds ? "text-white" : "text-indigo-500"}`}
+							className={`h-5 w-5 ${filteredImageIds ? "text-white" : "text-sage"}`}
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"

@@ -24,6 +24,7 @@ const aliasSpec = {
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
 		coverImages: "coverImages",
+		_count: "_count",
 	},
 };
 
@@ -43,6 +44,9 @@ const service = async (data) => {
 		return {
 			...album,
 			coverImages,
+			_count: {
+				images: album._count?.album_images || 0,
+			},
 		};
 	});
 
