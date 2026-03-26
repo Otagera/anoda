@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AlbumCard } from "~/components/AlbumCard";
 import { ConfirmModal } from "~/components/ConfirmModal";
@@ -19,6 +19,7 @@ const Home = () => {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [albumName, setAlbumName] = useState("");
 	const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+	const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
 
 	// Confirmation Modal States
 	const [confirmDeleteAlbumId, setConfirmDeleteAlbumId] = useState<
@@ -77,6 +78,15 @@ const Home = () => {
 		deleteAlbumMutation.mutate(albumId);
 		setConfirmDeleteAlbumId(null);
 	};
+
+	useEffect(() => {
+		const shouldShowGuide =
+			localStorage.getItem("anoda:first-signup-guide") === "show";
+		if (shouldShowGuide) {
+			setShowFirstTimeGuide(true);
+			localStorage.removeItem("anoda:first-signup-guide");
+		}
+	}, []);
 
 	return (
 		<MainContainer className="space-y-20">
@@ -185,6 +195,68 @@ const Home = () => {
 								}}
 							>
 								Cancel
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{showFirstTimeGuide && (
+				<div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/70 p-4 backdrop-blur-md">
+					<div className="w-full max-w-2xl rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-10">
+						<div className="mb-8">
+							<p className="text-xs font-black uppercase tracking-[0.2em] text-sage">
+								Welcome to Anoda Facematch
+							</p>
+							<Heading level={2} className="mt-3 mb-3">
+								Here’s a quick guide to get started
+							</Heading>
+							<p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+								The app is simple, but this short walkthrough helps you get value
+								faster from your very first upload.
+							</p>
+						</div>
+
+						<div className="space-y-4">
+							{[
+								{
+									title: "1) Create or rename albums",
+									description:
+										"Use albums to group events, clients, or projects before uploading photos.",
+								},
+								{
+									title: "2) Upload your photo library",
+									description:
+										"Add images in bulk and keep everything searchable in one place.",
+								},
+								{
+									title: "3) Use face search",
+									description:
+										"Find matching faces quickly instead of manually scanning every picture.",
+								},
+								{
+									title: "4) Share albums when needed",
+									description:
+										"Generate secure shared access links for collaborators or clients.",
+								},
+							].map((item) => (
+								<div
+									key={item.title}
+									className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/80"
+								>
+									<p className="font-bold text-zinc-900 dark:text-white">
+										{item.title}
+									</p>
+									<p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+										{item.description}
+									</p>
+								</div>
+							))}
+						</div>
+
+						<div className="mt-8 flex justify-end">
+							<Button onClick={() => setShowFirstTimeGuide(false)}>
+								Got it, let's start
 							</Button>
 						</div>
 					</div>
