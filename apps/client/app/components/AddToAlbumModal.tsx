@@ -63,7 +63,7 @@ export const AddToAlbumModal: React.FC<AddToAlbumModalProps> = ({
 				<div className="flex-1 overflow-y-auto p-4 space-y-2">
 					{isLoading ? (
 						<div className="flex justify-center py-8">
-							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
+							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage" />
 						</div>
 					) : albums.length === 0 ? (
 						<p className="text-center py-8 text-zinc-500 text-sm">
@@ -77,7 +77,7 @@ export const AddToAlbumModal: React.FC<AddToAlbumModalProps> = ({
 								onClick={() => setSelectedAlbumId(album.id)}
 								className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
 									selectedAlbumId === album.id
-										? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+										? "bg-sage/10 border-sage text-sage"
 										: "bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
 								}`}
 							>
@@ -124,7 +124,7 @@ export const AddToAlbumModal: React.FC<AddToAlbumModalProps> = ({
 						type="button"
 						onClick={() => selectedAlbumId && onConfirm(selectedAlbumId)}
 						disabled={!selectedAlbumId || isProcessing}
-						className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-500 transition-all disabled:opacity-50 active:scale-95"
+						className="flex-1 py-3 bg-sage text-zinc-950 rounded-2xl font-bold shadow-lg shadow-sage/25 hover:bg-sage/90 transition-all disabled:opacity-50 active:scale-95"
 					>
 						{isProcessing ? "Adding..." : "Add to Album"}
 					</button>

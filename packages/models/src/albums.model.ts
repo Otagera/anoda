@@ -41,6 +41,9 @@ const fetchAlbumsByUserids = async (userIds) => {
 			},
 		},
 		include: {
+			_count: {
+				select: { album_images: true },
+			},
 			album_images: {
 				take: 4,
 				include: {

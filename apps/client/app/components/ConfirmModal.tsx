@@ -55,7 +55,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 							className={`p-3 rounded-2xl flex-shrink-0 ${
 								isDestructive
 									? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
-									: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+									: "bg-sage/10 dark:bg-sage/10 text-sage"
 							}`}
 						>
 							{isDestructive ? (
@@ -114,7 +114,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 							className={`px-5 py-2.5 text-white rounded-xl transition-all font-semibold active:scale-95 disabled:opacity-50 w-full sm:w-auto flex items-center justify-center space-x-2 ${
 								isDestructive
 									? "bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/25"
-									: "bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/25"
+									: "bg-sage hover:bg-sage/90 shadow-lg shadow-sage/25"
 							}`}
 						>
 							{isLoading && (

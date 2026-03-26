@@ -7,12 +7,14 @@ interface TagPersonModalProps {
 	faceId: number;
 	currentPersonId?: string | null;
 	onClose: () => void;
+	onCloseAfterSelection: () => void;
 }
 
 const TagPersonModal = ({
 	faceId,
 	currentPersonId,
 	onClose,
+	onCloseAfterSelection,
 }: TagPersonModalProps) => {
 	const queryClient = useQueryClient();
 	const [newName, setNewName] = useState("");
@@ -29,7 +31,7 @@ const TagPersonModal = ({
 		mutationFn: (personId: string | null) => updateFace(faceId, { personId }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["image"] });
-			onClose();
+			onCloseAfterSelection();
 		},
 	});
 
@@ -41,7 +43,7 @@ const TagPersonModal = ({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["image"] });
 			queryClient.invalidateQueries({ queryKey: ["people"] });
-			onClose();
+			onCloseAfterSelection();
 		},
 	});
 
@@ -54,14 +56,14 @@ const TagPersonModal = ({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-			<div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
-				<div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-					<h2 className="text-xl font-bold text-gray-900 dark:text-white">
+			<div className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
+				<div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+					<h2 className="text-xl font-bold text-zinc-900 dark:text-white">
 						Who is this?
 					</h2>
 					<button
 						onClick={onClose}
-						className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+						className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -82,12 +84,12 @@ const TagPersonModal = ({
 
 				<div className="p-6 space-y-6">
 					<div>
-						<h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
+						<h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
 							Select existing person
 						</h3>
 						{isLoading ? (
 							<div className="flex justify-center py-4">
-								<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+								<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage"></div>
 							</div>
 						) : people.length > 0 ? (
 							<div className="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
@@ -95,17 +97,16 @@ const TagPersonModal = ({
 									<button
 										key={person.personId}
 										onClick={() => tagMutation.mutate(person.personId)}
-										className={`w-full text-left px-4 py-2 rounded-lg transition-colors flex items-center justify-between ${
-											currentPersonId === person.personId
-												? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-												: "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-transparent"
-										}`}
+										className={`w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center justify-between font-medium ${currentPersonId === person.personId
+												? "bg-sage/10 dark:bg-sage/20 text-zinc-900 dark:text-sage border border-sage/20 dark:border-sage/50"
+												: "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent"
+											}`}
 									>
 										<span>{person.name}</span>
 										{currentPersonId === person.personId && (
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
-												className="h-5 w-5"
+												className="h-5 w-5 text-sage"
 												viewBox="0 0 20 20"
 												fill="currentColor"
 											>
@@ -120,20 +121,20 @@ const TagPersonModal = ({
 								))}
 							</div>
 						) : (
-							<p className="text-sm text-gray-400 italic">
+							<p className="text-sm text-zinc-400 italic">
 								No people added yet.
 							</p>
 						)}
 					</div>
 
-					<div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-						<h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
+					<div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+						<h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
 							Add new person
 						</h3>
 						{!isCreating ? (
 							<button
 								onClick={() => setIsCreating(true)}
-								className="w-full py-2 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+								className="w-full py-3 px-4 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl text-zinc-500 dark:text-zinc-400 hover:border-sage hover:text-sage transition-all flex items-center justify-center gap-2 font-medium"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -156,19 +157,19 @@ const TagPersonModal = ({
 									value={newName}
 									onChange={(e) => setNewName(e.target.value)}
 									placeholder="Enter name"
-									className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+									className="flex-1 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:ring-2 focus:ring-sage outline-none text-zinc-900 dark:text-white"
 								/>
 								<button
 									type="submit"
 									disabled={createAndTagMutation.isPending || !newName.trim()}
-									className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors"
+									className="bg-sage hover:bg-sage/90 text-zinc-950 px-5 py-2 rounded-2xl font-bold disabled:opacity-50 transition-colors shadow-lg shadow-sage/20"
 								>
 									Add
 								</button>
 								<button
 									type="button"
 									onClick={() => setIsCreating(false)}
-									className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg transition-colors"
+									className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-4 py-2 rounded-2xl font-medium transition-colors border border-transparent"
 								>
 									Cancel
 								</button>
@@ -180,7 +181,7 @@ const TagPersonModal = ({
 						<div className="pt-2">
 							<button
 								onClick={() => tagMutation.mutate(null)}
-								className="text-sm text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center gap-1"
+								className="text-sm text-plum hover:text-plum/80 transition-colors flex items-center gap-1 font-medium"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

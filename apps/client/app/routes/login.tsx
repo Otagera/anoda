@@ -40,15 +40,15 @@ const LoginPage = () => {
 	return (
 		<div className="min-h-[calc(100vh-73px)] flex items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
+				<div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-sage/10 blur-[120px] rounded-full" />
+				<div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-plum/10 blur-[120px] rounded-full" />
 			</div>
 
 			<div className="w-full max-w-md relative">
-				<div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 space-y-8">
+				<div className="glass-panel p-8 rounded-3xl space-y-8">
 					<div className="text-center space-y-2">
 						<h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-							Welcome <span className="text-indigo-600">Back</span>
+							Welcome <span className="text-sage">Back</span>
 						</h1>
 						<p className="text-zinc-500 dark:text-zinc-400 font-medium">
 							Please enter your details to sign in
@@ -63,7 +63,7 @@ const LoginPage = () => {
 							<input
 								type="email"
 								placeholder="name@example.com"
-								className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all dark:text-white placeholder:text-zinc-400"
+								className="input-soft"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								required
@@ -77,7 +77,7 @@ const LoginPage = () => {
 								</label>
 								<Link
 									to="/forgot-password"
-									className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors"
+									className="text-xs font-bold text-sage hover:text-sage/80 transition-colors"
 								>
 									Forgot Password?
 								</Link>
@@ -86,7 +86,7 @@ const LoginPage = () => {
 								<input
 									type={showPassword ? "text" : "password"}
 									placeholder="••••••••"
-									className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all dark:text-white placeholder:text-zinc-400 pr-12"
+									className="input-soft pr-12"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									required
@@ -94,7 +94,7 @@ const LoginPage = () => {
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-indigo-600 transition-colors cursor-pointer"
+									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
 								>
 									{showPassword ? (
 										<svg
@@ -137,7 +137,7 @@ const LoginPage = () => {
 
 						<button
 							type="submit"
-							className="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
+							className="w-full py-4 px-6 btn-primary flex items-center justify-center space-x-2"
 							disabled={mutation.isPending}
 						>
 							{mutation.isPending ? (
@@ -185,7 +185,7 @@ const LoginPage = () => {
 						New here?{" "}
 						<Link
 							to="/signup"
-							className="text-indigo-600 hover:text-indigo-500 font-bold underline decoration-2 underline-offset-4 transition-colors"
+							className="text-sage hover:text-sage/80 font-bold underline decoration-2 underline-offset-4 transition-colors"
 						>
 							Create an account
 						</Link>

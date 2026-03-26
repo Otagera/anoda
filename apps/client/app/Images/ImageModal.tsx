@@ -180,7 +180,7 @@ const ImageModal = ({
 						}}
 						className={`p-3 rounded-full transition-all backdrop-blur-md shadow-lg border ${
 							showFaces
-								? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30"
+								? "bg-sage/20 text-sage border-sage/30"
 								: "bg-zinc-800/80 text-white hover:bg-zinc-700 border-zinc-700"
 						}`}
 						title={showFaces ? "Hide Faces" : "Show Faces"}
@@ -388,7 +388,7 @@ const ImageModal = ({
 									<button
 										type="button"
 										key={face.face_id}
-										className="absolute border-[3px] border-indigo-500 hover:border-indigo-400 rounded-[40%] shadow-[0_0_15px_rgba(99,102,241,0.6)] cursor-pointer transition-all duration-300 hover:shadow-[0_0_25px_rgba(99,102,241,1)] group"
+										className="absolute border-[3px] border-sage hover:border-sage/80 rounded-[40%] shadow-[0_0_15px_rgba(182, 186, 68, 0.4)] cursor-pointer transition-all duration-300 hover:shadow-[0_0_25px_rgba(182, 186, 68, 0.6)] group"
 										style={{
 											left: `${x}px`,
 											top: `${y}px`,
@@ -423,7 +423,7 @@ const ImageModal = ({
 							<p className="text-sm font-bold text-zinc-100">
 								{image.faces?.length || 0} faces detected
 							</p>
-							<p className="text-[10px] text-indigo-400 uppercase tracking-wider font-black">
+							<p className="text-[10px] text-sage uppercase tracking-wider font-black">
 								AI Match Active
 							</p>
 						</div>
@@ -453,7 +453,7 @@ const ImageModal = ({
 				>
 					<div className="flex items-center justify-between mb-8">
 						<h3 className="text-xl font-bold text-white flex items-center space-x-2">
-							<span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+							<span className="w-1.5 h-6 bg-sage rounded-full" />
 							<span>Details</span>
 						</h3>
 						<button
@@ -512,13 +512,13 @@ const ImageModal = ({
 							</div>
 						</div>
 
-						<div className="bg-gradient-to-br from-indigo-500/10 to-transparent p-6 rounded-3xl border border-indigo-500/20 relative overflow-hidden mt-8">
-							<div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl" />
-							<span className="text-[10px] uppercase tracking-widest font-bold text-indigo-400 block mb-2">
+						<div className="bg-gradient-to-br from-sage/10 to-transparent p-6 rounded-3xl border border-sage/20 relative overflow-hidden mt-8">
+							<div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-sage/20 rounded-full blur-2xl" />
+							<span className="text-[10px] uppercase tracking-widest font-bold text-sage block mb-2">
 								AI Insights
 							</span>
 							<div className="flex items-end space-x-3 mb-6 relative z-10">
-								<span className="text-6xl font-black text-indigo-400 leading-none">
+								<span className="text-6xl font-black text-sage leading-none">
 									{image.faces?.length || 0}
 								</span>
 								<span className="text-sm font-bold text-zinc-300 pb-1">
@@ -533,7 +533,7 @@ const ImageModal = ({
 									type="button"
 									onClick={handleReprocess}
 									disabled={isReprocessing}
-									className="relative z-10 w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/20"
+									className="relative z-10 w-full py-3 bg-sage text-zinc-950 rounded-xl text-sm font-bold hover:bg-sage/90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2 shadow-lg shadow-sage/20"
 								>
 									{isReprocessing && (
 										<svg

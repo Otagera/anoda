@@ -47,7 +47,7 @@ export const UploadManager: React.FC = () => {
 			>
 				<div className="flex items-center space-x-2">
 					<div
-						className={`w-2 h-2 rounded-full ${activeCount > 0 ? "bg-indigo-500 animate-pulse" : "bg-green-500"}`}
+						className={`w-2 h-2 rounded-full ${activeCount > 0 ? "bg-sage animate-pulse" : "bg-green-500"}`}
 					/>
 					<span className="font-semibold text-sm text-zinc-900 dark:text-white">
 						{activeCount > 0
@@ -111,7 +111,7 @@ export const UploadManager: React.FC = () => {
 									{task.status === "uploading" && (
 										<button
 											onClick={() => pauseUpload(task.id)}
-											className="p-1 text-zinc-500 hover:text-indigo-500"
+											className="p-1 text-zinc-500 hover:text-sage"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -153,7 +153,7 @@ export const UploadManager: React.FC = () => {
 									{task.status === "error" && (
 										<button
 											onClick={() => retryUpload(task.id)}
-											className="p-1 text-zinc-500 hover:text-indigo-500"
+											className="p-1 text-zinc-500 hover:text-sage"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -197,14 +197,14 @@ export const UploadManager: React.FC = () => {
 							<div className="flex items-center space-x-2">
 								<div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
 									<div
-										className={`h-full transition-all duration-300 ${task.status === "error" ? "bg-red-500" : task.status === "completed" ? "bg-green-500" : "bg-indigo-500"}`}
+										className={`h-full transition-all duration-300 ${task.status === "error" ? "bg-red-500" : task.status === "completed" ? "bg-green-500" : "bg-sage"}`}
 										style={{
 											width: `${task.status === "completed" ? 100 : task.status === "uploading" ? 45 : 0}%`,
 										}}
 									/>
 								</div>
 								<span
-									className={`text-[10px] uppercase font-bold ${task.status === "error" ? "text-red-500" : task.status === "completed" ? "text-green-500" : "text-indigo-500"}`}
+									className={`text-[10px] uppercase font-bold ${task.status === "error" ? "text-red-500" : task.status === "completed" ? "text-green-500" : "text-sage"}`}
 								>
 									{task.status}
 								</span>
