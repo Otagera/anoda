@@ -35,7 +35,7 @@ const ImageGridItem = ({
 				containerClassName,
 				isSelected
 					? "ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98] shadow-2xl shadow-sage/20"
-					: "hover:shadow-2xl hover:shadow-sage/10"
+					: "hover:shadow-2xl hover:shadow-sage/10",
 			)}
 		>
 			<img
@@ -45,7 +45,7 @@ const ImageGridItem = ({
 				className={cn(
 					"w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
 					className,
-					isSelected ? "opacity-80" : ""
+					isSelected ? "opacity-80" : "",
 				)}
 				onClick={(e) => {
 					if (selectionMode && onToggleSelect) {
@@ -62,7 +62,7 @@ const ImageGridItem = ({
 					"absolute top-4 left-4 transition-all duration-300",
 					selectionMode || isSelected
 						? "opacity-100 scale-100"
-						: "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+						: "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100",
 				)}
 			>
 				<button
@@ -75,7 +75,7 @@ const ImageGridItem = ({
 						"w-8 h-8 rounded-xl flex items-center justify-center transition-all border shadow-lg backdrop-blur-md active:scale-90",
 						isSelected
 							? "bg-sage border-sage text-zinc-950"
-							: "bg-black/20 border-white/20 text-transparent hover:border-white/40"
+							: "bg-black/20 border-white/20 text-transparent hover:border-white/40",
 					)}
 				>
 					<svg

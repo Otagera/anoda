@@ -9,6 +9,10 @@ import { getAlbumLinks } from "./albums.lib";
 const spec = joi.object({
 	album_id: joi.string().required(),
 	user_id: joi.string().required(),
+	status: joi
+		.string()
+		.valid("APPROVED", "PENDING", "REJECTED")
+		.default("APPROVED"),
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),
@@ -18,6 +22,7 @@ const aliasSpec = {
 	request: {
 		albumId: "album_id",
 		userId: "user_id",
+		status: "status",
 		limit: "limit",
 		nextCursor: "nextCursor",
 		paginationType: "paginationType",
@@ -31,6 +36,7 @@ const aliasSpec = {
 		image_id: "imageId",
 		faces: "faces",
 		image_path: "imagePath",
+		status: "status",
 		upload_date: "uploadDate",
 		update_date: "updateDate",
 		original_size: "originalSize",

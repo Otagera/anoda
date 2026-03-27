@@ -6,9 +6,9 @@ import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const peopleRoutes = new Elysia({ prefix: "/people" })
 	.derive(authDerivation)
-	.get("/", async ({ set }) => {
+	.get("/", async ({ set, user }) => {
 		try {
-			const data = await listPeopleService();
+			const data = await listPeopleService(user.user_id);
 
 			set.status = HTTP_STATUS_CODES.OK;
 			return {
@@ -28,9 +28,12 @@ const peopleRoutes = new Elysia({ prefix: "/people" })
 	})
 	.post(
 		"/",
-		async ({ body, set }) => {
+		async ({ body, set, user }) => {
 			try {
-				const data = await createPersonService(body);
+				const data = await createPersonService({
+					...body,
+					user_id: user.user_id,
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {

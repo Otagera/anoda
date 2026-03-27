@@ -19,9 +19,12 @@ const aliasSpec = {
 		album_id: "id",
 		album_name: "albumName",
 		created_by: "userId",
+		storage_config_id: "storageConfigId",
+		storage_config: "storageConfig",
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
 		share_token: "shareToken",
+		settings: "settings",
 	},
 };
 const service = async (data: unknown) => {

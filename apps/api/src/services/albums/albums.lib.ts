@@ -167,8 +167,16 @@ export const getAlbumLinksNoError = async (where) => {
 export const getAlbumLinks = async (where, options = {}) => {
 	await albumLinkValidation(where, { check_image_id: false });
 
-	const { image_id, album_id } = where;
-	const album = await fetchAlbumImages({ album_id, image_id }, options);
+	const { image_id, album_id, status } = where;
+
+	const filter: any = { album_id, image_id };
+	if (status) {
+		filter.images = {
+			status,
+		};
+	}
+
+	const album = await fetchAlbumImages(filter, options);
 
 	if (!album || !album.length) {
 		return [];

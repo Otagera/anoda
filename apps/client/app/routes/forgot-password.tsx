@@ -94,40 +94,39 @@ const ForgotPasswordPage = () => {
 									</>
 								) : (
 									"Send Reset Link"
-									)}
-									</button>
-									</form>
-									) : (
-									<div className="bg-sage/10 dark:bg-sage/20 p-6 rounded-2xl border border-sage/20 dark:border-sage/50 text-center space-y-4">
-									<div className="w-12 h-12 bg-sage text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-sage/20">
-									<svg
+								)}
+							</button>
+						</form>
+					) : (
+						<div className="bg-sage/10 dark:bg-sage/20 p-6 rounded-2xl border border-sage/20 dark:border-sage/50 text-center space-y-4">
+							<div className="w-12 h-12 bg-sage text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-sage/20">
+								<svg
 									className="w-6 h-6"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
-									>
+								>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
 										strokeWidth={2}
 										d="M5 13l4 4L19 7"
 									/>
-									</svg>
-									</div>
-									<p className="text-zinc-700 dark:text-zinc-300 font-medium">
-									We've sent a password reset link to{" "}
-									<span className="font-bold text-sage">{email}</span>.
-									Please check your inbox.
-									</p>
-									<button
-									onClick={() => setIsSubmitted(false)}
-									className="text-sm font-bold text-sage hover:text-sage/80 transition-colors"
-									>
-									Didn't receive it? Try again
-									</button>
-									</div>
-									)
-}
+								</svg>
+							</div>
+							<p className="text-zinc-700 dark:text-zinc-300 font-medium">
+								We've sent a password reset link to{" "}
+								<span className="font-bold text-sage">{email}</span>. Please
+								check your inbox.
+							</p>
+							<button
+								onClick={() => setIsSubmitted(false)}
+								className="text-sm font-bold text-sage hover:text-sage/80 transition-colors"
+							>
+								Didn't receive it? Try again
+							</button>
+						</div>
+					)}
 
 					<div className="pt-4 text-center">
 						<Link

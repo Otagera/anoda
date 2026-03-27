@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
 import {
 	getImageSize,
 	isImageCorrupted,
@@ -27,7 +28,10 @@ const fileSchema = Joi.object({
 });
 
 const spec = Joi.object({
-	uploaded_by: Joi.string().required(),
+	uploaded_by: Joi.string().optional(),
+	status: Joi.string()
+		.valid("PENDING", "APPROVED", "REJECTED")
+		.default("APPROVED"),
 	files: Joi.array().items(fileSchema).min(1).max(50).required(),
 });
 
@@ -35,6 +39,7 @@ const aliasSpec = {
 	request: {
 		files: "files",
 		userId: "uploaded_by",
+		status: "status",
 	},
 	response: {
 		images: "images",
@@ -43,6 +48,7 @@ const aliasSpec = {
 		image_id: "imageId",
 		faces: "faces",
 		image_path: "imagePath",
+		status: "status",
 		upload_date: "uploadDate",
 		update_date: "updateDate",
 		original_size: "originalSize",
@@ -50,7 +56,7 @@ const aliasSpec = {
 	},
 };
 
-const storeImage = async (file, uploaded_by) => {
+const storeImage = async (file, uploaded_by, status) => {
 	const imagePath = file.path;
 	const imageSize = await getImageSize(imagePath);
 	const isCorrupted = await isImageCorrupted(imagePath);
@@ -63,6 +69,7 @@ const storeImage = async (file, uploaded_by) => {
 		original_height: imageSize.height,
 		original_width: imageSize.width,
 		uploaded_by,
+		status,
 	});
 
 	const imageId = imageResult.image_id;
@@ -76,8 +83,9 @@ const service = async (data) => {
 
 	const imagesToProcess = [];
 	for (const file of params.files) {
-		// figure out how to use createImages inside storeImage
-		imagesToProcess.push(await storeImage(file, params.uploaded_by));
+		imagesToProcess.push(
+			await storeImage(file, params.uploaded_by, params.status),
+		);
 	}
 
 	for (const imageInfo of imagesToProcess) {
@@ -90,6 +98,11 @@ const service = async (data) => {
 			},
 			{ removeOnComplete: true, removeOnFail: true },
 		);
+
+		// Log usage for each image processed
+		if (params.uploaded_by) {
+			await logUsage(params.uploaded_by, "compute_unit", "face_detection", 1);
+		}
 	}
 	const imageIds = imagesToProcess.map((img) => {
 		return img.imageId;

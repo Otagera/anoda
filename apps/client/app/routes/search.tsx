@@ -4,11 +4,11 @@ import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { BackButton } from "~/components/BackButton";
 import { MainContainer } from "~/components/MainContainer";
-import TagPersonModal from "~/components/TagPersonModal";
 import { Button } from "~/components/standard/Button";
 import { Card } from "~/components/standard/Card";
 import { EmptyState } from "~/components/standard/EmptyState";
 import { Heading } from "~/components/standard/Heading";
+import TagPersonModal from "~/components/TagPersonModal";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -21,7 +21,7 @@ import {
 } from "../utils/api";
 
 /**
- * A high-performance face zoom component that uses ResizeObserver to 
+ * A high-performance face zoom component that uses ResizeObserver to
  * perfectly center and spotlight a detected face within a fluid container.
  */
 const FaceZoomView = ({
@@ -29,7 +29,7 @@ const FaceZoomView = ({
 	width,
 	height,
 	onClick,
-	padFactor = 4.0
+	padFactor = 4.0,
 }: {
 	face: any;
 	width: number;
@@ -38,7 +38,10 @@ const FaceZoomView = ({
 	padFactor?: number;
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
+	const [containerSize, setContainerSize] = useState<{
+		w: number;
+		h: number;
+	} | null>(null);
 
 	useEffect(() => {
 		const el = containerRef.current;
@@ -46,7 +49,7 @@ const FaceZoomView = ({
 		const ro = new ResizeObserver(([entry]) => {
 			setContainerSize({
 				w: entry.contentRect.width,
-				h: entry.contentRect.height
+				h: entry.contentRect.height,
 			});
 		});
 		ro.observe(el);
@@ -54,7 +57,8 @@ const FaceZoomView = ({
 	}, []);
 
 	const { imgStyle, boxStyle } = useMemo(() => {
-		if (!containerSize || !face.boundingBox) return { imgStyle: {}, boxStyle: {} };
+		if (!containerSize || !face.boundingBox)
+			return { imgStyle: {}, boxStyle: {} };
 
 		const { w: cW, h: cH } = containerSize;
 		const { left, top, right, bottom } = face.boundingBox;
@@ -75,21 +79,21 @@ const FaceZoomView = ({
 
 		return {
 			imgStyle: {
-				position: 'absolute' as const,
+				position: "absolute" as const,
 				width: `${width * scale}px`,
 				height: `${height * scale}px`,
 				left: `${cW / 2 - faceCX * scale}px`,
 				top: `${cH / 2 - faceCY * scale}px`,
-				transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+				transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
 			},
 			boxStyle: {
-				position: 'absolute' as const,
-				left: `${(cW / 2 - faceCX * scale) + left * scale}px`,
-				top: `${(cH / 2 - faceCY * scale) + top * scale}px`,
+				position: "absolute" as const,
+				left: `${cW / 2 - faceCX * scale + left * scale}px`,
+				top: `${cH / 2 - faceCY * scale + top * scale}px`,
 				width: `${boxW * scale}px`,
 				height: `${boxH * scale}px`,
-				transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-			}
+				transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+			},
 		};
 	}, [containerSize, face.boundingBox, width, height, padFactor]);
 
@@ -117,7 +121,8 @@ const FaceZoomView = ({
 							className="border-2 border-sage/80 rounded-xl pointer-events-none z-10"
 							style={{
 								...boxStyle,
-								boxShadow: '0 0 0 9999px rgba(0,0,0,0.25), 0 0 30px rgba(182, 186, 68, 0.3) inset'
+								boxShadow:
+									"0 0 0 9999px rgba(0,0,0,0.25), 0 0 30px rgba(182, 186, 68, 0.3) inset",
 							}}
 						>
 							<div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-sage/90 backdrop-blur-md text-zinc-950 text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap">
@@ -297,20 +302,23 @@ const SearchPage = () => {
 				const area = width * height;
 				const isFeatured = area > 2000000;
 
-				const spanClass = getBentoSpanClass(
-					width,
-					height,
-					index,
-					isFeatured,
-				);
+				const spanClass = getBentoSpanClass(width, height, index, isFeatured);
 
 				return (
-					<div key={face.faceId || index} className={cn("relative animate-in fade-in slide-in-from-bottom-4 duration-500", spanClass)} style={{ animationDelay: `${index * 50}ms` }}>
-						<Card
-							className="w-full h-full p-0 group overflow-hidden"
-						>
+					<div
+						key={face.faceId || index}
+						className={cn(
+							"relative animate-in fade-in slide-in-from-bottom-4 duration-500",
+							spanClass,
+						)}
+						style={{ animationDelay: `${index * 50}ms` }}
+					>
+						<Card className="w-full h-full p-0 group overflow-hidden">
 							{/* Spotlight / Full Image Rendering */}
-							{showFacesInGrid && face.boundingBox && width > 0 && height > 0 ? (
+							{showFacesInGrid &&
+							face.boundingBox &&
+							width > 0 &&
+							height > 0 ? (
 								<FaceZoomView
 									face={face}
 									width={width}
@@ -327,7 +335,7 @@ const SearchPage = () => {
 										url: face.imagePath,
 										alt: `Match ${index + 1}`,
 									}}
-									onDelete={() => { }}
+									onDelete={() => {}}
 									shared={true}
 									className="w-full h-full object-cover cursor-pointer"
 									onClick={() => setSelectedImage(face)}
@@ -345,7 +353,7 @@ const SearchPage = () => {
 													? "bg-sage text-zinc-950 border-sage"
 													: Number(similarity) > 50
 														? "bg-slate-blue text-white border-slate-blue"
-														: "bg-zinc-800 text-zinc-100 border-zinc-700"
+														: "bg-zinc-800 text-zinc-100 border-zinc-700",
 											)}
 										>
 											{similarity}% Match
@@ -425,7 +433,8 @@ const SearchPage = () => {
 	const SourceFaceThumbnail = ({ face }: { face: any }) => {
 		if (!face?.imagePath) return null;
 
-		const isCropped = face.boundingBox && face.originalWidth && face.originalHeight;
+		const isCropped =
+			face.boundingBox && face.originalWidth && face.originalHeight;
 
 		return (
 			<div className="relative group">
@@ -440,20 +449,36 @@ const SearchPage = () => {
 							}}
 						/>
 					) : (
-						<img src={face.imagePath} alt="Source" className="w-full h-full object-cover" />
+						<img
+							src={face.imagePath}
+							alt="Source"
+							className="w-full h-full object-cover"
+						/>
 					)}
 				</div>
 			</div>
 		);
 	};
 
-	const StatBlock = ({ label, value, subtext, color = "text-zinc-900 dark:text-white" }: { label: string; value: string | number; subtext?: string; color?: string }) => (
+	const StatBlock = ({
+		label,
+		value,
+		subtext,
+		color = "text-zinc-900 dark:text-white",
+	}: {
+		label: string;
+		value: string | number;
+		subtext?: string;
+		color?: string;
+	}) => (
 		<div className="flex flex-col">
 			<span className="text-zinc-500 text-[8px] font-black uppercase tracking-wider mb-0.5">
 				{label}
 			</span>
 			<div className="flex items-baseline gap-1.5">
-				<span className={cn("text-xl font-bold tabular-nums tracking-tight", color)}>
+				<span
+					className={cn("text-xl font-bold tabular-nums tracking-tight", color)}
+				>
 					{value}
 				</span>
 				{subtext && (
@@ -475,19 +500,25 @@ const SearchPage = () => {
 						<div className="p-2.5 bg-sage text-zinc-950 rounded-xl border border-sage shadow-lg shadow-sage/10">
 							<Search size={20} strokeWidth={3} />
 						</div>
-						<Heading level={1} className="text-2xl md:text-3xl m-0">Search Results</Heading>
+						<Heading level={1} className="text-2xl md:text-3xl m-0">
+							Search Results
+						</Heading>
 					</div>
 
 					{sourceFace?.imagePath && (
 						<div className="flex items-center gap-4 pl-6 border-l border-zinc-200 dark:border-zinc-800">
 							<SourceFaceThumbnail face={sourceFace} />
 							<div className="flex flex-col">
-								<span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Target Subject</span>
+								<span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">
+									Target Subject
+								</span>
 								<button
 									onClick={() => setTaggingFaceId(sourceFace.faceId)}
 									className="text-sm font-bold text-zinc-900 dark:text-white hover:text-sage transition-colors text-left"
 								>
-									{sourceFace?.personName || sourceFace?.personId?.split("-")[0] || "Unknown Subject"}
+									{sourceFace?.personName ||
+										sourceFace?.personId?.split("-")[0] ||
+										"Unknown Subject"}
 								</button>
 							</div>
 						</div>
@@ -497,7 +528,11 @@ const SearchPage = () => {
 				{!loading && !error && results.length > 0 && (
 					<div className="flex items-center gap-8 bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 px-6 backdrop-blur-sm">
 						<div className="flex gap-8">
-							<StatBlock label="Identified" value={confident.length + possible.length} subtext="Matches" />
+							<StatBlock
+								label="Identified"
+								value={confident.length + possible.length}
+								subtext="Matches"
+							/>
 							<StatBlock label="Correlation" value="High" color="text-sage" />
 						</div>
 						<div className="w-px h-8 bg-zinc-200 dark:border-zinc-800 mx-2" />
@@ -520,7 +555,9 @@ const SearchPage = () => {
 						<div className="absolute inset-0 border-[4px] border-sage border-t-transparent rounded-full animate-spin" />
 					</div>
 					<div className="text-center">
-						<Heading level={2} className="mb-2">Analyzing Biometrics</Heading>
+						<Heading level={2} className="mb-2">
+							Analyzing Biometrics
+						</Heading>
 						<p className="text-zinc-500 animate-pulse font-medium tracking-wide">
 							Scanning neural embeddings...
 						</p>
@@ -532,7 +569,9 @@ const SearchPage = () => {
 						<X size={32} strokeWidth={3} />
 					</div>
 					<div>
-						<Heading level={2} className="text-plum mb-2">Search Failed</Heading>
+						<Heading level={2} className="text-plum mb-2">
+							Search Failed
+						</Heading>
 						<p className="text-plum/80 font-medium">{error}</p>
 					</div>
 				</div>
@@ -549,7 +588,9 @@ const SearchPage = () => {
 							<div className="flex items-center gap-4 mb-10">
 								<div className="w-1.5 h-8 bg-sage rounded-full shadow-[0_0_15px_rgba(182,186,68,0.5)]" />
 								<div>
-									<Heading level={2} className="text-xl">Confident Matches</Heading>
+									<Heading level={2} className="text-xl">
+										Confident Matches
+									</Heading>
 									<span className="text-sage text-[9px] font-black uppercase tracking-[0.3em] block mt-0.5">
 										Neural Correlation &gt; 95%
 									</span>
@@ -566,7 +607,9 @@ const SearchPage = () => {
 									<div className="flex items-center gap-4">
 										<div className="w-1.5 h-8 bg-terracotta rounded-full" />
 										<div>
-											<Heading level={2} className="text-xl">Possible Matches</Heading>
+											<Heading level={2} className="text-xl">
+												Possible Matches
+											</Heading>
 											<span className="text-terracotta text-[9px] font-black uppercase tracking-[0.2em] block mt-0.5">
 												Probabilistic Suggestions
 											</span>
@@ -579,7 +622,11 @@ const SearchPage = () => {
 										className="rounded-full px-5 py-2.5 h-auto text-xs"
 									>
 										{showPossible ? "Hide Suggestions" : "Show Suggestions"}
-										{showPossible ? <ChevronUp className="ml-2 w-4 h-4" /> : <ChevronDown className="ml-2 w-4 h-4" />}
+										{showPossible ? (
+											<ChevronUp className="ml-2 w-4 h-4" />
+										) : (
+											<ChevronDown className="ml-2 w-4 h-4" />
+										)}
 									</Button>
 								</div>
 
@@ -595,7 +642,9 @@ const SearchPage = () => {
 									<div className="flex items-center gap-4">
 										<div className="w-1.5 h-8 bg-zinc-500 rounded-full" />
 										<div>
-											<Heading level={2} className="text-xl">Ignored Matches</Heading>
+											<Heading level={2} className="text-xl">
+												Ignored Matches
+											</Heading>
 											<span className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em] block mt-0.5">
 												Excluded from Results
 											</span>
@@ -608,7 +657,11 @@ const SearchPage = () => {
 										className="rounded-full px-5 py-2.5 h-auto text-xs"
 									>
 										{showIgnored ? "Hide Ignored" : "Review Ignored"}
-										{showIgnored ? <ChevronUp className="ml-2 w-4 h-4" /> : <ChevronDown className="ml-2 w-4 h-4" />}
+										{showIgnored ? (
+											<ChevronUp className="ml-2 w-4 h-4" />
+										) : (
+											<ChevronDown className="ml-2 w-4 h-4" />
+										)}
 									</Button>
 								</div>
 

@@ -17,18 +17,14 @@ import {
 
 const validateImageData = (imageData) => {
 	if (!imageData.image_path) {
-		throw new Error("Album name: image_path is required");
+		throw new Error("Image path: image_path is required");
 	}
 
 	if (!imageData.original_width) {
-		throw new Error("Creator: original_width is required");
+		throw new Error("Width: original_width is required");
 	}
 	if (!imageData.original_height) {
-		throw new Error("Creator: original_size.height is required");
-	}
-
-	if (!imageData.uploaded_by) {
-		throw new Error("Creator: uploaded_by is required");
+		throw new Error("Height: original_height is required");
 	}
 };
 

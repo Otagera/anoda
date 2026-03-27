@@ -20,6 +20,7 @@ export const createElysiaApp = async () => {
 	const { default: facesRoutes } = await import("./routes/faces.route");
 	const { default: publicRoutes } = await import("./routes/public.route");
 	const { default: peopleRoutes } = await import("./routes/people.route");
+	const { default: settingsRoutes } = await import("./routes/settings.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -51,7 +52,6 @@ export const createElysiaApp = async () => {
 			if (body && request.url.includes("/auth/signup")) {
 				const debugBody = { ...(body as any) };
 				if (debugBody.password) debugBody.password = "***";
-				console.log("Request Body:", debugBody);
 			}
 		})
 		.onAfterHandle(({ request, set }) => {
@@ -130,7 +130,8 @@ export const createElysiaApp = async () => {
 				.use(picturesRoutes)
 				.use(facesRoutes)
 				.use(publicRoutes)
-				.use(peopleRoutes),
+				.use(peopleRoutes)
+				.use(settingsRoutes),
 		)
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get(

@@ -32,6 +32,30 @@ Development is tracked using `beads` (bd). Current active tasks:
 *   `anoda-facematch-ofp`: Optimization: Worker-based Image Processing
 *   `anoda-facematch-apr`: Upload: Persistent Background Manager
 *   `anoda-facematch-kgm`: Real-time: SSE Status Updates
+*   `anoda-facematch-r2b`: Infrastructure: R2 Migration & BYOS Support
+*   `anoda-facematch-evt`: Features: Collaborative Events & Moderation
+
+### Collaborative Events
+
+Anoda Facematch is evolving from a personal gallery into a social, collaborative platform. **Events** are special types of albums designed for crowdsourcing photos:
+*   **Frictionless Contribution:** Guests can upload photos via a QR code or link without creating an account.
+*   **"Selfie to Join":** An optional flow where guests take a selfie to instantly find all photos of themselves within the event.
+*   **Host Control:** Hosts can review and approve guest uploads before they appear in the main gallery.
+*   **Automatic Expiration:** Upload windows can be set to close automatically after a specific duration.
+
+### Storage & Pricing Strategy (Compute vs. Storage)
+
+The application separates the cost of **AI Intelligence** from **Physical Storage**:
+*   **Compute Credits:** Users pay for "Compute Units" (CPU/GPU time) consumed by face detection, embedding generation, and clustering.
+*   **Managed Storage:** Default storage provided by Anoda (using Cloudflare R2 for zero-egress costs).
+*   **BYOS (Bring Your Own Storage):** Power users and pros can connect their own S3-compatible buckets (AWS, Cloudflare R2). In this mode, Anoda acts as the "AI Layer," while the user retains full ownership and cost-control of their image files.
+
+### Infrastructure: Cloudflare R2 Migration
+
+To ensure a sustainable free tier and low-cost scaling, the application is migrating to **Cloudflare R2**:
+*   **Zero Egress Fees:** Eliminates bandwidth costs when users view or download photos.
+*   **Storage Abstraction:** A unified `StorageService` allows the app to seamlessly switch between local, managed R2, and BYOS buckets.
+*   **Direct-to-Cloud Uploads:** Using S3 Presigned URLs, the client uploads directly to storage, bypassing the API server to save resources.
 
 ### Scalability Considerations
 
@@ -82,6 +106,7 @@ Redis will be used as a caching layer to improve query performance.
 | image\_id         | UUID (Primary)  | Unique identifier for the image                                                |
 | image\_path       | TEXT            | Path to the original image (local or cloud)                                    |
 | optimized\_path   | TEXT            | Path to the optimized WebP image                                               |
+| status            | TEXT            | Moderation status: `PENDING`, `APPROVED`, `REJECTED`                           |
 | upload\_date      | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)            |
 | update\_date      | TIMESTAMPTZ     | Date and time the image was last updated (default: `CURRENT_TIMESTAMP`)        |
 | original\_width   | INT             | Original width of the image                                                   |
@@ -103,6 +128,7 @@ Redis will be used as a caching layer to improve query performance.
 | ------------------ | --------------- | ------------------------------------------------------------------------------- |
 | person\_id        | UUID (Primary)  | Unique identifier for the person                                               |
 | name              | TEXT            | Name assigned to the person                                                    |
+| user\_id          | UUID (Foreign)  | Owner of this person record (references `users.user_id`)                       |
 | created\_at       | TIMESTAMPTZ     | Date and time the person was created (default: `CURRENT_TIMESTAMP`)            |
 | updated\_at       | TIMESTAMPTZ     | Date and time the person was last updated (default: `CURRENT_TIMESTAMP`)       |
 
@@ -112,9 +138,20 @@ Redis will be used as a caching layer to improve query performance.
 | album\_id         | UUID (Primary)  | Unique identifier for the album                                                |
 | album\_name       | TEXT            | Name of the album                                                              |
 | created\_by       | UUID (Foreign)  | ID of the user who created the album (references `users.user_id`)              |
+| storage\_config\_id| UUID (Foreign) | Linked BYOS storage (references `user_storage_configs.id`)                     |
 | creation\_date    | TIMESTAMPTZ     | Date and time the album was created (default: `CURRENT_TIMESTAMP`)             |
 | shared\_link      | TEXT            | The generated link to share the album                                          |
 | share\_token      | TEXT (Unique)   | Token used to authenticate public access to shared albums                      |
+
+**Table: `album_settings`**
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| album\_id         | UUID (Primary)  | Unique identifier (references `albums.album_id`)                               |
+| is\_event         | BOOLEAN         | Whether collaborative features are enabled                                     |
+| requires\_approval| BOOLEAN         | Whether guest uploads require host approval                                    |
+| tagging\_policy   | TEXT            | Who can tag faces (`HOST_ONLY`, `GUESTS_SELF`, `ANYONE`)                       |
+| expires\_at       | TIMESTAMPTZ     | When the event upload window closes                                            |
+| allow\_guest\_uploads| BOOLEAN      | Whether guests can contribute photos                                           |
 
 **Table: `album_images`**
 | Column Name       | Data Type       | Description                                                                     |
@@ -123,12 +160,37 @@ Redis will be used as a caching layer to improve query performance.
 | image\_id         | UUID (Foreign)  | ID of the image (references `images.image_id`)                                 |
 | album\_id         | UUID (Foreign)  | ID of the album (references `albums.album_id`)                                 |
 
+**Table: `user_storage_configs`**
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| id                | UUID (Primary)  | Unique identifier                                                              |
+| user\_id          | UUID (Foreign)  | Owner of the config (references `users.user_id`)                               |
+| provider          | TEXT            | Storage provider (`r2`, `s3`)                                                  |
+| name              | TEXT            | Friendly name for the config                                                   |
+| access\_key\_id   | TEXT            | Encrypted API key                                                              |
+| secret\_access\_key| TEXT           | Encrypted API secret                                                           |
+| bucket            | TEXT            | Bucket name                                                                    |
+| endpoint          | TEXT            | S3-compatible endpoint URL                                                     |
+| region            | TEXT            | Optional S3 region                                                             |
+| is\_active        | BOOLEAN         | Whether this is the default managed config                                     |
+
+**Table: `usage_logs`**
+| Column Name       | Data Type       | Description                                                                     |
+| ------------------ | --------------- | ------------------------------------------------------------------------------- |
+| id                | SERIAL (Primary)| Unique identifier                                                              |
+| user\_id          | UUID (Foreign)  | User to charge (references `users.user_id`)                                    |
+| resource          | TEXT            | Resource type (`compute_unit`, `storage_gb`)                                   |
+| operation         | TEXT            | Specific action (`face_detection`, `clustering`)                               |
+| quantity          | INT             | Amount consumed                                                                |
+| timestamp         | TIMESTAMPTZ     | Date and time of consumption                                                   |
+
 **Table: `users`**
 | Column Name       | Data Type       | Description                                                                     |
 | ------------------ | --------------- | ------------------------------------------------------------------------------- |
 | user\_id          | UUID (Primary)  | Unique identifier for the user                                                 |
 | email             | TEXT (Unique)   | Email address of the user                                                      |
 | password          | TEXT            | Password of the user                                                           |
+| preferences       | JSONB           | User-level global settings                                                     |
 
 
 
@@ -289,7 +351,18 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
     * 13.2 Intelligent Bento Grid: Implement content-aware layout using resolution and aspect ratio. Done.
     * 13.3 Theatre Mode: Major refactor of Image Modal with carousel, side panel, and keyboard navigation. Done.
     * 13.4 Feature Parity: Bring shared views up to the same quality as owner views. Done.
-    * 13.5 Data Integrity: Fix nested data access across all main views. **Done**.
+    * 13.5 Data Integrity: Fix nested data access across all main views. Done.
+* Status: Done.
+
+**Milestone 14: Collaborative Events & BYOS**
+
+* Tasks:
+    * 14.1 Storage Abstraction Layer: Implement `StorageService` with R2 and Local providers. Done.
+    * 14.2 R2 Migration: Move all existing image flows to Cloudflare R2 with Presigned URLs. Done.
+    * 14.3 Settings Infrastructure: Implement Global User Preferences and Local Album/Event settings. Done.
+    * 14.4 Event Logic: Implement QR-based guest uploads, moderation queues, and expiration. Done.
+    * 14.5 BYOS Support: Implement secure storage for user S3 keys and dynamic provider initialization. Done.
+    * 14.6 Usage & Quotas: Implement "Compute Unit" tracking and host-based billing logic. Done.
 * Status: Done.
 
 ### Monitoring & Observability (LGTM Stack)

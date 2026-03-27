@@ -29,6 +29,9 @@ const fetchUser = async (where) => {
 
 	return await prisma.users.findUnique({
 		where,
+		include: {
+			storage_configs: true,
+		},
 	});
 };
 
@@ -36,6 +39,9 @@ const fetchUserById = async (userId) => {
 	return await prisma.users.findFirst({
 		where: {
 			user_id: userId,
+		},
+		include: {
+			storage_configs: true,
 		},
 	});
 };
@@ -101,6 +107,35 @@ const deleteAllUsers = async () => {
 	return transaction;
 };
 
+// Storage Configs
+const createStorageConfig = async (userId, data) => {
+	return await prisma.user_storage_configs.create({
+		data: {
+			...data,
+			user_id: userId,
+		},
+	});
+};
+
+const updateStorageConfig = async (configId, data) => {
+	return await prisma.user_storage_configs.update({
+		where: { id: configId },
+		data,
+	});
+};
+
+const deleteStorageConfig = async (configId) => {
+	return await prisma.user_storage_configs.delete({
+		where: { id: configId },
+	});
+};
+
+const fetchStorageConfigs = async (userId) => {
+	return await prisma.user_storage_configs.findMany({
+		where: { user_id: userId },
+	});
+};
+
 export {
 	createNewUser,
 	updateExistingUser,
@@ -112,4 +147,8 @@ export {
 	deleteUserById,
 	deleteUsersByIds,
 	deleteAllUsers,
+	createStorageConfig,
+	updateStorageConfig,
+	deleteStorageConfig,
+	fetchStorageConfigs,
 };

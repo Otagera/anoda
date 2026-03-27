@@ -25,6 +25,7 @@ const aliasSpec = {
 		shared_link: "sharedLink",
 		coverImages: "coverImages",
 		_count: "_count",
+		settings: "settings",
 	},
 };
 

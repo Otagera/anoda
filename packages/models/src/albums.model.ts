@@ -3,23 +3,51 @@ import { deleteFile } from "../../utils/src/file.util.ts";
 
 const createNewAlbum = async (data) => {
 	return await prisma.albums.create({
-		data,
+		data: {
+			...data,
+			settings: {
+				create: {}, // Initialize with default settings
+			},
+		},
+		include: {
+			settings: true,
+			storage_config: true,
+		},
 	});
 };
 
 const updateExistingAlbum = async (album_id, created_by, userData) => {
+	const { settings, ...albumData } = userData;
 	return await prisma.albums.update({
 		where: {
 			album_id,
 			created_by,
 		},
-		data: userData,
+		data: {
+			...albumData,
+			settings: settings
+				? {
+						upsert: {
+							create: settings,
+							update: settings,
+						},
+					}
+				: undefined,
+		},
+		include: {
+			settings: true,
+			storage_config: true,
+		},
 	});
 };
 
 const fetchAlbum = async (where) => {
 	return await prisma.albums.findUnique({
 		where,
+		include: {
+			settings: true,
+			storage_config: true,
+		},
 	});
 };
 
@@ -29,6 +57,10 @@ const fetchAlbumsByIds = async (albumIds) => {
 			album_id: {
 				in: albumIds,
 			},
+		},
+		include: {
+			settings: true,
+			storage_config: true,
 		},
 	});
 };
@@ -41,6 +73,8 @@ const fetchAlbumsByUserids = async (userIds) => {
 			},
 		},
 		include: {
+			settings: true,
+			storage_config: true,
 			_count: {
 				select: { album_images: true },
 			},

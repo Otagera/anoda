@@ -23,6 +23,7 @@
 	"dependencies": {
 		"@bull-board/elysia": "^6.16.2",
 		"@elysiajs/cors": "^1.4.1",
-		"@elysiajs/static": "^1.4.7"
+		"@elysiajs/static": "^1.4.7",
+		"react-datepicker": "^9.1.0"
 	}
 }

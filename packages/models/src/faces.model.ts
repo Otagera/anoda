@@ -36,7 +36,7 @@ const ignoreFace = async (personId: string, faceId: number) => {
 		});
 	} catch (e: any) {
 		// Ignore if it already exists (Unique constraint violation)
-		if (e.code === 'P2002') return;
+		if (e.code === "P2002") return;
 		throw e;
 	}
 };

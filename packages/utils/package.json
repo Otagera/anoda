@@ -29,14 +29,16 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"mongoose": "^8.2.3",
+		"@aws-sdk/client-s3": "^3.1017.0",
+		"@aws-sdk/s3-request-presigner": "^3.1017.0",
+		"bcrypt": "^5.1.1",
 		"dotenv": "^16.4.7",
+		"express-rate-limit": "^7.5.0",
+		"ioredis": "^5.5.0",
 		"joi": "^17.13.3",
 		"jsonwebtoken": "^9.0.2",
-		"bcrypt": "^5.1.1",
-		"sharp": "^0.33.5",
+		"mongoose": "^8.2.3",
 		"pino": "^9.6.0",
-		"ioredis": "^5.5.0",
-		"express-rate-limit": "^7.5.0"
+		"sharp": "^0.33.5"
 	}
 }

@@ -8,6 +8,7 @@ import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
 import ImagesList from "~/Images/ImageGallery";
 import { createAlbum, deleteAlbum, editAlbum, fetchAlbums } from "../utils/api";
+import { Sparkles, QrCode, HardDrive, Users, Search } from "lucide-react";
 
 const Home = () => {
 	const queryClient = useQueryClient();
@@ -89,20 +90,17 @@ const Home = () => {
 	}, []);
 
 	return (
-		<MainContainer className="space-y-20">
+		<MainContainer className="space-y-20 pb-20">
 			{/* Albums Section */}
 			<section>
 				<div className="flex justify-between items-end mb-10">
 					<div>
-						<Heading level={1}>Albums</Heading>
-						<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2">
-							Organize your photos into meaningful collections
+						<Heading level={1} className="text-4xl font-black">Albums</Heading>
+						<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
+							Organize your photos and collaborative events
 						</p>
 					</div>
-					<Button
-						variant="outline"
-						onClick={() => setIsCreateModalOpen(true)}
-					>
+					<Button onClick={() => setIsCreateModalOpen(true)}>
 						Create New Album
 					</Button>
 				</div>
@@ -134,8 +132,8 @@ const Home = () => {
 			{/* Recent Photos Section */}
 			<section>
 				<div className="mb-10">
-					<Heading level={2}>Recent Photos</Heading>
-					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2">
+					<Heading level={2} className="text-2xl font-bold">Recent Photos</Heading>
+					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
 						Your latest memories across all albums
 					</p>
 				</div>
@@ -162,14 +160,14 @@ const Home = () => {
 						<Heading level={2} className="mb-2">
 							{isCreateModalOpen ? "Create Album" : "Edit Album"}
 						</Heading>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">
-							{isCreateModalOpen 
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 font-medium">
+							{isCreateModalOpen
 								? "Give your new album a name to start organizing."
 								: "Update the name of your album."}
 						</p>
 						<input
 							type="text"
-							className="w-full px-6 py-4 rounded-2xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition-all placeholder:text-zinc-400"
+							className="w-full px-6 py-4 rounded-2xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition-all placeholder:text-zinc-400 font-medium"
 							placeholder="e.g. Summer Vacation 2025"
 							value={albumName}
 							onChange={(e) => setAlbumName(e.target.value)}
@@ -177,16 +175,27 @@ const Home = () => {
 						/>
 						<div className="flex items-center space-x-3 mt-10">
 							<Button
-								className="flex-1"
-								onClick={isCreateModalOpen ? handleCreateAlbum : handleEditAlbum}
-								disabled={(isCreateModalOpen ? createAlbumMutation.isPending : editAlbumMutation.isPending) || !albumName.trim()}
+								className="flex-1 font-bold"
+								onClick={
+									isCreateModalOpen ? handleCreateAlbum : handleEditAlbum
+								}
+								disabled={
+									(isCreateModalOpen
+										? createAlbumMutation.isPending
+										: editAlbumMutation.isPending) || !albumName.trim()
+								}
 							>
-								{isCreateModalOpen 
-									? (createAlbumMutation.isPending ? "Creating..." : "Create Album")
-									: (editAlbumMutation.isPending ? "Saving..." : "Save Changes")}
+								{isCreateModalOpen
+									? createAlbumMutation.isPending
+										? "Creating..."
+										: "Create Album"
+									: editAlbumMutation.isPending
+										? "Saving..."
+										: "Save Changes"}
 							</Button>
 							<Button
 								variant="ghost"
+								className="rounded-xl font-bold"
 								onClick={() => {
 									setIsCreateModalOpen(false);
 									setIsEditModalOpen(false);
@@ -203,60 +212,60 @@ const Home = () => {
 
 			{showFirstTimeGuide && (
 				<div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/70 p-4 backdrop-blur-md">
-					<div className="w-full max-w-2xl rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-10">
-						<div className="mb-8">
-							<p className="text-xs font-black uppercase tracking-[0.2em] text-sage">
-								Welcome to Anoda Facematch
-							</p>
-							<Heading level={2} className="mt-3 mb-3">
-								Here’s a quick guide to get started
+					<div className="w-full max-w-2xl rounded-[3rem] border border-zinc-200 bg-white p-10 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-12">
+						<div className="mb-10 text-center">
+							<div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sage/10 text-sage mb-4">
+								<Sparkles size={24} />
+							</div>
+							<Heading level={2} className="text-3xl font-black mb-2">
+								Welcome to the Intelligence Layer
 							</Heading>
-							<p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-								The app is simple, but this short walkthrough helps you get value
-								faster from your very first upload.
+							<p className="text-zinc-500 dark:text-zinc-400 font-medium">
+								Anoda Facematch is ready. Here's how to get the most value.
 							</p>
 						</div>
 
-						<div className="space-y-4">
+						<div className="grid gap-4 sm:grid-cols-2">
 							{[
 								{
-									title: "1) Create or rename albums",
-									description:
-										"Use albums to group events, clients, or projects before uploading photos.",
+									icon: <Users className="h-5 w-5 text-indigo-500" />,
+									title: "Create Events",
+									description: "Turn any album into a collaborative event in settings.",
 								},
 								{
-									title: "2) Upload your photo library",
-									description:
-										"Add images in bulk and keep everything searchable in one place.",
+									icon: <QrCode className="h-5 w-5 text-sage" />,
+									title: "Share QR Codes",
+									description: "Let guests upload photos directly without an account.",
 								},
 								{
-									title: "3) Use face search",
-									description:
-										"Find matching faces quickly instead of manually scanning every picture.",
+									icon: <HardDrive className="h-5 w-5 text-plum" />,
+									title: "Connect BYOS",
+									description: "Plug in your own S3/R2 bucket in Global Settings.",
 								},
 								{
-									title: "4) Share albums when needed",
-									description:
-										"Generate secure shared access links for collaborators or clients.",
+									icon: <Search className="h-5 w-5 text-terracotta" />,
+									title: "AI Face Search",
+									description: "Instantly find matching faces across guest uploads.",
 								},
 							].map((item) => (
 								<div
 									key={item.title}
-									className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/80"
+									className="rounded-[2rem] border border-zinc-100 bg-zinc-50/50 p-6 dark:border-zinc-800 dark:bg-zinc-950/50 transition-all hover:border-sage/30 group"
 								>
-									<p className="font-bold text-zinc-900 dark:text-white">
+									<div className="mb-3">{item.icon}</div>
+									<p className="font-bold text-zinc-900 dark:text-white group-hover:text-sage transition-colors">
 										{item.title}
 									</p>
-									<p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+									<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
 										{item.description}
 									</p>
 								</div>
 							))}
 						</div>
 
-						<div className="mt-8 flex justify-end">
-							<Button onClick={() => setShowFirstTimeGuide(false)}>
-								Got it, let's start
+						<div className="mt-10 flex justify-center">
+							<Button onClick={() => setShowFirstTimeGuide(false)} className="rounded-2xl px-12 py-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-sage/20">
+								Start Organizing
 							</Button>
 						</div>
 					</div>

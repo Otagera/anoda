@@ -17,14 +17,27 @@ model album_images {
 }
 
 model albums {
-  album_id      String         @id @default(uuid()) @db.Uuid
-  album_name    String?
-  created_by    String?        @db.Uuid
-  creation_date DateTime?      @default(now()) @db.Timestamptz(6)
-  shared_link   String?
-  share_token   String?        @unique
-  album_images  album_images[]
-  users         users?         @relation(fields: [created_by], references: [user_id], onDelete: SetNull)
+  album_id          String         @id @default(uuid()) @db.Uuid
+  album_name        String?
+  created_by        String?        @db.Uuid
+  storage_config_id String?        @db.Uuid
+  creation_date     DateTime?      @default(now()) @db.Timestamptz(6)
+  shared_link       String?
+  share_token       String?        @unique
+  album_images      album_images[]
+  users             users?         @relation(fields: [created_by], references: [user_id], onDelete: SetNull)
+  storage_config    user_storage_configs? @relation(fields: [storage_config_id], references: [id], onDelete: SetNull)
+  settings          album_settings?
+}
+
+model album_settings {
+  album_id          String   @id @db.Uuid
+  is_event          Boolean  @default(false)
+  requires_approval Boolean  @default(true)
+  tagging_policy    String   @default("HOST_ONLY") // HOST_ONLY, GUESTS_SELF, ANYONE
+  expires_at        DateTime? @db.Timestamptz(6)
+  allow_guest_uploads Boolean @default(false)
+  album             albums   @relation(fields: [album_id], references: [album_id], onDelete: Cascade)
 }
 
 model faces {
@@ -42,10 +55,12 @@ model faces {
 model people {
   person_id   String    @id @default(uuid()) @db.Uuid
   name        String
+  user_id     String?   @db.Uuid
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
   updated_at  DateTime? @default(now()) @db.Timestamptz(6)
   faces       faces[]
   ignored_faces ignored_faces[]
+  users       users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
 model ignored_faces {
@@ -63,6 +78,7 @@ model images {
   image_id        String         @id @default(uuid()) @db.Uuid
   image_path      String
   optimized_path  String?
+  status          String         @default("APPROVED") // PENDING, APPROVED, REJECTED
   upload_date     DateTime?      @default(now()) @db.Timestamptz(6)
   update_date     DateTime?      @default(now()) @db.Timestamptz(6)
   album_images    album_images[]
@@ -73,10 +89,40 @@ model images {
   users           users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
 }
 
+model user_storage_configs {
+  id                String   @id @default(uuid()) @db.Uuid
+  user_id           String   @db.Uuid
+  provider          String   // 'r2', 's3'
+  name              String   
+  access_key_id     String   // Encrypted
+  secret_access_key String   // Encrypted
+  bucket            String
+  endpoint          String
+  region            String?
+  is_active         Boolean  @default(false)
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  user              users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  albums            albums[]
+}
+
+model usage_logs {
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.Uuid
+  resource   String   // 'compute_unit', 'storage_gb'
+  operation  String   // 'face_detection', 'clustering'
+  quantity   Int      @default(1)
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+  user       users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
 model users {
-  user_id  String   @id @default(uuid()) @db.Uuid
-  email    String   @unique
-  password String
-  albums   albums[]
-  images   images[]
+  user_id         String   @id @default(uuid()) @db.Uuid
+  email           String   @unique
+  password        String
+  albums          albums[]
+  images          images[]
+  people          people[]
+  storage_configs user_storage_configs[]
+  usage_logs      usage_logs[]
+  preferences     Json?    @default("{}")
 }

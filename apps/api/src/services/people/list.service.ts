@@ -9,8 +9,8 @@ const aliasSpec = {
 	},
 };
 
-const service = async () => {
-	const people = await getPeople();
+const service = async (user_id: string) => {
+	const people = await getPeople(user_id);
 
 	return people.map((person) => aliaserSpec(aliasSpec.response, person));
 };

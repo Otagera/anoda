@@ -1,5 +1,5 @@
-import { Albums, Users } from "../../../../packages/models/src/index.model";
 import prisma from "../../../../packages/config/src/db.config";
+import { Albums, Users } from "../../../../packages/models/src/index.model";
 import { createElysiaApp } from "../elysia";
 
 /**
@@ -45,28 +45,31 @@ export const setupTestEnv = async (prefix: string) => {
 	const cleanup = async () => {
 		try {
 			// Cleanup dependent records directly using Prisma for robustness in tests
-			
+
 			// Delete Albums (and cascading album_images if configured, else manual)
 			await prisma.album_images.deleteMany({
-				where: { albums: { created_by: user.user_id } }
+				where: { albums: { created_by: user.user_id } },
 			});
 			await Albums.deleteAlbumsByUserId(user.user_id);
-			
+
 			// Delete Images (and cascading faces/album_images)
 			await prisma.faces.deleteMany({
-				where: { images: { uploaded_by: user.user_id } }
+				where: { images: { uploaded_by: user.user_id } },
 			});
 			await prisma.album_images.deleteMany({
-				where: { images: { uploaded_by: user.user_id } }
+				where: { images: { uploaded_by: user.user_id } },
 			});
 			await prisma.images.deleteMany({
-				where: { uploaded_by: user.user_id }
+				where: { uploaded_by: user.user_id },
 			});
 
 			// Delete User
 			await Users.deleteUserById(user.user_id);
 		} catch (error) {
-			console.error(`[Cleanup Error] Failed to cleanup test user ${email}:`, error);
+			console.error(
+				`[Cleanup Error] Failed to cleanup test user ${email}:`,
+				error,
+			);
 		}
 	};
 

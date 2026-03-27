@@ -21,6 +21,7 @@
 		"isbot": "^5.1.17",
 		"jszip": "^3.10.1",
 		"lucide-react": "^1.6.0",
+		"qrcode.react": "^4.2.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"react-hot-toast": "^2.6.0",

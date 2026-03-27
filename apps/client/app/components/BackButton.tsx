@@ -12,7 +12,8 @@ export const BackButton: React.FC<BackButtonProps> = ({
 	shareToken,
 }) => {
 	const finalTo = to || (shareToken ? `/share/${shareToken}` : "/home");
-	const finalLabel = label || (shareToken ? "Back to Album" : "Back to Dashboard");
+	const finalLabel =
+		label || (shareToken ? "Back to Album" : "Back to Dashboard");
 
 	return (
 		<Link

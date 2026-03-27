@@ -97,10 +97,11 @@ const TagPersonModal = ({
 									<button
 										key={person.personId}
 										onClick={() => tagMutation.mutate(person.personId)}
-										className={`w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center justify-between font-medium ${currentPersonId === person.personId
+										className={`w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center justify-between font-medium ${
+											currentPersonId === person.personId
 												? "bg-sage/10 dark:bg-sage/20 text-zinc-900 dark:text-sage border border-sage/20 dark:border-sage/50"
 												: "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent"
-											}`}
+										}`}
 									>
 										<span>{person.name}</span>
 										{currentPersonId === person.personId && (

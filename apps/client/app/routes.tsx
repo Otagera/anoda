@@ -6,6 +6,7 @@ import ForgotPassword from "./routes/forgot-password";
 import Home from "./routes/home";
 import Login from "./routes/login";
 import Search from "./routes/search";
+import Settings from "./routes/settings";
 import SharedAlbum from "./routes/sharedAlbum";
 import Signup from "./routes/signup";
 import Welcome from "./welcome/Welcome";
@@ -50,6 +51,10 @@ export default [
 					{
 						path: "search",
 						element: <Search />,
+					},
+					{
+						path: "settings",
+						element: <Settings />,
 					},
 				],
 			},

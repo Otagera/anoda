@@ -10,6 +10,16 @@ const spec = joi.object({
 	album_id: joi.string().required(),
 	created_by: joi.string().required(),
 	share_token: joi.string().allow(null),
+	storage_config_id: joi.string().uuid().allow(null),
+	settings: joi
+		.object({
+			is_event: joi.boolean(),
+			requires_approval: joi.boolean(),
+			tagging_policy: joi.string().valid("HOST_ONLY", "GUESTS_SELF", "ANYONE"),
+			expires_at: joi.date().allow(null),
+			allow_guest_uploads: joi.boolean(),
+		})
+		.optional(),
 });
 
 const aliasSpec = {
@@ -18,14 +28,18 @@ const aliasSpec = {
 		albumId: "album_id",
 		userId: "created_by",
 		shareToken: "share_token",
+		storageConfigId: "storage_config_id",
+		settings: "settings",
 	},
 	response: {
 		album_id: "id",
 		album_name: "albumName",
 		created_by: "userId",
+		storage_config_id: "storageConfigId",
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
 		share_token: "shareToken",
+		settings: "settings",
 	},
 };
 

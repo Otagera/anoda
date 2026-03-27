@@ -315,6 +315,19 @@ const deleteAllImagesQuery = async () => {
 	}
 };
 
+const moderateImagesQuery = async (imageIds: string[], status: string) => {
+	return await prisma.images.updateMany({
+		where: {
+			image_id: {
+				in: imageIds,
+			},
+		},
+		data: {
+			status,
+		},
+	});
+};
+
 export {
 	uploadImage,
 	uploadImages,
@@ -332,4 +345,5 @@ export {
 	fetchAllImagesQuery,
 	deleteImagesByIdsQuery,
 	deleteAllImagesQuery,
+	moderateImagesQuery,
 };

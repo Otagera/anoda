@@ -49,7 +49,8 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 							</svg>
 						</button>
 						<span className="text-white font-black whitespace-nowrap text-sm sm:text-base tracking-tight">
-							{selectedCount} <span className="text-zinc-500 font-medium ml-1">selected</span>
+							{selectedCount}{" "}
+							<span className="text-zinc-500 font-medium ml-1">selected</span>
 						</span>
 					</div>
 

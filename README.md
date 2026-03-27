@@ -4,18 +4,19 @@
 
 ## Overview
 
-Anoda Facematch is a photo management application that allows users to upload photos, organize them into albums, and perform face recognition. Users can select a recognized face in a photo and search for other photos containing that same person within an album. The application also supports creating shared albums with public links, tagging identified people, and real-time processing updates.
+Anoda Facematch is an **AI Intelligence Layer** for your photo library. It allows users to organize photos, perform advanced face recognition, and host **Collaborative Events**. The platform separates AI compute from physical storage, offering a **Bring Your Own Storage (BYOS)** model that gives users full control over their data while leveraging powerful facial recognition and search.
 
 ## Features
 
-- **Face Detection & Recognition:** Automatically detects faces in uploaded images using a background worker.
-- **Face Search:** Find all occurrences of a specific face within an album or shared collection.
-- **Face Confirmation (Tagging):** Tag detected faces with names to organize people.
-- **Shared Albums:** Generate public links to share albums with non-users.
+- **Collaborative Events:** Host weddings, parties, or gatherings where guests can contribute photos via QR code without an account.
+- **"Selfie to Join":** Guests can take a selfie to instantly find all photos of themselves within a shared event.
+- **BYOS (Bring Your Own Storage):** Connect your own AWS S3 or Cloudflare R2 bucket. Anoda handles the AI, while you own the files and the costs.
+- **Face Detection & Recognition:** Automatically detects and clusters faces using a high-performance background worker.
+- **Face Search:** Find all occurrences of a specific face across albums or collaborative events.
+- **Managed Storage (R2):** Sustainable managed storage with zero egress fees powered by Cloudflare R2.
 - **Real-time Updates:** UI updates automatically when image processing is complete via Server-Sent Events (SSE).
 - **Background Uploads:** Persistent upload manager (using IndexedDB) allows uploads to continue in the background and resume after page reloads.
 - **Image Optimization:** Automatically generates optimized WebP versions of images for fast display.
-- **Responsive UI:** Modern, responsive interface built with React and Tailwind CSS.
 
 ## Project Structure
 
@@ -109,9 +110,18 @@ The API is built with ElysiaJS. Key endpoints include:
 - `GET /api/v1/people`: List people.
 - `POST /api/v1/people`: Create a new person.
 
-**Public (Shared)**
+**Settings & Storage**
+- `GET /api/v1/settings`: Fetch user preferences and storage configs.
+- `POST /api/v1/settings/storage`: Add a new BYOS storage configuration.
+- `PUT /api/v1/settings/storage/:id`: Update storage configuration.
+- `DELETE /api/v1/settings/storage/:id`: Remove storage configuration.
+
+**Public (Shared & Events)**
 - `GET /api/v1/public/albums/:token`: View shared album.
+- `POST /api/v1/public/albums/:token/upload`: Guest upload to event.
+- `POST /api/v1/public/albums/:token/presigned-url`: Request guest upload URL.
 - `POST /api/v1/public/faces/search`: Search faces in shared album.
+- `POST /api/v1/public/albums/:token/search-by-image`: "Selfie to Join" search.
 
 ## Contributing
 

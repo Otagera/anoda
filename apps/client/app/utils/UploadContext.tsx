@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { get, set } from "idb-keyval";
 import type React from "react";
 import {
@@ -8,7 +9,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { uploadImages } from "./api";
+import { getPresignedUrl, uploadImages, getPublicPresignedUrl, uploadGuestImages } from "./api";
 
 export interface UploadTask {
 	id: string;
@@ -18,11 +19,18 @@ export interface UploadTask {
 	status: "pending" | "uploading" | "completed" | "error" | "paused";
 	error?: string;
 	albumId: string;
+	initialStatus?: "PENDING" | "APPROVED";
+	shareToken?: string; // If present, it's a guest upload
 }
 
 interface UploadContextType {
 	tasks: UploadTask[];
-	addUploads: (files: FileList, albumId: string) => void;
+	addUploads: (
+		files: FileList,
+		albumId: string,
+		initialStatus?: "PENDING" | "APPROVED",
+		shareToken?: string,
+	) => void;
 	pauseUpload: (id: string) => void;
 	resumeUpload: (id: string) => void;
 	retryUpload: (id: string) => void;
@@ -61,23 +69,31 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	// Persist tasks to IndexedDB whenever they change
 	useEffect(() => {
-		// We don't want to save the actual File object in localStorage,
-		// but IndexedDB handles Blobs/Files perfectly.
 		set(IDB_KEY, tasks);
 	}, [tasks]);
 
-	const addUploads = useCallback((files: FileList, albumId: string) => {
-		const newTasks: UploadTask[] = Array.from(files).map((file) => ({
-			id: Math.random().toString(36).substring(2, 11),
-			fileName: file.name,
-			file,
-			progress: 0,
-			status: "pending",
-			albumId,
-		}));
-		setTasks((prev) => [...prev, ...newTasks]);
-		setIsManagerOpen(true);
-	}, []);
+	const addUploads = useCallback(
+		(
+			files: FileList,
+			albumId: string,
+			initialStatus?: "PENDING" | "APPROVED",
+			shareToken?: string,
+		) => {
+			const newTasks: UploadTask[] = Array.from(files).map((file) => ({
+				id: Math.random().toString(36).substring(2, 11),
+				fileName: file.name,
+				file,
+				progress: 0,
+				status: "pending",
+				albumId,
+				initialStatus,
+				shareToken,
+			}));
+			setTasks((prev) => [...prev, ...newTasks]);
+			setIsManagerOpen(true);
+		},
+		[],
+	);
 
 	const processNextTask = useCallback(async () => {
 		const nextTask = tasks.find((t) => t.status === "pending");
@@ -90,11 +106,52 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 		);
 
 		try {
-			const formData = new FormData();
-			formData.append("uploadedImages", nextTask.file);
-			formData.append("albumId", nextTask.albumId);
+			let presignedData;
+			
+			// 1. Get Presigned URL (Authenticated or Public)
+			if (nextTask.shareToken) {
+				const res = await getPublicPresignedUrl(nextTask.shareToken, {
+					fileName: nextTask.fileName,
+					contentType: nextTask.file.type,
+				});
+				presignedData = res.data;
+			} else {
+				const res = await getPresignedUrl({
+					fileName: nextTask.fileName,
+					contentType: nextTask.file.type,
+					albumId: nextTask.albumId,
+				});
+				presignedData = res.data;
+			}
 
-			await uploadImages(formData);
+			// 2. Upload directly to Cloud (R2/S3/Local Direct)
+			await axios.put(presignedData.uploadUrl, nextTask.file, {
+				headers: { "Content-Type": nextTask.file.type },
+				onUploadProgress: (progressEvent) => {
+					const progress = Math.round(
+						(progressEvent.loaded * 100) / (progressEvent.total || 1),
+					);
+					setTasks((prev) =>
+						prev.map((t) => (t.id === nextTask.id ? { ...t, progress } : t)),
+					);
+				},
+			});
+
+			// 3. Notify backend to process the uploaded file
+			const formData = new FormData();
+			formData.append("key", presignedData.key);
+			formData.append("albumId", nextTask.albumId);
+			if (nextTask.initialStatus) {
+				formData.append("status", nextTask.initialStatus);
+			}
+
+			if (nextTask.shareToken) {
+				await uploadGuestImages(nextTask.shareToken, formData);
+				queryClient.invalidateQueries({ queryKey: ["shared-album", nextTask.shareToken] });
+			} else {
+				await uploadImages(formData);
+				queryClient.invalidateQueries({ queryKey: ["images", nextTask.albumId] });
+			}
 
 			setTasks((prev) =>
 				prev.map((t) =>
@@ -103,8 +160,6 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 						: t,
 				),
 			);
-
-			queryClient.invalidateQueries({ queryKey: ["images", nextTask.albumId] });
 		} catch (err: any) {
 			setTasks((prev) =>
 				prev.map((t) =>
@@ -119,7 +174,6 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	useEffect(() => {
 		const activeUploads = tasks.filter((t) => t.status === "uploading").length;
 		if (activeUploads < 2) {
-			// Allow 2 concurrent uploads
 			processNextTask();
 		}
 	}, [tasks, processNextTask]);

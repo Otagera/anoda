@@ -20,11 +20,11 @@ const aliasSpec = {
 	},
 };
 
-const service = async (data) => {
+const service = async (data: { name: string; user_id: string }) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	const person = await createPerson(params.name);
+	const person = await createPerson(params.name, data.user_id);
 
 	return aliaserSpec(aliasSpec.response, person);
 };

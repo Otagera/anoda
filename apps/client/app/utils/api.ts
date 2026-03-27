@@ -69,14 +69,16 @@ export const fetchAlbums = async () => {
 export const fetchImagesInAlbum = async ({
 	albumId,
 	pageParam = null,
+	status = "APPROVED",
 }: {
 	albumId: string;
 	pageParam?: string | null;
+	status?: "APPROVED" | "PENDING" | "REJECTED";
 }) => {
 	try {
 		const url = pageParam
-			? `/albums/${albumId}/images?paginationType=cursor&limit=25&nextCursor=${pageParam}`
-			: `/albums/${albumId}/images?paginationType=cursor&limit=25`;
+			? `/albums/${albumId}/images?paginationType=cursor&limit=25&nextCursor=${pageParam}&status=${status}`
+			: `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
 		const response = await axiosAPI.get(url);
 		return response.data;
 	} catch (error) {
@@ -247,7 +249,9 @@ export const updateFace = async (
 
 export const ignoreFace = async (faceId: number, personId: string) => {
 	try {
-		const response = await axiosAPI.post(`/faces/${faceId}/ignore`, { personId });
+		const response = await axiosAPI.post(`/faces/${faceId}/ignore`, {
+			personId,
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error ignoring face:", error);
@@ -257,10 +261,133 @@ export const ignoreFace = async (faceId: number, personId: string) => {
 
 export const unignoreFace = async (faceId: number, personId: string) => {
 	try {
-		const response = await axiosAPI.post(`/faces/${faceId}/unignore`, { personId });
+		const response = await axiosAPI.post(`/faces/${faceId}/unignore`, {
+			personId,
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error un-ignoring face:", error);
+		throw error;
+	}
+};
+
+// Settings & Storage
+export const fetchSettings = async () => {
+	try {
+		const response = await axiosAPI.get("/settings");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching settings:", error);
+		throw error;
+	}
+};
+
+export const createStorageConfig = async (data: any) => {
+	try {
+		const response = await axiosAPI.post("/settings/storage", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error creating storage config:", error);
+		throw error;
+	}
+};
+
+export const updateStorageConfig = async (configId: string, data: any) => {
+	try {
+		const response = await axiosAPI.put(`/settings/storage/${configId}`, data);
+		return response.data;
+	} catch (error) {
+		console.error("Error updating storage config:", error);
+		throw error;
+	}
+};
+
+export const deleteStorageConfig = async (configId: string) => {
+	try {
+		const response = await axiosAPI.delete(`/settings/storage/${configId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error deleting storage config:", error);
+		throw error;
+	}
+};
+
+export const getPresignedUrl = async (data: {
+	fileName: string;
+	contentType: string;
+	albumId?: string;
+}) => {
+	try {
+		const response = await axiosAPI.post("/images/presigned-url", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error getting presigned URL:", error);
+		throw error;
+	}
+};
+
+export const getPublicPresignedUrl = async (
+	token: string,
+	data: {
+		fileName: string;
+		contentType: string;
+	},
+) => {
+	try {
+		const response = await axiosAPI.post(
+			`/public/albums/${token}/presigned-url`,
+			data,
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error getting public presigned URL:", error);
+		throw error;
+	}
+};
+
+// Events & Guest Uploads
+export const uploadGuestImages = async (token: string, formData: FormData) => {
+	try {
+		const response = await axiosAPI.post(
+			`/public/albums/${token}/upload`,
+			formData,
+			{
+				headers: { "Content-Type": "multipart/form-data" },
+			},
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error uploading guest images:", error);
+		throw error;
+	}
+};
+
+export const editAlbumSettings = async (albumId: string, data: any) => {
+	try {
+		const response = await axiosAPI.put(`/albums/${albumId}`, {
+			...data,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error editing album settings:", error);
+		throw error;
+	}
+};
+
+export const moderateImages = async (
+	imageIds: string[],
+	status: "APPROVED" | "REJECTED",
+) => {
+	try {
+		// We might need a new endpoint for bulk moderation or just update each image
+		// For now, let's assume we have a bulk update endpoint or we'll implement it
+		const response = await axiosAPI.patch("/images/moderate", {
+			imageIds,
+			status,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error moderating images:", error);
 		throw error;
 	}
 };

@@ -1,5 +1,5 @@
 import { Edit2, MoreVertical, Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "~/utils/cn";
 import { Card } from "./standard/Card";
@@ -14,7 +14,9 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 
 	if (coverImages.length >= 4) {
 		return (
-			<div className={cn("grid grid-cols-2 grid-rows-2 w-full h-full", className)}>
+			<div
+				className={cn("grid grid-cols-2 grid-rows-2 w-full h-full", className)}
+			>
 				{coverImages.slice(0, 4).map((src: string, i: number) => (
 					<img
 						key={src}
@@ -32,7 +34,10 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 			<img
 				src={coverImages[0]}
 				alt={album.albumName}
-				className={cn("w-full h-full object-cover transition-transform duration-500 group-hover:scale-105", className)}
+				className={cn(
+					"w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
+					className,
+				)}
 			/>
 		);
 	}
@@ -41,25 +46,27 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 	const firstLetter = album.albumName
 		? album.albumName.charAt(0).toUpperCase()
 		: "?";
-    
-    // Using the new OKLCH colors for fallbacks
-    const fallbackGradients = [
-        "from-sage to-slate-blue",
-        "from-terracotta to-plum",
-        "from-slate-blue to-terracotta",
-        "from-plum to-sage",
-    ];
-    
-    // Deterministic selection based on album ID or name
-    const charCode = (album.albumName || "A").charCodeAt(0);
-    const gradient = fallbackGradients[charCode % fallbackGradients.length];
+
+	// Using the new OKLCH colors for fallbacks
+	const fallbackGradients = [
+		"from-sage to-slate-blue",
+		"from-terracotta to-plum",
+		"from-slate-blue to-terracotta",
+		"from-plum to-sage",
+	];
+
+	// Deterministic selection based on album ID or name
+	const charCode = (album.albumName || "A").charCodeAt(0);
+	const gradient = fallbackGradients[charCode % fallbackGradients.length];
 
 	return (
-		<div className={cn(
-            "w-full h-full flex items-center justify-center bg-gradient-to-br text-white font-black text-6xl transition-transform duration-500 group-hover:scale-105",
-            gradient,
-            className
-        )}>
+		<div
+			className={cn(
+				"w-full h-full flex items-center justify-center bg-gradient-to-br text-white font-black text-6xl transition-transform duration-500 group-hover:scale-105",
+				gradient,
+				className,
+			)}
+		>
 			{firstLetter}
 		</div>
 	);
@@ -92,7 +99,7 @@ export const AlbumCard = ({ album, onEdit, onDelete }: AlbumCardProps) => {
 				<AlbumCover album={album} />
 				<div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 			</Card>
-			
+
 			{(onEdit || onDelete) && (
 				<div className="absolute top-2 right-2 z-10" ref={menuRef}>
 					<button
@@ -106,7 +113,7 @@ export const AlbumCard = ({ album, onEdit, onDelete }: AlbumCardProps) => {
 					>
 						<MoreVertical size={16} />
 					</button>
-					
+
 					{isMenuOpen && (
 						<div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 py-1 animate-in fade-in zoom-in duration-200">
 							{onEdit && (

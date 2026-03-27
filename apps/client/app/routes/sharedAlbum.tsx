@@ -1,22 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
+import { Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { MainContainer } from "~/components/MainContainer";
+import { Button } from "~/components/standard/Button";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
 import { SelfieSearchModal } from "../components/SelfieSearchModal";
 import { fetchSharedAlbum, searchFaces } from "../utils/api";
+import { useUpload } from "../utils/UploadContext";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();
+	const { addUploads } = useUpload();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isSelfieModalOpen, setIsSelfieModalOpen] = useState(false);
+	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [filteredImageIds, setFilteredIds] = useState<Set<string> | null>(null);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
 
 	const { data: albumResponse, isLoading } = useQuery({
 		queryKey: ["shared-album", token],
@@ -26,6 +32,21 @@ const SharedAlbumPage = () => {
 
 	const albumData = albumResponse?.data;
 	const allImages = useMemo(() => albumData?.images || [], [albumData]);
+
+	const handleUpload = () => {
+		if (!uploadFiles || uploadFiles.length === 0) return;
+		
+		// Use the unified UploadContext for high-quality direct uploads
+		addUploads(
+			uploadFiles, 
+			albumData.id, 
+			albumData.settings?.requires_approval ? "PENDING" : "APPROVED",
+			token // Pass shareToken to signal guest upload
+		);
+		
+		setIsUploadModalOpen(false);
+		setUploadFiles(null);
+	};
 
 	const displayedImages = useMemo(() => {
 		if (!filteredImageIds) return allImages;
@@ -78,7 +99,6 @@ const SharedAlbumPage = () => {
 				const response = await fetch(image.imagePath);
 				const blob = await response.blob();
 
-				// Get filename from path or use ID
 				const fileName = `photo-${i + 1}-${image.imageId.slice(0, 8)}.jpg`;
 				folder?.file(fileName, blob);
 
@@ -186,6 +206,16 @@ const SharedAlbumPage = () => {
 				</div>
 
 				<div className="flex items-center space-x-3 w-full md:w-auto">
+					{albumData.canUpload && (
+						<button
+							type="button"
+							className="flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl cursor-pointer"
+							onClick={() => setIsUploadModalOpen(true)}
+						>
+							<Upload size={20} />
+							<span>Contribute</span>
+						</button>
+					)}
 					<button
 						type="button"
 						className={`flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl border transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl ${
@@ -228,16 +258,10 @@ const SharedAlbumPage = () => {
 					const width = image.originalSize?.width || 0;
 					const height = image.originalSize?.height || 0;
 
-					// Determine if this specific image should be featured (e.g. exceptionally high res)
 					const area = width * height;
 					const isFeatured = area > 2000000;
 
-					const spanClass = getBentoSpanClass(
-						width,
-						height,
-						index,
-						isFeatured,
-					);
+					const spanClass = getBentoSpanClass(width, height, index, isFeatured);
 
 					return (
 						<div key={image.imageId} className={`relative ${spanClass}`}>
@@ -295,6 +319,50 @@ const SharedAlbumPage = () => {
 				onClear={() => setSelectedIds(new Set())}
 				onDownload={handleBulkDownload}
 			/>
+
+			{isUploadModalOpen && (
+				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+					<div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
+						<h2 className="text-2xl font-black mb-2">Contribute Photos</h2>
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">
+							Add your photos to this shared collection.
+						</p>
+
+						<div className="relative group mb-8">
+							<input
+								type="file"
+								multiple
+								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+								onChange={(e) => setUploadFiles(e.target.files)}
+							/>
+							<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:border-sage group-hover:bg-sage/5">
+								<Upload className="h-10 w-10 text-zinc-300 group-hover:text-sage mb-4" />
+								<p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 text-center">
+									{uploadFiles
+										? `${uploadFiles.length} photos selected`
+										: "Drop photos or click to browse"}
+								</p>
+							</div>
+						</div>
+
+						<div className="flex gap-3">
+							<Button
+								className="flex-1"
+								onClick={handleUpload}
+								disabled={!uploadFiles}
+							>
+								Add to Queue
+							</Button>
+							<Button
+								variant="ghost"
+								onClick={() => setIsUploadModalOpen(false)}
+							>
+								Cancel
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
 		</MainContainer>
 	);
 };

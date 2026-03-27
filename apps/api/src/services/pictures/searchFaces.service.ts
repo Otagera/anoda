@@ -45,7 +45,9 @@ const service = async (data) => {
 				faceId: face.face_id,
 				personId: face.person_id,
 				personName: face.people?.name || null,
-				imagePath: face.images ? normalizeImagePath(face.images.image_path) : null,
+				imagePath: face.images
+					? normalizeImagePath(face.images.image_path)
+					: null,
 				boundingBox: face.bounding_box,
 				originalWidth: face.images?.original_width || null,
 				originalHeight: face.images?.original_height || null,

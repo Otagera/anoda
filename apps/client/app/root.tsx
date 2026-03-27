@@ -11,13 +11,14 @@ import {
 import type { Route } from "./+types/root";
 import "./index.css";
 import "./app.css";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { UploadManager } from "./components/UploadManager";
 import { Button } from "./components/standard/Button";
 import { Heading } from "./components/standard/Heading";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { UploadManager } from "./components/UploadManager";
 import { AuthProvider, useAuth } from "./utils/auth";
 import { EventsProvider } from "./utils/EventsContext";
 import { UploadProvider } from "./utils/UploadContext";
+import { Card } from "./components/standard/Card";
 
 const Navbar = () => {
 	const { isAuthenticated, logout } = useAuth();
@@ -47,13 +48,27 @@ const Navbar = () => {
 				<div className="flex items-center space-x-6">
 					<ThemeToggle />
 					{isHydrated && isAuthenticated && (
-						<button
-							type="button"
-							onClick={handleLogout}
-							className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors cursor-pointer"
-						>
-							Logout
-						</button>
+						<>
+							<Link
+								to="/home"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors cursor-pointer"
+							>
+								Home
+							</Link>
+							<Link
+								to="/settings"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors cursor-pointer"
+							>
+								Settings
+							</Link>
+							<button
+								type="button"
+								onClick={handleLogout}
+								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors cursor-pointer"
+							>
+								Logout
+							</button>
+						</>
 					)}
 				</div>
 			</div>
@@ -135,16 +150,23 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 	return (
 		<main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6 antialiased font-sans">
-			<Card className="max-w-md w-full p-12 text-center border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl" hoverable={false}>
+			<Card
+				className="max-w-md w-full p-12 text-center border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl"
+				hoverable={false}
+			>
 				<div className="w-20 h-20 bg-plum/10 text-plum rounded-[2rem] flex items-center justify-center mx-auto mb-8">
-					<span className="text-4xl font-black">{message === "404" ? "404" : "!"}</span>
+					<span className="text-4xl font-black">
+						{message === "404" ? "404" : "!"}
+					</span>
 				</div>
-				<Heading level={1} className="mb-4">{message}</Heading>
+				<Heading level={1} className="mb-4">
+					{message}
+				</Heading>
 				<p className="text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed font-medium">
 					{details}
 				</p>
 				<div className="flex flex-col space-y-3">
-					<Button onClick={() => window.location.href = "/home"}>
+					<Button onClick={() => (window.location.href = "/home")}>
 						Return to Home
 					</Button>
 				</div>
