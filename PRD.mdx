@@ -342,7 +342,6 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
     * 12.7 Improved Auth UI: Redesign Login/Signup and add Forgot Password flow. Done.
     * 12.8 Fix Album Pagination: Ensure infinite scroll respects limits. Done.
 * Status: Done.
-* Status: Done.
 
 **Milestone 13: UI/UX Overhaul & Finalization**
 
@@ -370,11 +369,21 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
 The application implements the LGTM stack (Loki, Grafana, Tempo, Mimir/Prometheus) for comprehensive system visibility:
 *   **Centralized Logging (Loki):** Consolidates logs from API, Worker, and AI services into a single searchable interface.
 *   **Infrastructure Metrics (Prometheus + cAdvisor):** Real-time monitoring of CPU, Memory, and Network usage across all Docker containers, specifically tracking the load of the AI service.
-*   **Future Enhancements:**
-    *   **Distributed Tracing (Tempo):** Trace requests across service boundaries (API -> Worker -> AI) to identify latency bottlenecks.
-    *   **Structured JSON Logging:** Shift from plain text to JSON logs for advanced filtering and dashboarding in Grafana.
-    *   **Application-Level Metrics:** Track business-specific metrics like queue lengths, match accuracy, and user activity.
-    *   **Infrastructure Exporters:** Add dedicated exporters for PostgreSQL and Redis to monitor database health and connection pools.
+
+### Structured Logging Implementation
+
+**Current State:** All services use plain text `console.log` which gets captured by Docker's json-file logging driver and forwarded to Loki via Promtail.
+
+**Phase 1 - JSON Logging (Implemented):**
+*   Replace plain text logs with structured JSON format across all services
+*   JSON format: `{ "timestamp": "...", "level": "info", "service": "api", "message": "...", "metadata": {...} }`
+*   Benefits: Advanced filtering, field extraction, dashboarding in Grafana
+
+**Phase 2 - Advanced Observability (Future):**
+*   **Direct Loki Push:** Replace Docker logging with direct HTTP push to Loki from each service (bypasses Docker logs)
+*   **Distributed Tracing (Tempo):** Add trace IDs to correlate requests across API -> Worker -> AI service boundaries
+*   **Application Metrics:** Track business metrics (queue lengths, face match accuracy, user activity)
+*   **Infrastructure Exporters:** Add dedicated exporters for PostgreSQL and Redis
 
 ### Expected Deliverables
 

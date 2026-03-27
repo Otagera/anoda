@@ -7,23 +7,26 @@ import {
 	Outlet,
 	useNavigate,
 } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 
 import type { Route } from "./+types/root";
 import "./index.css";
 import "./app.css";
 import { Button } from "./components/standard/Button";
+import { Card } from "./components/standard/Card";
 import { Heading } from "./components/standard/Heading";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { UploadManager } from "./components/UploadManager";
+import { UsageIndicator } from "./components/UsageIndicator";
 import { AuthProvider, useAuth } from "./utils/auth";
 import { EventsProvider } from "./utils/EventsContext";
 import { UploadProvider } from "./utils/UploadContext";
-import { Card } from "./components/standard/Card";
 
 const Navbar = () => {
 	const { isAuthenticated, logout } = useAuth();
 	const navigate = useNavigate();
 	const [isHydrated, setIsHydrated] = useState(false);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 	useEffect(() => {
 		setIsHydrated(true);
@@ -32,45 +35,92 @@ const Navbar = () => {
 	const handleLogout = () => {
 		logout();
 		navigate("/login");
+		setIsMobileMenuOpen(false);
 	};
 
 	return (
 		<nav className="sticky top-0 z-50 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300">
-			<div className="max-w-6xl mx-auto px-6 sm:px-10 py-5 flex justify-between items-center">
-				<Link to="/" className="group flex items-center space-x-2">
-					<div className="w-8 h-8 bg-sage rounded-xl flex items-center justify-center shadow-lg shadow-sage/20 transition-transform group-hover:scale-110">
-						<div className="w-3 h-3 bg-zinc-950 rounded-full" />
+			<div className="max-w-6xl mx-auto px-2 sm:px-6 py-2 sm:py-4 flex flex-wrap justify-between items-center gap-2">
+				<Link to="/" className="group flex items-center space-x-1.5 sm:space-x-2">
+					<div className="w-6 h-6 sm:w-8 sm:h-8 bg-sage rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-sage/20 transition-transform group-hover:scale-110">
+						<div className="w-2 h-2 sm:w-3 sm:h-3 bg-zinc-950 rounded-full" />
 					</div>
-					<span className="text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
-						anoda<span className="text-sage">.</span>facematch
+					<span className="text-base sm:text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
+						anoda<span className="text-sage hidden sm:inline">.</span>facematch
 					</span>
 				</Link>
-				<div className="flex items-center space-x-6">
+
+				{/* Desktop Navigation */}
+				<div className="hidden sm:flex items-center gap-3">
+					{isHydrated && isAuthenticated && <UsageIndicator />}
 					<ThemeToggle />
 					{isHydrated && isAuthenticated && (
 						<>
 							<Link
 								to="/home"
-								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors cursor-pointer"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors"
 							>
 								Home
 							</Link>
 							<Link
 								to="/settings"
-								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors cursor-pointer"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors"
 							>
 								Settings
 							</Link>
 							<button
 								type="button"
 								onClick={handleLogout}
-								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors cursor-pointer"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors"
 							>
 								Logout
 							</button>
 						</>
 					)}
 				</div>
+
+				{/* Mobile Menu Button */}
+				{isHydrated && isAuthenticated && (
+					<button
+						type="button"
+						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+						className="sm:hidden p-2 text-zinc-500 dark:text-zinc-400 hover:text-sage transition-colors"
+					>
+						{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+					</button>
+				)}
+
+				{/* Mobile Menu Dropdown */}
+				{isMobileMenuOpen && isHydrated && isAuthenticated && (
+					<div className="w-full sm:hidden mt-2 pb-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
+						<UsageIndicator />
+						<div className="flex items-center gap-2">
+							<ThemeToggle />
+							<span className="text-xs text-zinc-500">Theme</span>
+						</div>
+						<Link
+							to="/home"
+							onClick={() => setIsMobileMenuOpen(false)}
+							className="block text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors py-2"
+						>
+							Home
+						</Link>
+						<Link
+							to="/settings"
+							onClick={() => setIsMobileMenuOpen(false)}
+							className="block text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors py-2"
+						>
+							Settings
+						</Link>
+						<button
+							type="button"
+							onClick={handleLogout}
+							className="block text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors py-2"
+						>
+							Logout
+						</button>
+					</div>
+				)}
 			</div>
 		</nav>
 	);

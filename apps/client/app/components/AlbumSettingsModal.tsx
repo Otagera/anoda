@@ -108,13 +108,13 @@ export const AlbumSettingsModal = ({
 					{/* Storage Selection */}
 					<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
 						<div className="flex items-center gap-2 mb-3">
-							<HardDrive size={18} className="text-indigo-500" />
+							<HardDrive size={18} className="text-sage" />
 							<p className="font-bold text-zinc-900 dark:text-white text-sm">
 								Storage Destination
 							</p>
 						</div>
 						<select
-							className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+							className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-sage outline-none transition-all"
 							value={selectedStorageId || ""}
 							onChange={(e) => setSelectedStorageId(e.target.value || null)}
 						>
@@ -249,15 +249,26 @@ export const AlbumSettingsModal = ({
 
 									{/* Expiration Date */}
 									<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
-										<p className="font-bold text-zinc-900 dark:text-white mb-3 text-sm">
-											Uploads Close On
-										</p>
+										<div className="flex items-center justify-between mb-3">
+											<p className="font-bold text-zinc-900 dark:text-white text-sm">
+												Uploads Close On
+											</p>
+											{expiresAt && (
+												<button
+													type="button"
+													onClick={() => handleDateChange(null)}
+													className="text-xs text-plum hover:text-plum/80 font-medium"
+												>
+													Clear to Never
+												</button>
+											)}
+										</div>
 										<DatePicker
 											selected={expiresAt}
 											onChange={handleDateChange}
 											showTimeSelect
 											dateFormat="Pp"
-											className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+											className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-sage outline-none transition-all"
 											placeholderText="Never"
 										/>
 									</div>

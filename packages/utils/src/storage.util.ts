@@ -34,6 +34,7 @@ export interface StorageProvider {
 		key: string,
 		contentType: string,
 		expires?: number,
+		shareToken?: string,
 	): Promise<string>;
 	getDownloadUrl(key: string): string;
 }
@@ -73,9 +74,15 @@ export class LocalProvider implements StorageProvider {
 		return `${this.baseUrl}/${key}`;
 	}
 
-	async getUploadPresignedUrl(key: string): Promise<string> {
+	async getUploadPresignedUrl(
+		key: string,
+		_contentType: string,
+		_expires?: number,
+		shareToken?: string,
+	): Promise<string> {
 		// For local, we point to our own API endpoint that handles the direct local upload
-		return `http://localhost:${config[config.env || "development"].elysia_port}/api/v1/images/upload-direct-local?key=${key}`;
+		const baseUrl = `http://localhost:${config[config.env || "development"].elysia_port}/api/v1/public/images/upload-direct-local?key=${key}`;
+		return shareToken ? `${baseUrl}&shareToken=${shareToken}` : baseUrl;
 	}
 
 	getDownloadUrl(key: string): string {
@@ -139,6 +146,7 @@ export class R2Provider implements StorageProvider {
 		key: string,
 		contentType: string,
 		expires: number = 3600,
+		_shareToken?: string,
 	): Promise<string> {
 		const command = new PutObjectCommand({
 			Bucket: this.bucket,
@@ -163,8 +171,25 @@ export class StorageService {
 	private provider: StorageProvider;
 
 	private constructor() {
-		// Default to Local for now.
-		this.provider = new LocalProvider();
+		// Default to Managed R2 if configured in .env, otherwise Local
+		const envConfig = config[config.env || "development"];
+		const r2 = envConfig?.r2;
+
+		if (r2?.access_key_id && r2?.secret_access_key && r2?.bucket) {
+			console.log(
+				`[STORAGE] Initializing with Managed R2 Bucket: ${r2.bucket}`,
+			);
+			this.provider = new R2Provider({
+				accessKeyId: r2.access_key_id,
+				secretAccessKey: r2.secret_access_key,
+				bucket: r2.bucket,
+				endpoint: r2.endpoint || "",
+				region: r2.region,
+			});
+		} else {
+			console.log("[STORAGE] No Managed R2 configured, using LocalProvider");
+			this.provider = new LocalProvider();
+		}
 	}
 
 	static getInstance(): StorageService {
@@ -230,8 +255,14 @@ export class StorageService {
 		key: string,
 		contentType: string,
 		expires?: number,
+		shareToken?: string,
 	): Promise<string> {
-		return this.provider.getUploadPresignedUrl(key, contentType, expires);
+		return this.provider.getUploadPresignedUrl(
+			key,
+			contentType,
+			expires,
+			shareToken,
+		);
 	}
 }
 

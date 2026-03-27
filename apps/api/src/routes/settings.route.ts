@@ -3,6 +3,7 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 import { createStorageConfigService } from "../services/settings/createStorageConfig.service.ts";
 import { deleteStorageConfigService } from "../services/settings/deleteStorageConfig.service.ts";
 import { fetchSettingsService } from "../services/settings/fetchSettings.service.ts";
+import { fetchUsageService } from "../services/settings/fetchUsage.service.ts";
 import { updateStorageConfigService } from "../services/settings/updateStorageConfig.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 
@@ -16,6 +17,25 @@ const settingsRoutes = new Elysia({ prefix: "/settings" })
 			return {
 				status: "completed",
 				message: "Settings retrieved successfully.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	})
+	.get("/usage", async ({ set, userId }) => {
+		try {
+			const data = await fetchUsageService({ userId });
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Usage retrieved successfully.",
 				data,
 			};
 		} catch (error: any) {

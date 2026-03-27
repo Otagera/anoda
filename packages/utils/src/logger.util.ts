@@ -212,4 +212,29 @@ const logger = new PinoLogger({
 	enableConsoleLogs: true,
 });
 
+export const createServiceLogger = (serviceName: string) => {
+	const pinoInstance = pino({
+		name: serviceName,
+		level: process.env.LOG_LEVEL || "info",
+		formatters: {
+			bindings: () => ({ service: serviceName }),
+		},
+	});
+
+	return {
+		info: (message: string, meta?: Record<string, unknown>) => {
+			pinoInstance.info({ ...meta }, message);
+		},
+		warn: (message: string, meta?: Record<string, unknown>) => {
+			pinoInstance.warn({ ...meta }, message);
+		},
+		error: (message: string, meta?: Record<string, unknown>) => {
+			pinoInstance.error({ ...meta }, message);
+		},
+		debug: (message: string, meta?: Record<string, unknown>) => {
+			pinoInstance.debug({ ...meta }, message);
+		},
+	};
+};
+
 export default logger;

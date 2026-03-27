@@ -35,15 +35,15 @@ const SharedAlbumPage = () => {
 
 	const handleUpload = () => {
 		if (!uploadFiles || uploadFiles.length === 0) return;
-		
+
 		// Use the unified UploadContext for high-quality direct uploads
 		addUploads(
-			uploadFiles, 
-			albumData.id, 
+			uploadFiles,
+			albumData.id,
 			albumData.settings?.requires_approval ? "PENDING" : "APPROVED",
-			token // Pass shareToken to signal guest upload
+			token, // Pass shareToken to signal guest upload
 		);
-		
+
 		setIsUploadModalOpen(false);
 		setUploadFiles(null);
 	};

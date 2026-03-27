@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit2, HardDrive, Plus, Trash2 } from "lucide-react";
+import { Edit2, Gauge, HardDrive, Plus, Trash2, Zap } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { MainContainer } from "~/components/MainContainer";
@@ -12,6 +12,57 @@ import {
 	fetchSettings,
 	updateStorageConfig,
 } from "../utils/api";
+
+const formatBytes = (bytes: number) => {
+	if (bytes === 0) return "0 B";
+	const k = 1024;
+	const sizes = ["B", "KB", "MB", "GB"];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return parseFloat((bytes / k ** i).toFixed(1)) + " " + sizes[i];
+};
+
+const UsageBar = ({
+	used,
+	limit,
+	label,
+	color = "sage",
+}: {
+	used: number;
+	limit: number;
+	label: string;
+	color?: "sage" | "plum" | "terracotta";
+}) => {
+	const percentage = Math.min((used / limit) * 100, 100);
+	const colorClasses = {
+		sage: "bg-sage",
+		plum: "bg-plum",
+		terracotta: "bg-terracotta",
+	};
+	const bgClasses = {
+		sage: "bg-sage/10",
+		plum: "bg-plum/10",
+		terracotta: "bg-terracotta/10",
+	};
+
+	return (
+		<div className="space-y-2">
+			<div className="flex justify-between text-sm">
+				<span className="font-medium text-zinc-600 dark:text-zinc-300">
+					{label}
+				</span>
+				<span className="font-bold text-zinc-900 dark:text-white">
+					{used.toLocaleString()} / {limit.toLocaleString()}
+				</span>
+			</div>
+			<div className={`h-3 rounded-full overflow-hidden ${bgClasses[color]}`}>
+				<div
+					className={`h-full rounded-full transition-all duration-500 ${colorClasses[color]}`}
+					style={{ width: `${percentage}%` }}
+				/>
+			</div>
+		</div>
+	);
+};
 
 const Settings = () => {
 	const queryClient = useQueryClient();
@@ -113,7 +164,7 @@ const Settings = () => {
 		return (
 			<MainContainer>
 				<div className="flex justify-center py-20">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-500" />
 				</div>
 			</MainContainer>
 		);
@@ -160,6 +211,70 @@ const Settings = () => {
 				</Card>
 			</section>
 
+			{/* Plan & Usage Section */}
+			<section className="space-y-6">
+				<Heading level={2} className="text-2xl font-bold">
+					Plan & Usage
+				</Heading>
+				<div className="grid gap-6 md:grid-cols-2">
+					<Card className="p-8 bg-gradient-to-br from-sage/10 to-sage/5 dark:from-sage/5 dark:to-transparent border-sage/20">
+						<div className="flex items-center gap-4 mb-6">
+							<div className="w-12 h-12 rounded-2xl bg-sage/15 flex items-center justify-center text-sage">
+								<Zap size={24} />
+							</div>
+							<div>
+								<p className="text-xs font-black uppercase tracking-widest text-zinc-400">
+									Current Plan
+								</p>
+								<p className="text-2xl font-black text-zinc-900 dark:text-white capitalize">
+									{settingsData?.data?.usage?.plan || "Free"}
+								</p>
+							</div>
+						</div>
+						<div className="space-y-4">
+							<UsageBar
+								used={settingsData?.data?.usage?.imagesUsed || 0}
+								limit={settingsData?.data?.usage?.imagesLimit || 50}
+								label="Images processed this month"
+								color="sage"
+							/>
+							<p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+								Resets on the 1st of each month
+							</p>
+						</div>
+					</Card>
+
+					<Card className="p-8 bg-gradient-to-br from-plum/10 to-plum/5 dark:from-plum/5 dark:to-transparent border-plum/20">
+						<div className="flex items-center gap-4 mb-6">
+							<div className="w-12 h-12 rounded-2xl bg-plum/15 flex items-center justify-center text-plum">
+								<Gauge size={24} />
+							</div>
+							<div>
+								<p className="text-xs font-black uppercase tracking-widest text-zinc-400">
+									Storage Used
+								</p>
+								<p className="text-2xl font-black text-zinc-900 dark:text-white">
+									{formatBytes(
+										(settingsData?.data?.usage?.storageUsedMB || 0) * 1024,
+									)}
+								</p>
+							</div>
+						</div>
+						<div className="space-y-4">
+							<UsageBar
+								used={settingsData?.data?.usage?.storageUsedMB || 0}
+								limit={settingsData?.data?.usage?.storageLimitMB || 1024}
+								label="Storage this month"
+								color="plum"
+							/>
+							<p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+								1 GB included on Free plan
+							</p>
+						</div>
+					</Card>
+				</div>
+			</section>
+
 			{/* Storage / BYOS Section */}
 			<section className="space-y-6">
 				<div className="flex justify-between items-end">
@@ -182,7 +297,7 @@ const Settings = () => {
 				</div>
 
 				{isFormOpen && (
-					<Card className="p-10 border-indigo-500/30 bg-indigo-500/5 backdrop-blur-xl rounded-[2.5rem]">
+					<Card className="p-10 border-sage-500/30 bg-sage-500/5 backdrop-blur-xl rounded-[2.5rem]">
 						<form onSubmit={handleSubmit} className="space-y-8">
 							<div className="flex justify-between items-center mb-2">
 								<Heading level={3} className="text-xl font-bold">
@@ -199,7 +314,7 @@ const Settings = () => {
 									</label>
 									<input
 										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
 										placeholder="e.g. My R2 Bucket"
 										value={formData.name}
 										onChange={(e) =>
@@ -213,7 +328,7 @@ const Settings = () => {
 										Provider
 									</label>
 									<select
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-bold"
 										value={formData.provider}
 										onChange={(e) =>
 											setFormData({ ...formData, provider: e.target.value })
@@ -229,7 +344,7 @@ const Settings = () => {
 									</label>
 									<input
 										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
 										value={formData.bucket}
 										onChange={(e) =>
 											setFormData({ ...formData, bucket: e.target.value })
@@ -243,7 +358,7 @@ const Settings = () => {
 									</label>
 									<input
 										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
 										placeholder="https://<id>.r2.cloudflarestorage.com"
 										value={formData.endpoint}
 										onChange={(e) =>
@@ -258,7 +373,7 @@ const Settings = () => {
 									</label>
 									<input
 										type="password"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
 										value={formData.accessKeyId}
 										onChange={(e) =>
 											setFormData({ ...formData, accessKeyId: e.target.value })
@@ -273,7 +388,7 @@ const Settings = () => {
 									</label>
 									<input
 										type="password"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
 										value={formData.secretAccessKey}
 										onChange={(e) =>
 											setFormData({
@@ -314,10 +429,10 @@ const Settings = () => {
 					{settingsData?.data?.storageConfigs?.map((config: any) => (
 						<Card
 							key={config.id}
-							className="p-8 flex items-center justify-between group hover:border-indigo-500/50 transition-all rounded-[2rem] bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 shadow-sm"
+							className="p-8 flex items-center justify-between group hover:border-sage-500/50 transition-all rounded-[2rem] bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 shadow-sm"
 						>
 							<div className="flex items-center gap-6">
-								<div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-500">
+								<div className="w-14 h-14 rounded-2xl bg-sage-500/10 flex items-center justify-center text-sage-500 group-hover:bg-sage-500 group-hover:text-white transition-all duration-500">
 									<HardDrive size={28} />
 								</div>
 								<div>
@@ -332,7 +447,7 @@ const Settings = () => {
 							<div className="flex items-center gap-2">
 								<button
 									onClick={() => handleEdit(config)}
-									className="p-3 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-500/10 rounded-xl transition-all"
+									className="p-3 text-zinc-400 hover:text-sage-500 hover:bg-sage-500/10 rounded-xl transition-all"
 									title="Edit"
 								>
 									<Edit2 size={20} />

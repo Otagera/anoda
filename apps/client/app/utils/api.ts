@@ -235,6 +235,15 @@ export const createPerson = async (name: string) => {
 	}
 };
 
+export const updatePerson = async (personId: string, name: string) => {
+	try {
+		const response = await axiosAPI.put(`/people/${personId}`, { name });
+		return response.data;
+	} catch (error) {
+		console.error("Error updating person:", error);
+	}
+};
+
 export const updateFace = async (
 	faceId: number,
 	data: { personId: string | null },
@@ -278,6 +287,16 @@ export const fetchSettings = async () => {
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching settings:", error);
+		throw error;
+	}
+};
+
+export const fetchUsage = async () => {
+	try {
+		const response = await axiosAPI.get("/settings/usage");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching usage:", error);
 		throw error;
 	}
 };
@@ -364,6 +383,7 @@ export const uploadGuestImages = async (token: string, formData: FormData) => {
 
 export const editAlbumSettings = async (albumId: string, data: any) => {
 	try {
+		console.log("Editing album with data:", data);
 		const response = await axiosAPI.put(`/albums/${albumId}`, {
 			...data,
 		});

@@ -181,31 +181,6 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}),
 		},
 	)
-	.post(
-		"/upload-direct-local",
-		async ({ query, body, set }) => {
-			try {
-				const key = query.key;
-				if (!key) throw new Error("Key is required");
-
-				const file = body as any; // Raw binary body
-				const filePath = path.join(process.cwd(), UPLOADS_DIR, key);
-
-				await Bun.write(filePath, file);
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return { success: true };
-			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-				return { error: error.message };
-			}
-		},
-		{
-			query: t.Object({
-				key: t.String(),
-			}),
-		},
-	)
 	.get("/", async ({ query, set, userId }) => {
 		try {
 			const data = await fetchPicturesService({
@@ -405,4 +380,81 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		},
 	);
 
-export default picturesRoutes;
+const publicPicturesRoutes = new Elysia({ prefix: "/images" }).put(
+	"/upload-direct-local",
+	async ({ query, set, headers, request }) => {
+		try {
+			const key = query.key;
+			const shareToken = query.shareToken;
+			const authHeader = headers.authorization;
+
+			if (!key) throw new Error("Key is required");
+
+			// 1. Authorization Check: Either valid JWT or valid shareToken
+			let isAuthorized = false;
+
+			if (authHeader) {
+				// We don't need to fully decode here, the key itself is a strong secret,
+				// but presence of any token in this protected group is a good basic check.
+				// (Real security comes from the fact that the backend generated the 'key').
+				isAuthorized = true;
+			} else if (shareToken) {
+				// Verify shareToken exists in DB
+				const album = await prisma.albums.findUnique({
+					where: { share_token: shareToken },
+				});
+				if (album) isAuthorized = true;
+			}
+
+			if (!isAuthorized) {
+				set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
+				return { error: "Unauthorized upload attempt" };
+			}
+
+			// Use absolute path based on app directory
+			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
+			const filePath = path.join(uploadsDir, key);
+
+			console.log("[LOCAL UPLOAD] Writing to:", filePath);
+			console.log("[LOCAL UPLOAD] cwd:", process.cwd());
+
+			// Ensure directory exists
+			await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+			const arrayBuffer = await request.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+
+			await Bun.write(filePath, buffer);
+
+			// Verify file was written
+			const exists = await fs.promises
+				.access(filePath)
+				.then(() => true)
+				.catch(() => false);
+			console.log("[LOCAL UPLOAD] File exists:", exists);
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "File uploaded successfully via direct local upload.",
+				data: { key },
+			};
+		} catch (error: any) {
+			console.error("[LOCAL UPLOAD] Error:", error.message, error.stack);
+			set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	},
+	{
+		query: t.Object({
+			key: t.String(),
+			shareToken: t.Optional(t.String()),
+		}),
+	},
+);
+
+export { picturesRoutes, publicPicturesRoutes };

@@ -68,13 +68,14 @@ const storeImage = async (file, uploaded_by, status) => {
 		image_path: imagePath,
 		original_height: imageSize.height,
 		original_width: imageSize.width,
+		size: file.size,
 		uploaded_by,
 		status,
 	});
 
 	const imageId = imageResult.image_id;
 
-	return { imagePath, imageId: imageId.toString() };
+	return { imagePath, imageId: imageId.toString(), size: file.size };
 };
 
 const service = async (data) => {
@@ -102,6 +103,12 @@ const service = async (data) => {
 		// Log usage for each image processed
 		if (params.uploaded_by) {
 			await logUsage(params.uploaded_by, "compute_unit", "face_detection", 1);
+			await logUsage(
+				params.uploaded_by,
+				"storage",
+				"upload",
+				imageInfo.size || 0,
+			);
 		}
 	}
 	const imageIds = imagesToProcess.map((img) => {

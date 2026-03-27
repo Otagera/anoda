@@ -97,6 +97,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		async ({ params, body, set, userId }) => {
 			try {
 				const albumId = params.albumId;
+				console.log("body", body);
 
 				const data = await alterAlbumService({ ...body, userId, albumId });
 
@@ -107,6 +108,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error) {
+				console.log("Error occurred while editing album:", error);
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -122,6 +124,16 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			body: t.Object({
 				albumName: t.Optional(t.String()),
 				shareToken: t.Optional(t.Nullable(t.String())),
+				settings: t.Optional(
+					t.Object({
+						is_event: t.Optional(t.Boolean()),
+						requires_approval: t.Optional(t.Boolean()),
+						tagging_policy: t.Optional(t.String()),
+						expires_at: t.Optional(t.Nullable(t.String())),
+						allow_guest_uploads: t.Optional(t.Boolean()),
+					}),
+				),
+				storageConfigId: t.Optional(t.Nullable(t.String())),
 			}),
 		},
 	)

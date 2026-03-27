@@ -690,6 +690,11 @@ const SearchPage = () => {
 							? sourceFace.personId
 							: results.find((f) => f.faceId === taggingFaceId)?.personId
 					}
+					currentPersonName={
+						taggingFaceId === sourceFace?.faceId
+							? sourceFace.personName
+							: results.find((f) => f.faceId === taggingFaceId)?.personName
+					}
 					onClose={() => setTaggingFaceId(null)}
 					onCloseAfterSelection={onTagComplete}
 				/>

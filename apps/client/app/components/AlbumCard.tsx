@@ -1,11 +1,12 @@
 import { Edit2, MoreVertical, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import type { Album } from "~/types";
 import { cn } from "~/utils/cn";
 import { Card } from "./standard/Card";
 
 interface AlbumCoverProps {
-	album: any;
+	album: Album;
 	className?: string;
 }
 
@@ -73,8 +74,8 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 };
 
 interface AlbumCardProps {
-	album: any;
-	onEdit?: (album: any) => void;
+	album: Album;
+	onEdit?: (album: Album) => void;
 	onDelete?: (albumId: string) => void;
 }
 

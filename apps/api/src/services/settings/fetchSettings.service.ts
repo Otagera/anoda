@@ -1,4 +1,5 @@
 import joi from "joi";
+import { getUserUsageStats } from "../../../../../packages/models/src/usage.model.ts";
 import { fetchUserById } from "../../../../../packages/models/src/users.model.ts";
 import { decrypt } from "../../../../../packages/utils/src/encryption.util.ts";
 import {
@@ -19,6 +20,7 @@ const aliasSpec = {
 		email: "email",
 		preferences: "preferences",
 		storage_configs: "storageConfigs",
+		usage: "usage",
 	},
 	storageConfig: {
 		id: "id",
@@ -42,9 +44,12 @@ const service = async (data: any) => {
 		aliaserSpec(aliasSpec.storageConfig, config),
 	);
 
+	const usage = await getUserUsageStats(params.userId);
+
 	return aliaserSpec(aliasSpec.response, {
 		...user,
 		storage_configs: formattedConfigs,
+		usage,
 	});
 };
 

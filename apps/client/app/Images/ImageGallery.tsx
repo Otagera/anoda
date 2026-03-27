@@ -9,7 +9,7 @@ import { AddToAlbumModal } from "~/components/AddToAlbumModal";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
 import { EmptyState } from "~/components/standard/EmptyState";
-import type { ImageFromDB } from "~/interface";
+import type { ImageFromDB } from "~/types";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
 import { getBentoSpanClass } from "~/utils/bento";

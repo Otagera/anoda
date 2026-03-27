@@ -9,7 +9,12 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { getPresignedUrl, uploadImages, getPublicPresignedUrl, uploadGuestImages } from "./api";
+import {
+	getPresignedUrl,
+	getPublicPresignedUrl,
+	uploadGuestImages,
+	uploadImages,
+} from "./api";
 
 export interface UploadTask {
 	id: string;
@@ -107,7 +112,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 
 		try {
 			let presignedData;
-			
+
 			// 1. Get Presigned URL (Authenticated or Public)
 			if (nextTask.shareToken) {
 				const res = await getPublicPresignedUrl(nextTask.shareToken, {
@@ -125,8 +130,14 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 
 			// 2. Upload directly to Cloud (R2/S3/Local Direct)
+			const token = localStorage.getItem("token");
 			await axios.put(presignedData.uploadUrl, nextTask.file, {
-				headers: { "Content-Type": nextTask.file.type },
+				headers: {
+					"Content-Type": nextTask.file.type,
+					...(token && !nextTask.shareToken
+						? { Authorization: `Bearer ${token}` }
+						: {}),
+				},
 				onUploadProgress: (progressEvent) => {
 					const progress = Math.round(
 						(progressEvent.loaded * 100) / (progressEvent.total || 1),
@@ -147,10 +158,16 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			if (nextTask.shareToken) {
 				await uploadGuestImages(nextTask.shareToken, formData);
-				queryClient.invalidateQueries({ queryKey: ["shared-album", nextTask.shareToken] });
+				queryClient.invalidateQueries({
+					queryKey: ["shared-album", nextTask.shareToken],
+				});
 			} else {
 				await uploadImages(formData);
-				queryClient.invalidateQueries({ queryKey: ["images", nextTask.albumId] });
+				queryClient.invalidateQueries({
+					queryKey: ["images", nextTask.albumId],
+				});
+				queryClient.invalidateQueries({ queryKey: ["settings"] });
+				queryClient.invalidateQueries({ queryKey: ["usage"] });
 			}
 
 			setTasks((prev) =>

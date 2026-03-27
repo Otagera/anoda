@@ -1,5 +1,5 @@
 import type React from "react";
-import type { ImageFromDB } from "~/interface";
+import type { ImageFromDB } from "~/types";
 
 interface CompactListViewProps {
 	images: ImageFromDB[];

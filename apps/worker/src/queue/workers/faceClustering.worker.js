@@ -10,6 +10,19 @@ const run = async (jobData) => {
 	try {
 		console.log(`Starting background face clustering for album: ${albumId}`);
 
+		// Get album owner (user_id) for creating people
+		const album = await prisma.albums.findUnique({
+			where: { album_id: albumId },
+			select: { created_by: true },
+		});
+
+		if (!album) {
+			console.error(`Album not found: ${albumId}`);
+			return { status: "error", reason: "Album not found" };
+		}
+
+		const userId = album.created_by;
+
 		// 1. Fetch all faces in this album that DO NOT have a person_id assigned yet
 		// We only want to cluster new/unassigned faces to avoid overwriting user edits
 		const albumImages = await prisma.album_images.findMany({
@@ -67,6 +80,7 @@ const run = async (jobData) => {
 				const newPerson = await prisma.people.create({
 					data: {
 						name: `Unknown Person ${Math.floor(Math.random() * 1000)}`,
+						user_id: userId,
 					},
 				});
 

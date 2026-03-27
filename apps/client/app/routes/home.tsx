@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { HardDrive, QrCode, Search, Sparkles, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AlbumCard } from "~/components/AlbumCard";
@@ -6,9 +7,15 @@ import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import type { Album } from "~/types";
 import ImagesList from "~/Images/ImageGallery";
-import { createAlbum, deleteAlbum, editAlbum, fetchAlbums } from "../utils/api";
-import { Sparkles, QrCode, HardDrive, Users, Search } from "lucide-react";
+import {
+	createAlbum,
+	deleteAlbum,
+	editAlbum,
+	fetchAlbums,
+	fetchSettings,
+} from "../utils/api";
 
 const Home = () => {
 	const queryClient = useQueryClient();
@@ -93,9 +100,11 @@ const Home = () => {
 		<MainContainer className="space-y-20 pb-20">
 			{/* Albums Section */}
 			<section>
-				<div className="flex justify-between items-end mb-10">
+				<div className="flex justify-between items-end mb-6">
 					<div>
-						<Heading level={1} className="text-4xl font-black">Albums</Heading>
+						<Heading level={1} className="text-4xl font-black">
+							Albums
+						</Heading>
 						<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
 							Organize your photos and collaborative events
 						</p>
@@ -111,7 +120,7 @@ const Home = () => {
 					</div>
 				) : (
 					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-						{albumsData?.data?.albums?.map((album: any) => (
+						{albumsData?.data?.albums?.map((album: Album) => (
 							<AlbumCard
 								key={album.id}
 								album={album}
@@ -132,7 +141,9 @@ const Home = () => {
 			{/* Recent Photos Section */}
 			<section>
 				<div className="mb-10">
-					<Heading level={2} className="text-2xl font-bold">Recent Photos</Heading>
+					<Heading level={2} className="text-2xl font-bold">
+						Recent Photos
+					</Heading>
 					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
 						Your latest memories across all albums
 					</p>
@@ -228,24 +239,27 @@ const Home = () => {
 						<div className="grid gap-4 sm:grid-cols-2">
 							{[
 								{
-									icon: <Users className="h-5 w-5 text-indigo-500" />,
+									icon: <Users className="h-5 w-5 text-sage" />,
 									title: "Create Events",
-									description: "Turn any album into a collaborative event in settings.",
+									description:
+										"Turn any album into a collaborative event in settings.",
 								},
 								{
 									icon: <QrCode className="h-5 w-5 text-sage" />,
 									title: "Share QR Codes",
-									description: "Let guests upload photos directly without an account.",
+									description:
+										"Let guests upload photos directly without an account.",
 								},
 								{
 									icon: <HardDrive className="h-5 w-5 text-plum" />,
-									title: "Connect BYOS",
-									description: "Plug in your own S3/R2 bucket in Global Settings.",
+									title: "Own Your Storage",
+									description: "Add your own S3/R2 bucket anytime in Settings.",
 								},
 								{
 									icon: <Search className="h-5 w-5 text-terracotta" />,
 									title: "AI Face Search",
-									description: "Instantly find matching faces across guest uploads.",
+									description:
+										"Instantly find matching faces across guest uploads.",
 								},
 							].map((item) => (
 								<div
@@ -264,7 +278,10 @@ const Home = () => {
 						</div>
 
 						<div className="mt-10 flex justify-center">
-							<Button onClick={() => setShowFirstTimeGuide(false)} className="rounded-2xl px-12 py-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-sage/20">
+							<Button
+								onClick={() => setShowFirstTimeGuide(false)}
+								className="rounded-2xl px-12 py-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-sage/20"
+							>
 								Start Organizing
 							</Button>
 						</div>

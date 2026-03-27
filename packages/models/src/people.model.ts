@@ -32,4 +32,32 @@ const getPersonById = async (person_id: string, user_id: string) => {
 	});
 };
 
-export { createPerson, getPeople, getPersonById };
+const updatePerson = async (
+	person_id: string,
+	user_id: string,
+	data: { name?: string },
+) => {
+	// First try to update with user_id (new people)
+	let result = await prisma.people.updateMany({
+		where: {
+			person_id,
+			user_id,
+		},
+		data,
+	});
+
+	// If not found, try updating legacy people without user_id
+	if (result.count === 0) {
+		result = await prisma.people.updateMany({
+			where: {
+				person_id,
+				user_id: null,
+			},
+			data,
+		});
+	}
+
+	return result;
+};
+
+export { createPerson, getPeople, getPersonById, updatePerson };

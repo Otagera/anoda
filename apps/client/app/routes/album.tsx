@@ -4,7 +4,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import JSZip from "jszip";
 import { CheckCircle, Settings2, Trash2, Upload, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,6 +18,7 @@ import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import { UsageIndicator } from "~/components/UsageIndicator";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -29,11 +29,13 @@ import {
 	editAlbum,
 	fetchAlbum,
 	fetchImagesInAlbum,
+	fetchSettings,
 	moderateImages,
 	uploadImages,
 } from "../utils/api";
 import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
+import { useDownloadZip } from "~/hooks/useDownloadZip";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();
@@ -55,6 +57,8 @@ const AlbumPage = () => {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [isAddToAlbumOpen, setIsAddToAlbumOpen] = useState(false);
 	const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+
+	const { downloadZip } = useDownloadZip();
 
 	const {
 		data: imagesData,
@@ -120,6 +124,15 @@ const AlbumPage = () => {
 		queryFn: () => fetchAlbum(albumId!),
 		enabled: !!albumId,
 	});
+
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: fetchSettings,
+	});
+
+	const usage = settingsData?.data?.usage;
+	const imagesUsed = usage?.imagesUsed || 0;
+	const imagesLimit = usage?.imagesLimit || 50;
 
 	const images = useMemo(() => {
 		const currentData = view === "gallery" ? imagesData : pendingImagesData;
@@ -293,49 +306,7 @@ const AlbumPage = () => {
 	};
 
 	const handleBulkDownload = async () => {
-		const selectedImages = images.filter((img: any) =>
-			selectedIds.has(img.imageId),
-		);
-
-		const toastId = toast.loading(
-			`Preparing ZIP with ${selectedIds.size} photos...`,
-		);
-
-		try {
-			const zip = new JSZip();
-			const folder = zip.folder("photos");
-
-			for (let i = 0; i < selectedImages.length; i++) {
-				const image = selectedImages[i];
-				const response = await fetch(image.imagePath);
-				const blob = await response.blob();
-				const fileName = `photo-${i + 1}-${image.imageId.slice(0, 8)}.jpg`;
-				folder?.file(fileName, blob);
-
-				if (i % 5 === 0) {
-					toast.loading(`Zipping: ${i + 1}/${selectedImages.length}`, {
-						id: toastId,
-					});
-				}
-			}
-
-			toast.loading("Generating ZIP file...", { id: toastId });
-			const content = await zip.generateAsync({ type: "blob" });
-			const url = window.URL.createObjectURL(content);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `${albumData?.data?.albumName || "album"}-photos.zip`;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-			window.URL.revokeObjectURL(url);
-
-			toast.success("Download started!", { id: toastId });
-			setSelectedIds(new Set());
-		} catch (_error) {
-			console.error("ZIP Error:", _error);
-			toast.error("Failed to create ZIP. Please try again.", { id: toastId });
-		}
+		await downloadZip(images, selectedIds, () => setSelectedIds(new Set()));
 	};
 
 	const handleTriggerClustering = async () => {
@@ -678,19 +649,89 @@ const AlbumPage = () => {
 				onConfirm={handleDeleteAlbum}
 				onCancel={() => setConfirmDeleteAlbum(false)}
 				isDestructive={true}
-				isLoading={deleteAlbumMutation.isPending}
 			/>
 
 			{isUploadModalOpen && (
 				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
 					<div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
-						<Heading level={2} className="mb-2">
-							Upload Photos
-						</Heading>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-10">
-							Select high-quality images to add to your album.
-						</p>
+						<div className="flex justify-between items-start mb-6">
+							<div>
+								<Heading level={2} className="mb-2">
+									Upload Photos
+								</Heading>
+								<p className="text-sm text-zinc-500 dark:text-zinc-400">
+									Add memories to your collection.
+								</p>
+							</div>
+							<UsageIndicator />
+						</div>
 
+						<div className="mb-8 p-5 bg-zinc-50 dark:bg-zinc-950 rounded-3xl border border-zinc-100 dark:border-zinc-800/50">
+							<div className="flex items-center justify-between text-sm mb-4">
+								<span className="font-semibold text-zinc-500">
+									Monthly Limit:
+								</span>
+								<span className="font-bold text-zinc-900 dark:text-white">
+									{imagesLimit} images
+								</span>
+							</div>
+
+							<div className="flex items-center justify-between text-sm mb-4">
+								<span className="font-semibold text-zinc-500">
+									Images Used:
+								</span>
+								<span className="font-bold text-zinc-900 dark:text-white">
+									{imagesUsed}
+								</span>
+							</div>
+
+							<div className="h-px bg-zinc-200 dark:bg-zinc-800 my-4" />
+
+							{files ? (
+								<>
+									<div className="flex items-center justify-between text-sm mb-2">
+										<span className="font-semibold text-zinc-500">
+											This upload:
+										</span>
+										<span className="font-black text-sage">
+											+ {files.length} images
+										</span>
+									</div>
+									<div className="flex items-center justify-between text-sm">
+										<span className="font-semibold text-zinc-500">
+											Remaining after:
+										</span>
+										<span
+											className={`font-black ${
+												imagesUsed + files.length > imagesLimit
+													? "text-plum"
+													: "text-sage"
+											}`}
+										>
+											{Math.max(0, imagesLimit - (imagesUsed + files.length))}{" "}
+											images
+										</span>
+									</div>
+									{imagesUsed + files.length > imagesLimit && (
+										<div className="mt-4 p-3 bg-plum/10 rounded-xl border border-plum/20">
+											<p className="text-xs text-plum font-bold leading-relaxed">
+												⚠️ You've reached your limit. Upgrade your plan to upload
+												these {files.length} photos.
+											</p>
+										</div>
+									)}
+								</>
+							) : (
+								<div className="flex items-center justify-between text-sm">
+									<span className="font-semibold text-zinc-500">
+										Available to upload:
+									</span>
+									<span className="font-black text-sage">
+										{imagesLimit - imagesUsed} images
+									</span>
+								</div>
+							)}
+						</div>
 						<div className="relative group mb-10">
 							<input
 								type="file"
@@ -733,11 +774,17 @@ const AlbumPage = () => {
 							<Button
 								className="flex-1"
 								onClick={handleUpload}
-								disabled={uploadImagesMutation.isPending || !files}
+								disabled={
+									uploadImagesMutation.isPending ||
+									!files ||
+									(files && imagesUsed + files.length > imagesLimit)
+								}
 							>
 								{uploadImagesMutation.isPending
 									? "Uploading..."
-									: "Start Upload"}
+									: files && imagesUsed + files.length > imagesLimit
+										? "Limit Exceeded"
+										: "Start Upload"}
 							</Button>
 							<Button
 								variant="ghost"
