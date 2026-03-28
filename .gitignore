@@ -24,7 +24,10 @@ dist-ssr
 *.sw?
 
 .env
+.env.example
 uploads
+__pycache__/
+*.pyc
 
 
 # React Router
