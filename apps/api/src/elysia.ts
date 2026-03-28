@@ -11,12 +11,17 @@ import {
 	EVENTS,
 	eventEmitter,
 } from "../../../packages/utils/src/events.util.ts";
+import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+
+const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
 	const { default: albumsRoutes } = await import("./routes/albums.route");
 	const { default: authRoutes } = await import("./routes/auth.route");
-	const { default: picturesRoutes } = await import("./routes/pictures.route");
+	const { picturesRoutes, publicPicturesRoutes } = await import(
+		"./routes/pictures.route"
+	);
 	const { default: facesRoutes } = await import("./routes/faces.route");
 	const { default: publicRoutes } = await import("./routes/public.route");
 	const { default: peopleRoutes } = await import("./routes/people.route");
@@ -122,6 +127,7 @@ export const createElysiaApp = async () => {
 				data: null,
 			};
 		})
+		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
 		.group("/api/v1", (app) =>
 			// Register authPlugin globally for this group
 			app
@@ -193,17 +199,20 @@ export const createElysiaApp = async () => {
 
 const start = async () => {
 	try {
-		console.log("Initializing Elysia server...");
+		logger.info("Initializing Elysia server...");
 		const app = await createElysiaApp();
 		const port = config[config.env].elysia_port || 3005;
 		app.listen(port);
 
-		console.log(
-			`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+		logger.info(
+			`Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
 		);
 		return app;
-	} catch (error) {
-		console.error("Failed to start Elysia server:", error);
+	} catch (error: any) {
+		logger.error("Failed to start Elysia server", {
+			error: error.message,
+			stack: error.stack,
+		});
 		process.exit(1);
 	}
 };

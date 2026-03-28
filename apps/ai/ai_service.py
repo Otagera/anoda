@@ -1,8 +1,8 @@
 import os
 import logging
+import json
 from fastapi import FastAPI, HTTPException, Body
 import numpy as np
-import json
 import uuid
 from typing import List, Optional, Dict
 from pydantic import BaseModel
@@ -11,9 +11,24 @@ from sklearn.cluster import DBSCAN
 # Import the new shared face extraction pipeline
 from face_utils import extract_faces
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+# Setup JSON logging for structured logs
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_obj = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "service": "ai",
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_obj)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+logger.addHandler(handler)
 
 app = FastAPI(title="Anoda AI Face Service")
 

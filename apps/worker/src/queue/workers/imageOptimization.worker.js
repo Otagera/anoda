@@ -1,7 +1,11 @@
 const prisma =
 	require("../../../../../packages/config/src/db.config.ts").default;
 const path = require("node:path");
+const fs = require("node:fs/promises");
 const sharp = require("sharp");
+const {
+	logUsage,
+} = require("../../../../../packages/models/src/usage.model.ts");
 const { queueServices } = require("../queue.service.ts");
 
 const run = async (jobData) => {
@@ -20,14 +24,20 @@ const run = async (jobData) => {
 			.toFile(optimizedPath);
 
 		// 2. Update Database with Optimized Path
-		await prisma.images.update({
+		const image = await prisma.images.update({
 			where: { image_id: imageId },
 			data: { optimized_path: optimizedPath },
 		});
 
 		console.log(`Optimized image saved: ${optimizedPath}`);
 
-		// 3. Queue Face Recognition
+		// 3. Log storage usage for optimized image
+		if (image.uploaded_by) {
+			const stats = await fs.stat(optimizedPath);
+			await logUsage(image.uploaded_by, "storage", "optimize", stats.size);
+		}
+
+		// 4. Queue Face Recognition
 		await queueServices.faceRecognitionQueueLib.addJob(
 			"faceRecognition",
 			{

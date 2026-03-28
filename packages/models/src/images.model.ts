@@ -1,5 +1,7 @@
+import fs from "node:fs/promises";
 import prisma from "../../config/src/db.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
+import { logUsage } from "./usage.model.ts";
 
 const uploadImage = async (imageData) => {
 	return await prisma.images.create({
@@ -114,10 +116,30 @@ const deleteImage = async (where) => {
 		await prisma.images.delete({
 			where,
 		});
+
+		if (image.uploaded_by && image.size) {
+			await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+		}
+
+		if (image.uploaded_by && image.optimized_path) {
+			try {
+				const stats = await fs.stat(image.optimized_path);
+				await logUsage(
+					image.uploaded_by,
+					"storage",
+					"delete_optimized",
+					-stats.size,
+				);
+			} catch (_e) {}
+		}
 	});
 
 	if (image.image_path) {
 		await deleteFile(image.image_path);
+	}
+
+	if (image.optimized_path) {
+		await deleteFile(image.optimized_path);
 	}
 
 	return transaction;
@@ -145,10 +167,30 @@ const deleteImageById = async (image_id) => {
 				image_id,
 			},
 		});
+
+		if (image.uploaded_by && image.size) {
+			await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+		}
+
+		if (image.uploaded_by && image.optimized_path) {
+			try {
+				const stats = await fs.stat(image.optimized_path);
+				await logUsage(
+					image.uploaded_by,
+					"storage",
+					"delete_optimized",
+					-stats.size,
+				);
+			} catch (_e) {}
+		}
 	});
 
 	if (image.image_path) {
 		await deleteFile(image.image_path);
+	}
+
+	if (image.optimized_path) {
+		await deleteFile(image.optimized_path);
 	}
 
 	return transaction;
@@ -183,11 +225,32 @@ const deleteImagesByIds = async (imageIds) => {
 				},
 			},
 		});
+
+		for (const image of images) {
+			if (image.uploaded_by && image.size) {
+				await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+			}
+
+			if (image.uploaded_by && image.optimized_path) {
+				try {
+					const stats = await fs.stat(image.optimized_path);
+					await logUsage(
+						image.uploaded_by,
+						"storage",
+						"delete_optimized",
+						-stats.size,
+					);
+				} catch (_e) {}
+			}
+		}
 	});
 
 	for (const image of images) {
 		if (image.image_path) {
 			await deleteFile(image.image_path);
+		}
+		if (image.optimized_path) {
+			await deleteFile(image.optimized_path);
 		}
 	}
 

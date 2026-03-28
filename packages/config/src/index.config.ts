@@ -65,6 +65,15 @@ const config = {
 			"python",
 		),
 		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
+
+		// Managed R2
+		r2: {
+			access_key_id: process.env.R2_ACCESS_KEY_ID,
+			secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
+			bucket: process.env.R2_BUCKET,
+			endpoint: process.env.R2_ENDPOINT,
+			region: process.env.R2_REGION || "auto",
+		},
 	},
 	test: {
 		db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,

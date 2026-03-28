@@ -306,39 +306,16 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 		"/albums/:token/presigned-url",
 		async ({ params, body, set }) => {
 			try {
-				const album = await prisma.albums.findUnique({
-					where: { share_token: params.token },
-					include: { storage_config: true },
+				const data = await getPresignedUrlService({
+					...body,
+					shareToken: params.token,
 				});
-
-				if (!album) throw new NotFoundError("Album not found.");
-
-				const key = `${Date.now()}-guest-${body.fileName}`;
-				let currentStorage = storage;
-
-				if (album.storage_config) {
-					currentStorage = storage.getProvider({
-						provider: album.storage_config.provider as any,
-						credentials: {
-							accessKeyId: album.storage_config.access_key_id,
-							secretAccessKey: album.storage_config.secret_access_key,
-							bucket: album.storage_config.bucket,
-							endpoint: album.storage_config.endpoint,
-							region: album.storage_config.region || undefined,
-						},
-					}) as any;
-				}
-
-				const uploadUrl = await (currentStorage as any).getUploadPresignedUrl(
-					key,
-					body.contentType,
-				);
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
 					message: "Presigned URL generated successfully.",
-					data: { uploadUrl, key },
+					data,
 				};
 			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
