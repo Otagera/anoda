@@ -406,7 +406,31 @@ export {
 	deleteAllImages,
 	fetchImagesByIdsQuery,
 	fetchAllImagesQuery,
-	deleteImagesByIdsQuery,
-	deleteAllImagesQuery,
-	moderateImagesQuery,
+  deleteImagesByIdsQuery,
+  deleteAllImagesQuery,
+  moderateImagesQuery,
+};
+
+export const deleteImagesWithLogging = async (imageIds: string[]) => {
+	const images = await prisma.images.findMany({
+		where: { image_id: { in: imageIds } },
+	});
+
+	if (images.length === 0) return;
+
+	await prisma.images.deleteMany({
+		where: { image_id: { in: imageIds } },
+	});
+
+	for (const image of images) {
+		if (image.uploaded_by && image.size) {
+			await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+		}
+		if (image.uploaded_by && image.optimized_path) {
+			try {
+				const stats = await fs.stat(image.optimized_path);
+				await logUsage(image.uploaded_by, "storage", "delete_optimized", -stats.size);
+			} catch (_e) {}
+		}
+	}
 };

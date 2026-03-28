@@ -1,5 +1,6 @@
 import prisma from "../../config/src/db.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
+import { deleteImagesWithLogging } from "./images.model.ts";
 
 const createNewAlbum = async (data) => {
 	return await prisma.albums.create({
@@ -128,9 +129,7 @@ const deleteAlbumById = async (albumId, userId) => {
 			});
 
 			// Delete images
-			await prisma.images.deleteMany({
-				where: { image_id: { in: imageIds } },
-			});
+			await deleteImagesWithLogging(imageIds);
 
 			// Delete local files after transaction
 			for (const img of images) {
@@ -197,13 +196,7 @@ const deleteAlbumsByUserId = async (userId) => {
 				},
 			});
 
-			await prisma.images.deleteMany({
-				where: {
-					image_id: {
-						in: imageIdsToDelete,
-					},
-				},
-			});
+			await deleteImagesWithLogging(imageIdsToDelete);
 
 			await prisma.album_images.deleteMany({
 				where: {
