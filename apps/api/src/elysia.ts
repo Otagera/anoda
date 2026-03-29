@@ -4,6 +4,7 @@ import { ElysiaAdapter } from "@bull-board/elysia";
 import { cors } from "@elysiajs/cors";
 import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
+import * as Sentry from "@sentry/bun";
 import { Elysia, sse } from "elysia";
 import config from "../../../packages/config/src/index.config.ts";
 import { AuthError } from "../../../packages/utils/src/error.util.ts";
@@ -13,6 +14,12 @@ import {
 } from "../../../packages/utils/src/events.util.ts";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+
+Sentry.init({
+	dsn: process.env.SENTRY_DSN,
+	environment: config.env,
+	serverName: "api",
+});
 
 const logger = createServiceLogger("api");
 
@@ -77,19 +84,6 @@ export const createElysiaApp = async () => {
 			AUTH_ERROR: AuthError,
 		})
 		.onError(({ code, error, set, request }) => {
-			console.error(`!!! Elysia Error Catch !!!`);
-			console.error(`Route: ${request.method} ${request.url}`);
-			console.error(`Code: ${code}`);
-			console.error(`Error Name: ${error.name}`);
-			console.error(`Error Message: ${error.message}`);
-			if (error.stack) {
-				console.error("Stack Trace:");
-				console.error(error.stack);
-			} else {
-				console.error("No stack trace available for this error.");
-				console.error("Error Object:", error);
-			}
-
 			if (code === "AUTH_ERROR" || error instanceof AuthError) {
 				set.status = 401;
 				return {

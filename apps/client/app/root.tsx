@@ -1,4 +1,6 @@
+import * as Sentry from "@sentry/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import {
@@ -7,9 +9,20 @@ import {
 	Outlet,
 	useNavigate,
 } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 
 import type { Route } from "./+types/root";
+
+Sentry.init({
+	dsn: import.meta.env.VITE_SENTRY_DSN,
+	environment: import.meta.env.MODE,
+	replaysSessionSampleRate: 0.1,
+	replaysOnErrorSampleRate: 1.0,
+	integrations: [
+		Sentry.replayIntegration(),
+		Sentry.browserTracingIntegration(),
+	],
+});
+
 import "./index.css";
 import "./app.css";
 import { Button } from "./components/standard/Button";
@@ -41,7 +54,10 @@ const Navbar = () => {
 	return (
 		<nav className="sticky top-0 z-50 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300">
 			<div className="max-w-6xl mx-auto px-2 sm:px-6 py-2 sm:py-4 flex flex-wrap justify-between items-center gap-2">
-				<Link to="/" className="group flex items-center space-x-1.5 sm:space-x-2">
+				<Link
+					to="/"
+					className="group flex items-center space-x-1.5 sm:space-x-2"
+				>
 					<div className="w-6 h-6 sm:w-8 sm:h-8 bg-sage rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-sage/20 transition-transform group-hover:scale-110">
 						<div className="w-2 h-2 sm:w-3 sm:h-3 bg-zinc-950 rounded-full" />
 					</div>

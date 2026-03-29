@@ -10,10 +10,12 @@
 		"typecheck": "tsc",
 		"format": "bunx biome format --write \"./app/**/*.{ts,tsx}\"",
 		"lint": "bunx biome lint ./app",
-		"check": "bunx biome check"
+		"check": "bunx biome check",
+		"test": "vitest"
 	},
 	"dependencies": {
 		"@mjackson/form-data-parser": "^0.7.0",
+		"@sentry/react": "^8.52.1",
 		"@tailwindcss/vite": "^4.1.11",
 		"@tanstack/react-query": "^5.66.0",
 		"axios": "^1.7.9",
@@ -31,16 +33,23 @@
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4.1.11",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/jest": "^30.0.0",
 		"@types/node": "^20",
 		"@types/react": "^19.0.8",
 		"@types/react-dom": "^19.0.3",
 		"@vitejs/plugin-react": "^4.3.4",
+		"@vitest/ui": "^4.1.2",
 		"autoprefixer": "^10.4.21",
 		"globals": "^15.14.0",
+		"jsdom": "^29.0.1",
 		"react-router-devtools": "^1.1.0",
 		"tailwindcss": "^4.1.11",
 		"typescript": "~5.7.2",
 		"vite": "^6.1.0",
-		"vite-tsconfig-paths": "^5.1.4"
+		"vite-tsconfig-paths": "^5.1.4",
+		"vitest": "^4.1.2"
 	}
 }
