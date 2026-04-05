@@ -7,21 +7,8 @@ const axiosAPI = axios.create({
 	headers: {
 		"Content-Type": "application/json",
 	},
+	withCredentials: true,
 });
-
-// Add a request interceptor (optional: for auth tokens)
-axiosAPI.interceptors.request.use(
-	(config) => {
-		if (typeof window !== "undefined") {
-			const token = localStorage.getItem("token");
-			if (token) {
-				config.headers.Authorization = `Bearer ${token}`;
-			}
-		}
-		return config;
-	},
-	(error) => Promise.reject(error),
-);
 
 // Add a response interceptor (optional: to handle errors globally)
 axiosAPI.interceptors.response.use(
@@ -31,9 +18,24 @@ axiosAPI.interceptors.response.use(
 		const message = error.response?.data?.message;
 
 		if (status === 401 || message?.includes("jwt expired")) {
-			localStorage.removeItem("token");
 			if (typeof window !== "undefined") {
-				window.location.href = "/login";
+				const isLoginPage = window.location.pathname === "/login";
+				const isAuthMe = error.config?.url?.includes("/auth/me");
+
+				if (!isLoginPage && !isAuthMe) {
+					window.location.href = "/login";
+				}
+			}
+		}
+
+		if (status === 402) {
+			if (typeof window !== "undefined") {
+				window.dispatchEvent(new CustomEvent("quota-exceeded"));
+				import("react-hot-toast").then(({ default: toast }) => {
+					toast.error("Quota Exceeded. Please upgrade your plan.", {
+						id: "quota-402",
+					});
+				});
 			}
 		}
 

@@ -77,7 +77,7 @@ export class LocalProvider implements StorageProvider {
 		}
 	}
 
-	async getSignedUrl(key: string): Promise<string> {
+	async getSignedUrl(key: string, _expires?: number): Promise<string> {
 		return `${this.baseUrl}/${key}`;
 	}
 
@@ -292,8 +292,8 @@ export class StorageService {
 		return this.provider.delete(key);
 	}
 
-	async getSignedUrl(key: string): Promise<string> {
-		return this.provider.getSignedUrl(key);
+	async getSignedUrl(key: string, expires?: number): Promise<string> {
+		return this.provider.getSignedUrl(key, expires);
 	}
 
 	async getUploadPresignedUrl(

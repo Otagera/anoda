@@ -24,6 +24,8 @@ export const BULL_QUEUE_NAMES = {
 	FACE_SEARCH: "face_search",
 	IMAGE_OPTIMIZATION: "image_optimization",
 	FACE_CLUSTERING: "face_clustering",
+	BULK_DOWNLOAD: "bulk_download",
+	FILE_DELETION: "file_deletion",
 };
 export const DEGREES = ["Bsc.", "B.A", "LLB.", "MSc.", "M.A."];
 export const LEVELS = ["Undergraduate", "Postgraduate"];

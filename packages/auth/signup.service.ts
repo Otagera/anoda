@@ -12,11 +12,7 @@ const spec = joi.object({
 	password: joi
 		.string()
 		.trim()
-		.regex(/[ -~]*[a-z][ -~]*/) // at least 1 lower-case
-		.regex(/[ -~]*[A-Z][ -~]*/) // at least 1 upper-case
-		.regex(/[ -~]*(?=[ -~])[^0-9a-zA-Z][ -~]*/) // basically: [ -~] && [^0-9a-zA-Z], at least 1 special character
-		.regex(/[ -~]*[0-9][ -~]*/) // at least 1 number
-		.min(8)
+		.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^0-9a-zA-Z]).{8,128}$/)
 		.required()
 		.messages({
 			"string.pattern.base":

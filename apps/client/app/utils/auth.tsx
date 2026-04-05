@@ -3,17 +3,19 @@ import {
 	type ReactNode,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { login as apiLogin, signup as apiSignup } from "./api";
+import axiosAPI from "./axios";
 
 interface User {
+	id: string;
 	email: string;
 	// Add other user properties as needed
 }
 
 interface AuthContextType {
-	token: string | null;
 	user: User | null;
 	login: (credentials: { email: string; password: string }) => Promise<void>;
 	signup: (credentials: { email: string; password: string }) => Promise<void>;
@@ -25,36 +27,39 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-	const [token, setToken] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
 	const [isInitialized, setIsInitialized] = useState(false);
+	const authCheckRef = useRef(false);
 
 	useEffect(() => {
-		const savedToken = localStorage.getItem("token");
-		if (savedToken) {
-			setToken(savedToken);
-		}
-		setIsInitialized(true);
-	}, []);
+		const checkAuth = async () => {
+			if (authCheckRef.current) return;
+			authCheckRef.current = true;
 
-	useEffect(() => {
-		if (token) {
-			// In a real app, you'd decode the token or fetch user data from an API
-			// For now, we'll just assume a user is logged in if a token exists
-			setUser({ email: "user@example.com" }); // Placeholder user data
-		} else {
-			setUser(null);
+			try {
+				const response = await axiosAPI.get("/auth/me");
+				if (response.data?.status === "completed" && response.data?.data) {
+					setUser(response.data.data);
+				}
+			} catch (error) {
+				setUser(null);
+			} finally {
+				authCheckRef.current = false;
+				setIsInitialized(true);
+			}
+		};
+
+		if (!isInitialized) {
+			checkAuth();
 		}
-	}, [token]);
+	}, [isInitialized]);
 
 	const login = async (credentials: { email: string; password: string }) => {
 		try {
 			const response = await apiLogin(credentials);
 
-			if (response?.data?.accessToken) {
-				localStorage.setItem("token", response.data.accessToken);
-				setToken(response.data.accessToken);
-				// Optionally, fetch user data here if your API returns it separately
+			if (response?.data?.status === "completed" && response?.data?.data) {
+				setUser(response.data.data);
 			} else {
 				throw new Error("Login failed");
 			}
@@ -68,10 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const signup = async (credentials: { email: string; password: string }) => {
 		try {
 			const response = await apiSignup(credentials);
-			if (response?.data?.accessToken) {
-				localStorage.setItem("token", response.data.accessToken);
-				setToken(response.data.accessToken);
-				// Optionally, fetch user data here
+			if (response?.data?.status === "completed" && response?.data?.data) {
+				setUser(response.data.data);
 			} else {
 				throw new Error("Signup failed");
 			}
@@ -82,18 +85,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		}
 	};
 
-	const logout = () => {
-		localStorage.removeItem("token");
-		setToken(null);
-		setUser(null);
+	const logout = async () => {
+		try {
+			await axiosAPI.post("/auth/logout");
+		} catch (error) {
+			console.error("Logout failed", error);
+		} finally {
+			setUser(null);
+		}
 	};
 
-	const isAuthenticated = !!token;
+	const isAuthenticated = !!user;
 
 	return (
 		<AuthContext.Provider
 			value={{
-				token,
 				user,
 				login,
 				signup,

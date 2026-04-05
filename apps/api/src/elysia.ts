@@ -45,6 +45,8 @@ export const createElysiaApp = async () => {
 				new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
 				new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
 				new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.bulkDownloadQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.fileDeletionQueueLib.getQueue()),
 			],
 			serverAdapter: serverAdapter,
 		});
@@ -55,7 +57,7 @@ export const createElysiaApp = async () => {
 	eventEmitter.setMaxListeners(100);
 
 	const app = new Elysia({
-		bodyLimit: 500 * 1024 * 1024, // 500MB limit for bulk uploads
+		bodyLimit: 10 * 1024 * 1024,
 	})
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
@@ -67,72 +69,25 @@ export const createElysiaApp = async () => {
 			}
 		})
 		.onAfterHandle(({ request, set }) => {
-			if (set.status >= 400) {
-				console.log(`[${set.status}] ${request.method} ${request.url}`);
+			if (set.status && set.status >= 400) {
+				const safeUrl = request.url.replace(
+					/(\/albums\/|\/images\/)[^/?]+/,
+					"$1***",
+				);
+				console.log(`[${set.status}] ${request.method} ${safeUrl}`);
 			}
 		})
-		.use(cors())
-		.use(staticPlugin({ assets: "src/uploads", prefix: "/api/uploads" }));
-
-	if (bullBoardPlugin) {
-		app.use(bullBoardPlugin);
-	}
-
-	app
-		.use(swagger())
-		.error({
-			AUTH_ERROR: AuthError,
-		})
-		.onError(({ code, error, set, request }) => {
-			if (code === "AUTH_ERROR" || error instanceof AuthError) {
-				set.status = 401;
-				return {
-					status: "error",
-					message: error.message,
-					data: null,
-				};
-			}
-
-			if (code === "VALIDATION") {
-				set.status = 400;
-				return {
-					status: "error",
-					message: error.message,
-					data: null,
-				};
-			}
-
-			if (code === "NOT_FOUND") {
-				set.status = 404;
-				return {
-					status: "error",
-					message: "Not Found",
-					data: null,
-				};
-			}
-
-			const statusCode =
-				(error as any).statusCode || (error as any).status || 500;
-			set.status = statusCode;
-
-			return {
-				status: "error",
-				message: error.message || "Internal server error",
-				data: null,
-			};
-		})
-		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
-		.group("/api/v1", (app) =>
-			// Register authPlugin globally for this group
-			app
-				.use(authRoutes)
-				.use(albumsRoutes)
-				.use(picturesRoutes)
-				.use(facesRoutes)
-				.use(publicRoutes)
-				.use(peopleRoutes)
-				.use(settingsRoutes),
+		.use(
+			cors({
+				origin:
+					config.env === "development"
+						? true
+						: process.env.CORS_ORIGIN
+							? process.env.CORS_ORIGIN.split(",")
+							: false,
+			}),
 		)
+		.use(staticPlugin({ assets: "src/uploads", prefix: "/api/uploads" }))
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get(
 			"/api/v1/events",
@@ -148,9 +103,7 @@ export const createElysiaApp = async () => {
 								try {
 									const sseData = `data: ${JSON.stringify(data)}\n\n`;
 									controller.enqueue(new TextEncoder().encode(sseData));
-								} catch (_e) {
-									// Controller might be closed
-								}
+								} catch (_e) {}
 							};
 
 							eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
@@ -183,10 +136,27 @@ export const createElysiaApp = async () => {
 			{
 				detail: {
 					summary: "SSE Events Stream",
-					description: "Real-time updates for image processing",
+					description: "Server-Sent Events stream for real-time updates",
 				},
 			},
+		)
+		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
+		.group("/api/v1", (app) =>
+			app
+				.use(authRoutes)
+				.use(albumsRoutes)
+				.use(picturesRoutes)
+				.use(facesRoutes)
+				.use(publicRoutes)
+				.use(peopleRoutes)
+				.use(settingsRoutes),
 		);
+
+	if (bullBoardPlugin) {
+		app.use(bullBoardPlugin);
+	}
+
+	app.use(swagger());
 
 	return app;
 };

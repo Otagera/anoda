@@ -103,8 +103,8 @@ export const UploadManager: React.FC = () => {
 							key={task.id}
 							className="p-3 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-xl group hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-colors"
 						>
-							<div className="flex items-center justify-between mb-1">
-								<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[140px]">
+							<div className="flex items-center justify-between mb-1 min-w-0">
+								<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
 									{task.fileName}
 								</span>
 								<div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -199,7 +199,7 @@ export const UploadManager: React.FC = () => {
 									<div
 										className={`h-full transition-all duration-300 ${task.status === "error" ? "bg-red-500" : task.status === "completed" ? "bg-green-500" : "bg-sage"}`}
 										style={{
-											width: `${task.status === "completed" ? 100 : task.status === "uploading" ? 45 : 0}%`,
+											width: `${task.status === "completed" ? 100 : task.status === "uploading" ? task.progress : 0}%`,
 										}}
 									/>
 								</div>

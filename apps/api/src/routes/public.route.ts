@@ -231,7 +231,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				}
 
 				// 2. Save temporary selfie locally AND to storage
-				const tempKey = `temp-selfie-${Date.now()}-${selfie.name}`;
+				const tempKey = `temp-selfie-${Date.now()}-${crypto.randomUUID()}`;
 				const fileBuffer = Buffer.from(await selfie.arrayBuffer());
 
 				// Save locally for AI service to access
@@ -561,6 +561,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				uploadedImages: t.Optional(t.Any()),
 				key: t.Optional(t.String()),
 			}),
+			bodyLimit: 500 * 1024 * 1024,
 		},
 	);
 

@@ -16,6 +16,8 @@ new QueueWorkersHandler(BULL_QUEUE_NAMES.IMAGE_OPTIMIZATION);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.FACE_RECOGNITION);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.FACE_SEARCH);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.FACE_CLUSTERING);
+new QueueWorkersHandler(BULL_QUEUE_NAMES.BULK_DOWNLOAD);
+new QueueWorkersHandler(BULL_QUEUE_NAMES.FILE_DELETION);
 
 logger.info("Worker Server started successfully", {
 	duration_seconds: (Date.now() - now) / 1000,

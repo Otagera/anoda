@@ -5,8 +5,18 @@ import { getUser } from "../../../../../packages/models/src/users.lib.ts";
 import { HTTP_STATUS_CODES } from "../../../../../packages/utils/src/constants.util.ts";
 import { AuthError } from "../../../../../packages/utils/src/error.util.ts";
 
-export const authDerivation = async ({ headers, set }) => {
+export const authDerivation = async ({
+	headers,
+	cookie: { accessToken },
+	set,
+}) => {
 	let token = headers.authorization;
+
+	if (token && token.startsWith("Bearer ")) {
+		token = token.split(" ")[1];
+	} else if (accessToken && accessToken.value) {
+		token = accessToken.value;
+	}
 
 	if (!token) {
 		set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
@@ -14,10 +24,6 @@ export const authDerivation = async ({ headers, set }) => {
 	}
 
 	try {
-		if (token.startsWith("Bearer ")) {
-			token = token.split(" ")[1];
-		}
-
 		const decoded = verify(token, config[config.env].secret) as {
 			userId: string;
 		};
@@ -34,9 +40,20 @@ export const authDerivation = async ({ headers, set }) => {
 			userId: userId,
 		};
 	} catch (error: any) {
-		throw new AuthError(
-			error?.message || "Unauthorized request, please provide a valid token.",
-		);
+		if (error instanceof AuthError) {
+			throw error;
+		}
+
+		console.error("[AUTH] Authentication failed:", error.message);
+
+		if (
+			error.name === "JsonWebTokenError" ||
+			error.name === "TokenExpiredError"
+		) {
+			throw new AuthError("Unauthorized: Invalid or expired token");
+		}
+
+		throw new AuthError("Unauthorized request, please provide a valid token.");
 	}
 };
 
