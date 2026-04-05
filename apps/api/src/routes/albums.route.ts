@@ -311,7 +311,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 						albumId,
 						worker: "faceClustering",
 					},
-					{ removeOnComplete: true, removeOnFail: true },
+					{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 				);
 
 				set.status = HTTP_STATUS_CODES.OK;

@@ -26,7 +26,10 @@ const fetchFaces = async ({ image_id, uploaded_by }) => {
 
 const fetchImage = async (where) => {
 	return await prisma.images.findFirst({
-		where,
+		where: {
+			...where,
+			deleted_at: null,
+		},
 		include: {
 			faces: true,
 		},
@@ -39,6 +42,7 @@ const fetchImagesByIds = async (imageIds) => {
 			image_id: {
 				in: imageIds,
 			},
+			deleted_at: null,
 		},
 		include: {
 			faces: true,
@@ -56,7 +60,10 @@ const fetchImagesByIds = async (imageIds) => {
 
 const fetchImages = async (where) => {
 	const images = await prisma.images.findMany({
-		where,
+		where: {
+			...where,
+			deleted_at: null,
+		},
 		include: {
 			faces: true,
 		},
@@ -73,6 +80,7 @@ const fetchImages = async (where) => {
 
 const fetchAllImages = async () => {
 	const images = await prisma.images.findMany({
+		where: { deleted_at: null },
 		include: {
 			faces: true,
 		},
@@ -132,6 +140,10 @@ const deleteImage = async (where) => {
 				);
 			} catch (_e) {}
 		}
+
+		if (image.uploaded_by) {
+			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+		}
 	});
 
 	if (image.image_path) {
@@ -182,6 +194,10 @@ const deleteImageById = async (image_id) => {
 					-stats.size,
 				);
 			} catch (_e) {}
+		}
+
+		if (image.uploaded_by) {
+			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
 		}
 	});
 
@@ -242,6 +258,10 @@ const deleteImagesByIds = async (imageIds) => {
 					);
 				} catch (_e) {}
 			}
+
+			if (image.uploaded_by) {
+				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			}
 		}
 	});
 
@@ -281,6 +301,28 @@ const deleteImagesByUserId = async (uploaded_by) => {
 				},
 			},
 		});
+
+		for (const image of imagesToDelete) {
+			if (image.uploaded_by && image.size) {
+				await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+			}
+
+			if (image.uploaded_by && image.optimized_path) {
+				try {
+					const stats = await fs.stat(image.optimized_path);
+					await logUsage(
+						image.uploaded_by,
+						"storage",
+						"delete_optimized",
+						-stats.size,
+					);
+				} catch (_e) {}
+			}
+
+			if (image.uploaded_by) {
+				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			}
+		}
 	});
 
 	return transaction;
@@ -288,9 +330,33 @@ const deleteImagesByUserId = async (uploaded_by) => {
 
 const deleteAllImages = async () => {
 	const transaction = await prisma.$transaction(async (prisma) => {
+		const allImages = await prisma.images.findMany();
+
 		await prisma.faces.deleteMany({});
 
 		await prisma.images.deleteMany({});
+
+		for (const image of allImages) {
+			if (image.uploaded_by && image.size) {
+				await logUsage(image.uploaded_by, "storage", "delete", -image.size);
+			}
+
+			if (image.uploaded_by && image.optimized_path) {
+				try {
+					const stats = await fs.stat(image.optimized_path);
+					await logUsage(
+						image.uploaded_by,
+						"storage",
+						"delete_optimized",
+						-stats.size,
+					);
+				} catch (_e) {}
+			}
+
+			if (image.uploaded_by) {
+				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			}
+		}
 	});
 
 	return transaction;
@@ -406,9 +472,9 @@ export {
 	deleteAllImages,
 	fetchImagesByIdsQuery,
 	fetchAllImagesQuery,
-  deleteImagesByIdsQuery,
-  deleteAllImagesQuery,
-  moderateImagesQuery,
+	deleteImagesByIdsQuery,
+	deleteAllImagesQuery,
+	moderateImagesQuery,
 };
 
 export const deleteImagesWithLogging = async (imageIds: string[]) => {
@@ -429,8 +495,16 @@ export const deleteImagesWithLogging = async (imageIds: string[]) => {
 		if (image.uploaded_by && image.optimized_path) {
 			try {
 				const stats = await fs.stat(image.optimized_path);
-				await logUsage(image.uploaded_by, "storage", "delete_optimized", -stats.size);
+				await logUsage(
+					image.uploaded_by,
+					"storage",
+					"delete_optimized",
+					-stats.size,
+				);
 			} catch (_e) {}
+		}
+		if (image.uploaded_by) {
+			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
 		}
 	}
 };

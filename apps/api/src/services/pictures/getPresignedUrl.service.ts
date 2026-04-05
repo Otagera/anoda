@@ -25,6 +25,7 @@ const aliasSpec = {
 	response: {
 		uploadUrl: "uploadUrl",
 		key: "key",
+		storageProvider: "storageProvider",
 	},
 };
 
@@ -33,6 +34,7 @@ const service = async (data: any) => {
 
 	const key = `${Date.now()}-${params.fileName}`;
 	let currentStorage = storage;
+	let storageProvider: string | undefined = storage.getProviderName();
 
 	// Use album's storage if specified (via albumId for owners or shareToken for guests)
 	if (params.albumId || params.shareToken) {
@@ -54,7 +56,9 @@ const service = async (data: any) => {
 						endpoint: album.storage_config.endpoint,
 						region: album.storage_config.region || undefined,
 					},
+					skip_tls_verify: album.storage_config.provider !== "local" ? (config[config.env || "development"] as any).skip_tls_verify : false,
 				}) as any;
+				storageProvider = album.storage_config.provider;
 			} catch (err) {
 				console.error("Failed to get storage provider:", err);
 				// Fall back to default storage
@@ -74,6 +78,7 @@ const service = async (data: any) => {
 		return aliaserSpec(aliasSpec.response, {
 			uploadUrl,
 			key,
+			storageProvider,
 		});
 	} catch (err: any) {
 		console.error("Presigned URL generation failed:", err);

@@ -29,7 +29,7 @@ export const reprocessPictureService = async ({
 			imagePath: image.image_path,
 			worker: "faceRecognition",
 		},
-		{ removeOnComplete: true, removeOnFail: true },
+		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 	);
 
 	return true;

@@ -1,10 +1,15 @@
 import type { InputHTMLAttributes } from "react";
 
-interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+interface CheckboxProps
+	extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
 	label?: string;
 }
 
-export const Checkbox = ({ label, className = "", ...props }: CheckboxProps) => {
+export const Checkbox = ({
+	label,
+	className = "",
+	...props
+}: CheckboxProps) => {
 	return (
 		<label className="flex items-center gap-3 cursor-pointer group">
 			<input

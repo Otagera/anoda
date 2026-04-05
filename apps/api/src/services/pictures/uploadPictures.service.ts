@@ -25,6 +25,8 @@ const fileSchema = Joi.object({
 	size: Joi.number()
 		.max(50 * 1024 * 1024)
 		.required(), // 50MB limit
+	storage_provider: Joi.string().optional(),
+	storage_key: Joi.string().optional(),
 });
 
 const spec = Joi.object({
@@ -64,18 +66,31 @@ const storeImage = async (file, uploaded_by, status) => {
 		throw new Error(`Image: ${file.filename} is corrupted`);
 	}
 
-	const imageResult = await createImage({
+	const imageData = {
 		image_path: imagePath,
 		original_height: imageSize.height,
 		original_width: imageSize.width,
 		size: file.size,
 		uploaded_by,
 		status,
-	});
+	};
+
+	if (file.storage_provider && file.storage_key) {
+		imageData.storage_provider = file.storage_provider;
+		imageData.storage_key = file.storage_key;
+	}
+
+	const imageResult = await createImage(imageData);
 
 	const imageId = imageResult.image_id;
 
-	return { imagePath, imageId: imageId.toString(), size: file.size };
+	return {
+		imagePath,
+		imageId: imageId.toString(),
+		size: file.size,
+		storageProvider: file.storage_provider,
+		storageKey: file.storage_key,
+	};
 };
 
 const service = async (data) => {
@@ -95,9 +110,11 @@ const service = async (data) => {
 			{
 				imageId: imageInfo.imageId,
 				imagePath: imageInfo.imagePath,
+				storageProvider: imageInfo.storageProvider,
+				storageKey: imageInfo.storageKey,
 				worker: "imageOptimization",
 			},
-			{ removeOnComplete: true, removeOnFail: true },
+			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 		);
 
 		// Log usage for each image processed

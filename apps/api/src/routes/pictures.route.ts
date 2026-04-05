@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Elysia, t } from "elysia";
 import prisma from "../../../../packages/config/src/db.config.ts";
+import config from "../../../../packages/config/src/index.config.ts";
 import {
 	HTTP_STATUS_CODES,
 	UPLOADS_DIR,
@@ -41,15 +42,94 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				}
 
 				let convertedFiles = [];
+				let useExternalStorage = false;
+				let currentStorage = storage;
+				let storageProvider: string | undefined =
+					body.storageProvider || storage.getProviderName();
+
+				// 1. Determine which storage provider to use
+				if (albumId && albumId !== "undefined" && albumId !== "null") {
+					const album = await prisma.albums.findUnique({
+						where: { album_id: albumId, created_by: userId },
+						include: { storage_config: true },
+					});
+
+					if (album?.storage_config) {
+						// Album has its own storage configuration (BYOS)
+						currentStorage = storage.getProvider({
+							provider: album.storage_config.provider as any,
+							credentials: {
+								accessKeyId: album.storage_config.access_key_id,
+								secretAccessKey: album.storage_config.secret_access_key,
+								bucket: album.storage_config.bucket,
+								endpoint: album.storage_config.endpoint,
+								region: album.storage_config.region || undefined,
+							},
+							skip_tls_verify: album.storage_config.provider !== "local" ? (config[config.env || "development"] as any).skip_tls_verify : false,
+						}) as any;
+						storageProvider = album.storage_config.provider;
+					} else if (body.storageProvider && body.storageProvider !== "local") {
+						// Album uses default storage, and it's external (e.g. Managed R2)
+						const envConfig = config[config.env || "development"];
+						const r2 = envConfig?.r2;
+						if (r2) {
+							currentStorage = storage.getProvider({
+								provider: "r2",
+								credentials: {
+									accessKeyId: r2.access_key_id,
+									secretAccessKey: r2.secret_access_key,
+									bucket: r2.bucket,
+									endpoint: r2.endpoint,
+									region: r2.region,
+								},
+								skip_tls_verify: (envConfig as any).skip_tls_verify,
+							}) as any;
+						}
+					}
+				} else if (body.storageProvider && body.storageProvider !== "local") {
+					// No album, but external storage requested (e.g. guest upload to managed R2)
+					const envConfig = config[config.env || "development"];
+					const r2 = envConfig?.r2;
+					if (r2) {
+						currentStorage = storage.getProvider({
+							provider: "r2",
+							credentials: {
+								accessKeyId: r2.access_key_id,
+								secretAccessKey: r2.secret_access_key,
+								bucket: r2.bucket,
+								endpoint: r2.endpoint,
+								region: r2.region,
+							},
+							skip_tls_verify: (envConfig as any).skip_tls_verify,
+						}) as any;
+					}
+				}
+
+				useExternalStorage = storageProvider !== "local";
 
 				if (existingKey) {
-					// Logic for file already in storage (via presigned URL)
-					const absolutePath = path.resolve(
-						process.cwd(),
-						UPLOADS_DIR,
-						existingKey,
-					);
-					// construct a minimal file object for the service
+					let filePath: string;
+					let fileSize = 0;
+
+					if (useExternalStorage) {
+						const imageBuffer = await currentStorage.getObject(existingKey);
+						const absolutePath = path.resolve(
+							process.cwd(),
+							UPLOADS_DIR,
+							existingKey,
+						);
+						await fs.promises.mkdir(path.dirname(absolutePath), {
+							recursive: true,
+						});
+						await fs.promises.writeFile(absolutePath, imageBuffer);
+						filePath = absolutePath;
+						fileSize = imageBuffer.length;
+					} else {
+						filePath = path.resolve(process.cwd(), UPLOADS_DIR, existingKey);
+						const stats = await fs.promises.stat(filePath);
+						fileSize = stats.size;
+					}
+
 					convertedFiles = [
 						{
 							mimetype: "image/jpeg",
@@ -58,34 +138,13 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 							encoding: "7bit",
 							destination: UPLOADS_DIR,
 							filename: existingKey,
-							path: absolutePath,
-							size: 0,
+							path: filePath,
+							size: fileSize,
+							storage_provider: useExternalStorage ? storageProvider : "local",
+							storage_key: existingKey,
 						},
 					];
 				} else {
-					// Original logic for direct file upload to API
-					// Dynamic Storage Provider Selection
-					let currentStorage = storage;
-					if (albumId && albumId !== "undefined" && albumId !== "null") {
-						const album = await prisma.albums.findUnique({
-							where: { album_id: albumId, created_by: userId },
-							include: { storage_config: true },
-						});
-
-						if (album?.storage_config) {
-							currentStorage = storage.getProvider({
-								provider: album.storage_config.provider as any,
-								credentials: {
-									accessKeyId: album.storage_config.access_key_id,
-									secretAccessKey: album.storage_config.secret_access_key,
-									bucket: album.storage_config.bucket,
-									endpoint: album.storage_config.endpoint,
-									region: album.storage_config.region || undefined,
-								},
-							}) as any;
-						}
-					}
-
 					convertedFiles = await Promise.all(
 						(Array.isArray(files) ? files : [files]).map(async (file) => {
 							const filename = `${Date.now()}-${file.name}`;
@@ -96,11 +155,23 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 								contentType: file.type,
 							});
 
-							const absolutePath = path.resolve(
-								process.cwd(),
-								UPLOADS_DIR,
-								storedKey,
-							);
+							let filePath: string;
+							const fileSize = file.size;
+
+							if (useExternalStorage) {
+								const tempPath = path.resolve(
+									process.cwd(),
+									UPLOADS_DIR,
+									storedKey,
+								);
+								await fs.promises.mkdir(path.dirname(tempPath), {
+									recursive: true,
+								});
+								await fs.promises.writeFile(tempPath, fileBuffer);
+								filePath = tempPath;
+							} else {
+								filePath = path.resolve(process.cwd(), UPLOADS_DIR, storedKey);
+							}
 
 							return {
 								mimetype: file.type,
@@ -109,8 +180,12 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 								encoding: "7bit",
 								destination: UPLOADS_DIR,
 								filename: filename,
-								path: absolutePath,
-								size: file.size,
+								path: filePath,
+								size: fileSize,
+								storage_provider: useExternalStorage
+									? storageProvider
+									: "local",
+								storage_key: storedKey,
 							};
 						}),
 					);

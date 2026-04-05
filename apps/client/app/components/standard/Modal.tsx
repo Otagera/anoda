@@ -96,6 +96,9 @@ interface ModalSectionProps {
 	className?: string;
 }
 
-export const ModalSection = ({ children, className = "" }: ModalSectionProps) => {
+export const ModalSection = ({
+	children,
+	className = "",
+}: ModalSectionProps) => {
 	return <div className={`space-y-4 ${className}`}>{children}</div>;
 };

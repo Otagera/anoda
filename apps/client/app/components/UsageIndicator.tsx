@@ -38,14 +38,11 @@ export const UsageIndicator = () => {
 						isComputeOverLimit
 							? "bg-red-500/10 text-red-500"
 							: isComputeNearLimit
-							? "bg-amber-500/10 text-amber-500"
-							: "bg-sage/10 text-sage"
+								? "bg-amber-500/10 text-amber-500"
+								: "bg-sage/10 text-sage"
 					}`}
 				>
-					<Zap
-						size={12}
-						className="fill-current sm:w-3.5 sm:h-3.5"
-					/>
+					<Zap size={12} className="fill-current sm:w-3.5 sm:h-3.5" />
 				</div>
 				<div className="flex flex-col">
 					<div className="flex items-center gap-1 sm:gap-2 mb-0.5">
@@ -62,8 +59,8 @@ export const UsageIndicator = () => {
 								isComputeOverLimit
 									? "bg-red-500"
 									: isComputeNearLimit
-									? "bg-amber-500"
-									: "bg-sage"
+										? "bg-amber-500"
+										: "bg-sage"
 							}`}
 							style={{ width: `${computePercentage}%` }}
 						/>
@@ -80,14 +77,11 @@ export const UsageIndicator = () => {
 						isStorageOverLimit
 							? "bg-red-500/10 text-red-500"
 							: isStorageNearLimit
-							? "bg-amber-500/10 text-amber-500"
-							: "bg-sage/10 text-sage"
+								? "bg-amber-500/10 text-amber-500"
+								: "bg-sage/10 text-sage"
 					}`}
 				>
-					<HardDrive
-						size={12}
-						className="fill-current sm:w-3.5 sm:h-3.5"
-					/>
+					<HardDrive size={12} className="fill-current sm:w-3.5 sm:h-3.5" />
 				</div>
 				<div className="flex flex-col">
 					<div className="flex items-center gap-1 sm:gap-2 mb-0.5">
@@ -104,8 +98,8 @@ export const UsageIndicator = () => {
 								isStorageOverLimit
 									? "bg-red-500"
 									: isStorageNearLimit
-									? "bg-amber-500"
-									: "bg-sage"
+										? "bg-amber-500"
+										: "bg-sage"
 							}`}
 							style={{ width: `${storagePercentage}%` }}
 						/>

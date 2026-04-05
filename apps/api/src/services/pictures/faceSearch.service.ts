@@ -24,7 +24,7 @@ const faceSearchService = async (data) => {
 	await queueServices.faceSearchQueueLib.addJob(
 		"faceSearch",
 		{ faceId, albumId, worker: "faceSearch" },
-		{ removeOnComplete: true, removeOnFail: true },
+		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 	);
 };
 

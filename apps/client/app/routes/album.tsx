@@ -19,6 +19,7 @@ import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
 import { UsageIndicator } from "~/components/UsageIndicator";
+import { useDownloadZip } from "~/hooks/useDownloadZip";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -35,7 +36,6 @@ import {
 } from "../utils/api";
 import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
-import { useDownloadZip } from "~/hooks/useDownloadZip";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();

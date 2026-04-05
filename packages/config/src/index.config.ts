@@ -1,14 +1,14 @@
 import path from "node:path";
 import dotenv from "dotenv";
 
-// 1. Try loading from the current working directory
-dotenv.config();
+// 1. Try loading from apps/api/.env (where the main backend config resides)
+dotenv.config({ path: path.join(import.meta.dir, "../../../apps/api/.env") });
 
 // 2. Try loading from the monorepo root (relative to this file in packages/config/src/)
 dotenv.config({ path: path.join(import.meta.dir, "../../../.env") });
 
-// 3. Try loading from apps/api/.env (where it currently resides)
-dotenv.config({ path: path.join(import.meta.dir, "../../../apps/api/.env") });
+// 3. Try loading from the current working directory
+dotenv.config();
 
 const config = {
 	env: process.env.NODE_ENV || "development",
@@ -65,6 +65,7 @@ const config = {
 			"python",
 		),
 		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
+		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
 
 		// Managed R2
 		r2: {
@@ -109,6 +110,7 @@ const config = {
 			"python",
 		),
 		ai_service_url: process.env.TEST_AI_SERVICE_URL || "http://localhost:8000",
+		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
 	},
 	production: {
 		db_url: process.env.DB_URL,
@@ -142,6 +144,7 @@ const config = {
 			api_secret: process.env.CHATTERBOX_API_SECRET,
 		},
 		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
+		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
 	},
 };
 

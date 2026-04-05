@@ -7,6 +7,12 @@ const target = process.env.API_TARGET || "http://localhost:3005";
 
 export default defineConfig({
 	plugins: [react(), tsconfigPaths()],
+	test: {
+		globals: true,
+		environment: "jsdom",
+		setupFiles: ["./app/test/setup.ts"],
+		include: ["app/**/*.{test,spec}.{ts,tsx}"],
+	},
 	server: {
 		host: true,
 		proxy: {

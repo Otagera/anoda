@@ -46,9 +46,7 @@ export const Input = ({
 			{hint && !error && (
 				<p className="text-xs text-zinc-500 dark:text-zinc-400">{hint}</p>
 			)}
-			{error && (
-				<p className="text-xs text-plum font-medium">{error}</p>
-			)}
+			{error && <p className="text-xs text-plum font-medium">{error}</p>}
 		</div>
 	);
 };

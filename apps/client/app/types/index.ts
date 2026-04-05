@@ -87,7 +87,10 @@ export interface Album {
 	};
 }
 
-export type AlbumListItem = Pick<Album, "id" | "albumName" | "coverImages" | "createdAt" | "imageCount" | "settings">;
+export type AlbumListItem = Pick<
+	Album,
+	"id" | "albumName" | "coverImages" | "createdAt" | "imageCount" | "settings"
+>;
 
 export interface StorageConfig {
 	id: string;

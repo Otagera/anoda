@@ -83,7 +83,7 @@ class AuthError extends OperationError {
 }
 
 class ValidationError extends OperationError {
-	name = "AuthError";
+	name = "ValidationError";
 	statusCode = HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY;
 
 	constructor(props) {

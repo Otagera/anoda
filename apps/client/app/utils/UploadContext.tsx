@@ -130,13 +130,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 
 			// 2. Upload directly to Cloud (R2/S3/Local Direct)
-			const token = localStorage.getItem("token");
 			await axios.put(presignedData.uploadUrl, nextTask.file, {
 				headers: {
 					"Content-Type": nextTask.file.type,
-					...(token && !nextTask.shareToken
-						? { Authorization: `Bearer ${token}` }
-						: {}),
 				},
 				onUploadProgress: (progressEvent) => {
 					const progress = Math.round(
@@ -152,6 +148,10 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			const formData = new FormData();
 			formData.append("key", presignedData.key);
 			formData.append("albumId", nextTask.albumId);
+			formData.append(
+				"storageProvider",
+				presignedData.storageProvider || "local",
+			);
 			if (nextTask.initialStatus) {
 				formData.append("status", nextTask.initialStatus);
 			}

@@ -60,7 +60,11 @@ export const SkeletonInput = () => {
 	return <Skeleton className="h-10 w-full rounded-xl" />;
 };
 
-export const SkeletonAvatar = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
+export const SkeletonAvatar = ({
+	size = "md",
+}: {
+	size?: "sm" | "md" | "lg";
+}) => {
 	const sizes = {
 		sm: "w-8 h-8",
 		md: "w-12 h-12",

@@ -7,8 +7,8 @@ import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
-import type { Album } from "~/types";
 import ImagesList from "~/Images/ImageGallery";
+import type { Album } from "~/types";
 import {
 	createAlbum,
 	deleteAlbum,

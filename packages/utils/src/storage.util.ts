@@ -19,6 +19,7 @@ export interface StorageConfig {
 		bucket: string;
 		region?: string;
 	};
+	skip_tls_verify?: boolean;
 }
 
 export interface UploadOptions {
@@ -37,6 +38,8 @@ export interface StorageProvider {
 		shareToken?: string,
 	): Promise<string>;
 	getDownloadUrl(key: string): string;
+	getObject(key: string): Promise<Buffer>;
+	getProviderName(): string;
 }
 
 /**
@@ -49,6 +52,10 @@ export class LocalProvider implements StorageProvider {
 	constructor() {
 		this.baseDir = path.resolve(process.cwd(), "apps/api/src/uploads");
 		this.baseUrl = `http://localhost:${config[config.env || "development"].elysia_port}/api/uploads`;
+	}
+
+	getProviderName(): string {
+		return "local";
 	}
 
 	async upload(
@@ -88,6 +95,11 @@ export class LocalProvider implements StorageProvider {
 	getDownloadUrl(key: string): string {
 		return `${this.baseUrl}/${key}`;
 	}
+
+	async getObject(key: string): Promise<Buffer> {
+		const filePath = path.join(this.baseDir, key);
+		return fs.readFile(filePath);
+	}
 }
 
 /**
@@ -97,7 +109,18 @@ export class R2Provider implements StorageProvider {
 	private client: S3Client;
 	private bucket: string;
 
-	constructor(cred: NonNullable<StorageConfig["credentials"]>) {
+	constructor(
+		cred: NonNullable<StorageConfig["credentials"]> & {
+			skip_tls_verify?: boolean;
+		},
+	) {
+		if (cred.skip_tls_verify) {
+			console.warn(
+				"[STORAGE] SKIP_TLS_VERIFY is enabled. Disabling TLS certificate validation.",
+			);
+			process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+		}
+
 		this.client = new S3Client({
 			region: cred.region || "auto",
 			endpoint: cred.endpoint,
@@ -161,6 +184,22 @@ export class R2Provider implements StorageProvider {
 		// For now, we'll use signed URLs for security.
 		return key;
 	}
+
+	getProviderName(): string {
+		return "r2";
+	}
+
+	async getObject(key: string): Promise<Buffer> {
+		const command = new GetObjectCommand({
+			Bucket: this.bucket,
+			Key: key,
+		});
+		const response = await this.client.send(command);
+		if (!response.Body) {
+			throw new Error(`Empty response for key: ${key}`);
+		}
+		return Buffer.from(await response.Body.transformToByteArray());
+	}
 }
 
 /**
@@ -185,6 +224,7 @@ export class StorageService {
 				bucket: r2.bucket,
 				endpoint: r2.endpoint || "",
 				region: r2.region,
+				skip_tls_verify: (envConfig as any).skip_tls_verify,
 			});
 		} else {
 			console.log("[STORAGE] No Managed R2 configured, using LocalProvider");
@@ -197,6 +237,10 @@ export class StorageService {
 			StorageService.instance = new StorageService();
 		}
 		return StorageService.instance;
+	}
+
+	getProviderName(): string {
+		return this.provider.getProviderName();
 	}
 
 	/**
@@ -220,7 +264,7 @@ export class StorageService {
 			try {
 				accessKeyId = decrypt(accessKeyId);
 				secretAccessKey = decrypt(secretAccessKey);
-			} catch (e) {
+			} catch (_e) {
 				// If decryption fails, assume they are already plain text
 				console.warn("Storage credential decryption failed, using as-is");
 			}
@@ -229,6 +273,7 @@ export class StorageService {
 				...config.credentials,
 				accessKeyId,
 				secretAccessKey,
+				skip_tls_verify: config.skip_tls_verify,
 			});
 		}
 
@@ -263,6 +308,10 @@ export class StorageService {
 			expires,
 			shareToken,
 		);
+	}
+
+	async getObject(key: string): Promise<Buffer> {
+		return this.provider.getObject(key);
 	}
 }
 

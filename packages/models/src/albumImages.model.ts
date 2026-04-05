@@ -23,7 +23,13 @@ const fetchAlbumImage = async (where) => {
 const fetchAlbumImages = async (where, options = {}) => {
 	const { take, skip, cursor, orderBy } = options;
 	return await prisma.album_images.findMany({
-		where,
+		where: {
+			...where,
+			images: {
+				...where.images,
+				deleted_at: null,
+			},
+		},
 		include: {
 			images: {
 				include: {

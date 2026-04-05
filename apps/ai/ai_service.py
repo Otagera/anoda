@@ -1,12 +1,21 @@
 import os
 import logging
 import json
+import tempfile
+from dotenv import load_dotenv
+
+# Load .env file from project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(project_root, ".env"))
+
 from fastapi import FastAPI, HTTPException, Body
 import numpy as np
 import uuid
 from typing import List, Optional, Dict
 from pydantic import BaseModel
 from sklearn.cluster import DBSCAN
+import boto3
+from botocore.config import Config
 
 # Import the new shared face extraction pipeline
 from face_utils import extract_faces
@@ -35,6 +44,8 @@ app = FastAPI(title="Anoda AI Face Service")
 class ProcessRequest(BaseModel):
     image_path: str
     image_id: str
+    storage_provider: Optional[str] = None
+    storage_key: Optional[str] = None
 
 class FaceData(BaseModel):
     embedding: List[float]
@@ -66,21 +77,80 @@ def is_valid_uuid(value):
     except ValueError:
         return False
 
+def get_s3_client(storage_config: dict):
+    """Create S3 client for R2/S3 storage."""
+    # Use urllib3 to disable SSL verification if SKIP_TLS_VERIFY is set
+    import urllib3
+    verify = True
+    if os.environ.get("SKIP_TLS_VERIFY") == "true":
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        verify = False
+    
+    session = boto3.session.Session()
+    return session.client(
+        "s3",
+        aws_access_key_id=storage_config["access_key_id"],
+        aws_secret_access_key=storage_config["secret_access_key"],
+        endpoint_url=storage_config["endpoint"],
+        region_name=storage_config.get("region", "auto"),
+        use_ssl=True,
+        verify=verify,
+    )
+
+async def fetch_image_from_storage(storage_provider: str, storage_key: str, storage_config: dict):
+    """Fetch image from R2/S3 and return local path."""
+    logger.info(f"Fetching image from {storage_provider}: {storage_key}")
+    
+    s3_client = get_s3_client(storage_config)
+    bucket = storage_config["bucket"]
+    
+    response = s3_client.get_object(Bucket=bucket, Key=storage_key)
+    image_data = response["Body"].read()
+    
+    # Write to temp file
+    suffix = os.path.splitext(storage_key)[1] or ".jpg"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(image_data)
+        tmp_path = tmp.name
+    
+    logger.info(f"Image fetched to: {tmp_path}")
+    return tmp_path
+
 @app.post("/process", response_model=ProcessResponse)
 async def process_image(request: ProcessRequest):
     image_path = request.image_path
     image_id = request.image_id
+    storage_provider = request.storage_provider
+    storage_key = request.storage_key
 
     if not is_valid_uuid(image_id):
         raise HTTPException(status_code=400, detail=f"Invalid UUID: {image_id}")
 
-    # Basic path validation to prevent traversal and ensure existence
-    abs_path = os.path.abspath(image_path)
-    if not os.path.exists(abs_path):
-        logger.error(f"Image not found: {abs_path}")
-        raise HTTPException(status_code=404, detail="Image file not found")
-
+    temp_file = None
+    
     try:
+        # Check if we need to fetch from storage
+        if storage_provider and storage_provider != "local" and storage_key:
+            storage_config = {
+                "access_key_id": os.environ.get("R2_ACCESS_KEY_ID"),
+                "secret_access_key": os.environ.get("R2_SECRET_ACCESS_KEY"),
+                "endpoint": os.environ.get("R2_ENDPOINT"),
+                "bucket": os.environ.get("R2_BUCKET"),
+                "region": os.environ.get("R2_REGION", "auto"),
+            }
+            
+            if not all([storage_config["access_key_id"], storage_config["endpoint"], storage_config["bucket"]]):
+                raise HTTPException(status_code=500, detail="Storage configuration missing")
+            
+            temp_file = await fetch_image_from_storage(storage_provider, storage_key, storage_config)
+            abs_path = temp_file
+        else:
+            # Basic path validation to prevent traversal and ensure existence
+            abs_path = os.path.abspath(image_path)
+            if not os.path.exists(abs_path):
+                logger.error(f"Image not found: {abs_path}")
+                raise HTTPException(status_code=404, detail="Image file not found")
+
         logger.info(f"Processing image: {abs_path}")
         
         # Use the tuned extraction pipeline
@@ -100,9 +170,19 @@ async def process_image(request: ProcessRequest):
             faces=faces_data
         )])
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"Error processing image {image_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
+    finally:
+        # Clean up temp file if created
+        if temp_file and os.path.exists(temp_file):
+            try:
+                os.unlink(temp_file)
+                logger.info(f"Cleaned up temp file: {temp_file}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temp file: {e}")
 
 @app.post("/cluster", response_model=ClusterResponse)
 async def cluster_faces(request: ClusterRequest):

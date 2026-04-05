@@ -44,7 +44,10 @@ const updateExistingAlbum = async (album_id, created_by, userData) => {
 
 const fetchAlbum = async (where) => {
 	return await prisma.albums.findUnique({
-		where,
+		where: {
+			...where,
+			deleted_at: null,
+		},
 		include: {
 			settings: true,
 			storage_config: true,
@@ -58,6 +61,7 @@ const fetchAlbumsByIds = async (albumIds) => {
 			album_id: {
 				in: albumIds,
 			},
+			deleted_at: null,
 		},
 		include: {
 			settings: true,
@@ -72,6 +76,7 @@ const fetchAlbumsByUserids = async (userIds) => {
 			created_by: {
 				in: userIds,
 			},
+			deleted_at: null,
 		},
 		include: {
 			settings: true,
@@ -98,7 +103,9 @@ const fetchAlbumsByUserids = async (userIds) => {
 };
 
 const fetchAllAlbums = async () => {
-	return await prisma.albums.findMany();
+	return await prisma.albums.findMany({
+		where: { deleted_at: null },
+	});
 };
 
 const deleteAlbumById = async (albumId, userId) => {
@@ -140,6 +147,12 @@ const deleteAlbumById = async (albumId, userId) => {
 		}
 
 		// Finally delete the album
+		const existingAlbum = await prisma.albums.findUnique({
+			where: { album_id: albumId },
+		});
+		if (!existingAlbum) {
+			return null;
+		}
 		return await prisma.albums.delete({
 			where: {
 				album_id: albumId,

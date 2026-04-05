@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 import axios from "axios";
 import { Elysia, t } from "elysia";
@@ -15,8 +16,9 @@ import {
 import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
 import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
+import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
-import { checkQuota } from "./middleware/quota.middleware.ts";
+import { checkQuota } from "./middleware/quota.middleware";
 
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.get(
@@ -37,6 +39,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							where: {
 								images: {
 									status: "APPROVED",
+									deleted_at: null,
 								},
 							},
 						},
@@ -227,16 +230,22 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					throw new NotFoundError("Invalid share token.");
 				}
 
-				// 2. Save temporary selfie using StorageService
+				// 2. Save temporary selfie locally AND to storage
 				const tempKey = `temp-selfie-${Date.now()}-${selfie.name}`;
 				const fileBuffer = Buffer.from(await selfie.arrayBuffer());
-				await storage.upload(fileBuffer, {
-					key: tempKey,
-					contentType: selfie.type,
-				});
 
-				// Get path for AI service
+				// Save locally for AI service to access
 				const tempPath = path.resolve(process.cwd(), UPLOADS_DIR, tempKey);
+				await fs.writeFile(tempPath, fileBuffer);
+
+				// Also upload to storage if using R2/S3
+				const currentStorage = storage.getProviderName();
+				if (currentStorage !== "local") {
+					await storage.upload(fileBuffer, {
+						key: tempKey,
+						contentType: selfie.type,
+					});
+				}
 
 				// 3. Call AI service to get embedding
 				const aiServiceUrl = config[config.env].ai_service_url;
@@ -248,7 +257,14 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				const faceData = aiResponse.data;
 
 				// Cleanup temp file
-				await storage.delete(tempKey);
+				try {
+					await fs.unlink(tempPath);
+				} catch (_e) {}
+
+				// Also cleanup from storage if using R2/S3
+				if (storage.getProviderName() !== "local") {
+					await storage.delete(tempKey);
+				}
 
 				if (
 					!faceData.results ||
@@ -340,7 +356,11 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 			try {
 				const album = await prisma.albums.findUnique({
 					where: { share_token: params.token },
-					include: { settings: true, storage_config: true },
+					include: {
+						settings: true,
+						storage_config: true,
+						album_images: { include: { images: true }, take: 1 },
+					},
 				});
 
 				if (!album) throw new NotFoundError("Album not found.");
@@ -380,13 +400,77 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				}
 
 				let convertedFiles = [];
+				let useExternalStorage = false;
+				let currentStorage = storage;
+				let storageProvider: string | undefined;
+
+				// Check album's own storage config first
+				if (album.storage_config) {
+					currentStorage = storage.getProvider({
+						provider: album.storage_config.provider as any,
+						credentials: {
+							accessKeyId: album.storage_config.access_key_id,
+							secretAccessKey: album.storage_config.secret_access_key,
+							bucket: album.storage_config.bucket,
+							endpoint: album.storage_config.endpoint,
+							region: album.storage_config.region || undefined,
+						},
+					}) as any;
+					useExternalStorage = album.storage_config.provider !== "local";
+					storageProvider = album.storage_config.provider;
+				} else {
+					// Check if images have external storage (from Managed R2)
+					const firstImage = album.album_images[0]?.images;
+					if (
+						firstImage?.storage_provider &&
+						firstImage.storage_provider !== "local"
+					) {
+						const envConfig = config[config.env || "development"];
+						const r2 = envConfig?.r2;
+						if (r2?.access_key_id && r2?.bucket) {
+							currentStorage = storage.getProvider({
+								provider: firstImage.storage_provider,
+								credentials: {
+									accessKeyId: r2.access_key_id,
+									secretAccessKey: r2.secret_access_key,
+									bucket: r2.bucket,
+									endpoint: r2.endpoint || undefined,
+									region: r2.region || "auto",
+								},
+							}) as any;
+							useExternalStorage = true;
+							storageProvider = firstImage.storage_provider;
+						}
+					}
+				}
 
 				if (existingKey) {
-					const absolutePath = path.resolve(
-						process.cwd(),
-						UPLOADS_DIR,
-						existingKey,
-					);
+					let filePath: string;
+					let fileSize = 0;
+
+					if (useExternalStorage) {
+						const imageBuffer = await currentStorage.getObject(existingKey);
+						const absolutePath = path.resolve(
+							process.cwd(),
+							UPLOADS_DIR,
+							existingKey,
+						);
+						await fs.mkdir(path.dirname(absolutePath), {
+							recursive: true,
+						});
+						await fs.writeFile(absolutePath, imageBuffer);
+						filePath = absolutePath;
+						fileSize = imageBuffer.length;
+					} else {
+						filePath = path.resolve(process.cwd(), UPLOADS_DIR, existingKey);
+						try {
+							const stats = await fs.stat(filePath);
+							fileSize = stats.size;
+						} catch {
+							throw new Error(`File not found: ${filePath}`);
+						}
+					}
+
 					convertedFiles = [
 						{
 							mimetype: "image/jpeg",
@@ -395,26 +479,13 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							encoding: "7bit",
 							destination: UPLOADS_DIR,
 							filename: existingKey,
-							path: absolutePath,
-							size: 0,
+							path: filePath,
+							size: fileSize,
+							storage_provider: useExternalStorage ? storageProvider : "local",
+							storage_key: existingKey,
 						},
 					];
 				} else {
-					// Dynamic Storage Provider Selection
-					let currentStorage = storage;
-					if (album.storage_config) {
-						currentStorage = storage.getProvider({
-							provider: album.storage_config.provider as any,
-							credentials: {
-								accessKeyId: album.storage_config.access_key_id,
-								secretAccessKey: album.storage_config.secret_access_key,
-								bucket: album.storage_config.bucket,
-								endpoint: album.storage_config.endpoint,
-								region: album.storage_config.region || undefined,
-							},
-						}) as any;
-					}
-
 					convertedFiles = await Promise.all(
 						(Array.isArray(files) ? files : [files]).map(async (file) => {
 							const filename = `guest-${Date.now()}-${file.name}`;
@@ -439,6 +510,10 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 								filename: filename,
 								path: absolutePath,
 								size: file.size,
+								storage_provider: useExternalStorage
+									? storageProvider
+									: "local",
+								storage_key: storedKey,
 							};
 						}),
 					);

@@ -27,6 +27,16 @@ axiosAPI.interceptors.request.use(
 axiosAPI.interceptors.response.use(
 	(response) => response,
 	(error) => {
+		const status = error.response?.status;
+		const message = error.response?.data?.message;
+
+		if (status === 401 || message?.includes("jwt expired")) {
+			localStorage.removeItem("token");
+			if (typeof window !== "undefined") {
+				window.location.href = "/login";
+			}
+		}
+
 		console.error("API Error:", error.response?.data || error.message);
 		return Promise.reject(error);
 	},

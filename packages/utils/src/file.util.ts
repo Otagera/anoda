@@ -32,7 +32,7 @@ const clearUploads = () => {
 };
 
 const yamlToJson = (ymlFile: string) => {
-	let doc;
+	let doc: unknown;
 	try {
 		doc = yaml.load(fs.readFileSync(ymlFile, "utf8"), {
 			schema: yaml.JSON_SCHEMA,

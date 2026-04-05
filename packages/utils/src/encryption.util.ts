@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import config from "../../config/src/index.config.ts";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -36,7 +35,9 @@ export const decrypt = (data: string): string => {
 	const tag = buffer.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
 	const encrypted = buffer.subarray(IV_LENGTH + TAG_LENGTH);
 
-	const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
+	const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv, {
+		authTagLength: TAG_LENGTH,
+	});
 	decipher.setAuthTag(tag);
 
 	const decrypted = Buffer.concat([
