@@ -13,6 +13,7 @@
 		"dev": "bun --watch src/index.js | bun run pino-pretty -c"
 	},
 	"dependencies": {
+		"archiver": "^7.0.1",
 		"bullmq": "^5.x.x",
 		"dotenv": "^16.x.x",
 		"pino": "^10.3.1",

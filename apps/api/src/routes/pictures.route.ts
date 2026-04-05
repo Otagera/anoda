@@ -4,10 +4,12 @@ import { Elysia, t } from "elysia";
 import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
 import {
+	BULL_QUEUE_NAMES,
 	HTTP_STATUS_CODES,
 	UPLOADS_DIR,
 } from "../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
+import { queueServices } from "../../../worker/src/queue/queue.service";
 import deletePictureService from "../services/pictures/deletePicture.service.ts";
 import fetchFacesService from "../services/pictures/fetchFaces.service.ts";
 import fetchPictureService from "../services/pictures/fetchPicture.service.ts";
@@ -21,6 +23,127 @@ import { checkQuota } from "./middleware/quota.middleware.ts";
 
 const picturesRoutes = new Elysia({ prefix: "/images" })
 	.derive(authDerivation)
+	.post(
+		"/bulk-download",
+		async ({ body, set, userId }) => {
+			try {
+				const { imageIds } = body;
+
+				// Verify ownership
+				const images = await prisma.images.findMany({
+					where: {
+						image_id: { in: imageIds },
+						created_by: userId,
+					},
+					select: { image_id: true },
+				});
+
+				if (images.length === 0) {
+					throw new Error("No authorized images found for download.");
+				}
+
+				const job = await queueServices.bulkDownloadQueueLib.addJob(
+					"bulkDownload",
+					{
+						imageIds: images.map((img) => img.image_id),
+						userId,
+						worker: "bulkDownload",
+					},
+					{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+				);
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Bulk download job initiated.",
+					data: { jobId: job.id },
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error.message || "Failed to initiate bulk download.",
+					data: null,
+				};
+			}
+		},
+		{
+			body: t.Object({
+				imageIds: t.Array(t.String()),
+			}),
+		},
+	)
+	.get(
+		"/bulk-download/:jobId",
+		async ({ params, set, userId }) => {
+			try {
+				const { jobId } = params;
+				const queue = queueServices.bulkDownloadQueueLib.getQueue();
+				const job = await queue.getJob(jobId);
+
+				if (!job) {
+					set.status = HTTP_STATUS_CODES.NOTFOUND;
+					return {
+						status: "error",
+						message: "Job not found.",
+						data: null,
+					};
+				}
+
+				// Check if job belongs to this user
+				if (job.data.userId !== userId) {
+					set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
+					return {
+						status: "error",
+						message: "Unauthorized access to job.",
+						data: null,
+					};
+				}
+
+				const state = await job.getState();
+				const result = job.returnvalue;
+
+				if (state === "completed" && result?.storageKey) {
+					// Generate signed URL for download
+					const downloadUrl = await storage.getSignedUrl(
+						result.storageKey,
+						3600,
+					);
+
+					return {
+						status: "completed",
+						message: "Job completed.",
+						data: {
+							state,
+							progress: 100,
+							downloadUrl,
+						},
+					};
+				}
+
+				return {
+					status: "completed",
+					message: "Job status retrieved.",
+					data: {
+						state,
+						progress: job.progress,
+					},
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error.message || "Failed to retrieve job status.",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				jobId: t.String(),
+			}),
+		},
+	)
 	.post(
 		"/",
 		async ({ body, set, userId }) => {
@@ -65,7 +188,10 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 								endpoint: album.storage_config.endpoint,
 								region: album.storage_config.region || undefined,
 							},
-							skip_tls_verify: album.storage_config.provider !== "local" ? (config[config.env || "development"] as any).skip_tls_verify : false,
+							skip_tls_verify:
+								album.storage_config.provider !== "local"
+									? (config[config.env || "development"] as any).skip_tls_verify
+									: false,
 						}) as any;
 						storageProvider = album.storage_config.provider;
 					} else if (body.storageProvider && body.storageProvider !== "local") {
@@ -222,6 +348,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				status: t.Optional(t.String()),
 			}),
 			beforeHandle: [checkQuota as any],
+			bodyLimit: 500 * 1024 * 1024,
 		},
 	)
 	.post(

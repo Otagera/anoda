@@ -112,6 +112,7 @@ const run = async (jobData) => {
 		const tempPath = `/tmp/${optimizedFilename}`;
 
 		await sharp(imageBuffer)
+			.rotate() // Bake EXIF orientation before resizing
 			.resize({ width: 2000, withoutEnlargement: true })
 			.webp({ quality: 80 })
 			.toFile(tempPath);
@@ -151,10 +152,8 @@ const run = async (jobData) => {
 		}
 
 		const imageUpdateData = { optimized_path: optimizedPathOrKey };
-		if (!isLocal && image.storage_provider) {
-			imageUpdateData.storage_provider = image.storage_provider;
-			imageUpdateData.storage_key = optimizedPathOrKey;
-		}
+		// DO NOT overwrite storage_key here! storage_key must point to the original high-res image
+		// so that the AI service (and future workers) process the correct original file.
 
 		const updatedImage = await prisma.images.update({
 			where: { image_id: imageId },

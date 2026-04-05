@@ -1,5 +1,6 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
 import {
 	aliaserSpec,
 	validateSpec,
@@ -56,7 +57,10 @@ const service = async (data: any) => {
 						endpoint: album.storage_config.endpoint,
 						region: album.storage_config.region || undefined,
 					},
-					skip_tls_verify: album.storage_config.provider !== "local" ? (config[config.env || "development"] as any).skip_tls_verify : false,
+					skip_tls_verify:
+						album.storage_config.provider !== "local"
+							? (config[config.env || "development"] as any).skip_tls_verify
+							: false,
 				}) as any;
 				storageProvider = album.storage_config.provider;
 			} catch (err) {

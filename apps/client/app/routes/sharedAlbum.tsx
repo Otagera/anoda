@@ -16,7 +16,7 @@ import { useUpload } from "../utils/UploadContext";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();
-	const { addUploads } = useUpload();
+	const { addUploads, tasks } = useUpload();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isSelfieModalOpen, setIsSelfieModalOpen] = useState(false);
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -49,9 +49,32 @@ const SharedAlbumPage = () => {
 	};
 
 	const displayedImages = useMemo(() => {
-		if (!filteredImageIds) return allImages;
-		return allImages.filter((img: any) => filteredImageIds.has(img.imageId));
-	}, [allImages, filteredImageIds]);
+		let baseImages = allImages;
+		if (filteredImageIds) {
+			baseImages = allImages.filter((img: any) =>
+				filteredImageIds.has(img.imageId),
+			);
+		}
+
+		if (!albumData?.settings?.requires_approval) return baseImages;
+
+		// Find any locally uploaded images that are pending approval
+		const pendingUploads = tasks
+			.filter(
+				(t) =>
+					t.albumId === albumData.id &&
+					t.initialStatus === "PENDING" &&
+					t.status === "completed",
+			)
+			.map((t) => ({
+				imageId: `pending-${t.id}`,
+				imagePath: URL.createObjectURL(t.file),
+				originalSize: { width: 800, height: 800 },
+				isPending: true,
+			}));
+
+		return [...pendingUploads, ...baseImages];
+	}, [allImages, filteredImageIds, tasks, albumData]);
 
 	const selectedImageId = searchParams.get("imageId");
 	const selectedImage = useMemo(() => {
@@ -279,8 +302,14 @@ const SharedAlbumPage = () => {
 								selectionMode={selectedIds.size > 0}
 								shared={true}
 								className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
-								onClick={() => setSelectedImage(image)}
+								onClick={() => !image.isPending && setSelectedImage(image)}
 							/>
+							{image.isPending && (
+								<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
+									<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+									Up for moderation
+								</div>
+							)}
 						</div>
 					);
 				})}
@@ -324,9 +353,37 @@ const SharedAlbumPage = () => {
 				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
 					<div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
 						<h2 className="text-2xl font-black mb-2">Contribute Photos</h2>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
 							Add your photos to this shared collection.
 						</p>
+
+						{albumData.settings?.requires_approval && (
+							<div className="mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-start space-x-3">
+								<div className="text-amber-500 mt-0.5">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										className="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<div>
+									<h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">
+										Moderation Enabled
+									</h4>
+									<p className="text-xs text-amber-700/80 dark:text-amber-500/80 leading-relaxed">
+										Photos uploaded to this album require approval from the host
+										before they become visible to everyone.
+									</p>
+								</div>
+							</div>
+						)}
 
 						<div className="relative group mb-8">
 							<input

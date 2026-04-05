@@ -1,5 +1,4 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import JSZip from "jszip";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -75,9 +74,27 @@ const ImagesList: FC = () => {
 	};
 
 	const handleDeleteImage = async (imageId: string) => {
+		// Optimistic update
+		const previousImages = queryClient.getQueryData(["images"]);
+		queryClient.setQueryData(["images"], (old: any) => {
+			if (!old) return old;
+			return {
+				...old,
+				pages: old.pages.map((page: any) => ({
+					...page,
+					data: {
+						...page.data,
+						images: page.data.images.filter(
+							(img: any) => img.imageId !== imageId,
+						),
+					},
+				})),
+			};
+		});
+
 		try {
 			await deleteImage(imageId);
-			queryClient.invalidateQueries({ queryKey: ["images"] });
+			toast.success("Image deleted successfully");
 			setSelectedIds((prev) => {
 				const next = new Set(prev);
 				next.delete(imageId);
@@ -85,6 +102,9 @@ const ImagesList: FC = () => {
 			});
 		} catch (error) {
 			console.error(`Error deleting image with ID ${imageId}:`, error);
+			toast.error("Failed to delete image");
+			// Rollback on error
+			queryClient.setQueryData(["images"], previousImages);
 		}
 	};
 
@@ -100,12 +120,15 @@ const ImagesList: FC = () => {
 	const handleBulkDelete = async () => {
 		const ids = Array.from(selectedIds);
 		setIsBatchProcessing(true);
+		const toastId = toast.loading(`Deleting ${ids.length} photos...`);
 		try {
 			await Promise.all(ids.map((id) => deleteImage(id)));
 			queryClient.invalidateQueries({ queryKey: ["images"] });
 			setSelectedIds(new Set());
+			toast.success("Photos deleted successfully", { id: toastId });
 		} catch (error) {
 			console.error("Bulk delete failed:", error);
+			toast.error("Failed to delete some photos", { id: toastId });
 		} finally {
 			setIsBatchProcessing(false);
 		}
@@ -114,6 +137,7 @@ const ImagesList: FC = () => {
 	const handleBatchAddToAlbum = async (albumId: string) => {
 		const ids = Array.from(selectedIds);
 		setIsBatchProcessing(true);
+		const toastId = toast.loading(`Adding ${ids.length} photos to album...`);
 		try {
 			await axiosAPI.post(`/albums/${albumId}/images`, {
 				imageIds: ids,
@@ -121,57 +145,82 @@ const ImagesList: FC = () => {
 			queryClient.invalidateQueries({ queryKey: ["images", albumId] });
 			setIsAddToAlbumOpen(false);
 			setSelectedIds(new Set());
-			alert(`Successfully added ${ids.length} photos to the album.`);
+			toast.success(`Successfully added ${ids.length} photos to the album.`, {
+				id: toastId,
+			});
 		} catch (error) {
 			console.error("Batch add to album failed:", error);
-			alert("Failed to add photos to album. Please try again.");
+			toast.error("Failed to add photos to album. Please try again.", {
+				id: toastId,
+			});
 		} finally {
 			setIsBatchProcessing(false);
 		}
 	};
 
 	const handleBulkDownload = async () => {
-		if (!images) return;
-		const selectedImages = images.filter((img) => selectedIds.has(img.imageId));
+		const ids = Array.from(selectedIds);
+		if (ids.length === 0) return;
 
 		const toastId = toast.loading(
-			`Preparing ZIP with ${selectedIds.size} photos...`,
+			`Initiating ZIP generation for ${ids.length} photos...`,
 		);
 
 		try {
-			const zip = new JSZip();
-			const folder = zip.folder("photos");
+			// 1. Request bulk download job
+			const { data: res } = await axiosAPI.post("/images/bulk-download", {
+				imageIds: ids,
+			});
+			const jobId = res.data.jobId;
 
-			for (let i = 0; i < selectedImages.length; i++) {
-				const image = selectedImages[i];
-				const response = await fetch(image.imagePath);
-				const blob = await response.blob();
-				const fileName = `photo-${i + 1}-${image.imageId.slice(0, 8)}.jpg`;
-				folder?.file(fileName, blob);
+			// 2. Poll for completion
+			let attempts = 0;
+			const maxAttempts = 60; // 2 minutes
+			let completed = false;
 
-				if (i % 5 === 0) {
-					toast.loading(`Zipping: ${i + 1}/${selectedImages.length}`, {
-						id: toastId,
-					});
+			while (!completed && attempts < maxAttempts) {
+				attempts++;
+				const { data: statusRes } = await axiosAPI.get(
+					`/images/bulk-download/${jobId}`,
+				);
+				const { state, downloadUrl } = statusRes.data;
+
+				if (state === "completed" && downloadUrl) {
+					toast.loading("Download ready, starting...", { id: toastId });
+
+					const link = document.createElement("a");
+					link.href = downloadUrl;
+					link.download = `photos-${Date.now()}.zip`;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+
+					toast.success("Download started!", { id: toastId });
+					setSelectedIds(new Set());
+					completed = true;
+					break;
 				}
+
+				if (state === "failed") {
+					throw new Error("ZIP generation failed on server.");
+				}
+
+				// Update toast with status
+				toast.loading(`Processing: ${state}...`, { id: toastId });
+
+				// Wait 2 seconds before next poll
+				await new Promise((resolve) => setTimeout(resolve, 2000));
 			}
 
-			toast.loading("Generating ZIP file...", { id: toastId });
-			const content = await zip.generateAsync({ type: "blob" });
-			const url = window.URL.createObjectURL(content);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = "downloaded-photos.zip";
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-			window.URL.revokeObjectURL(url);
-
-			toast.success("Download started!", { id: toastId });
-			setSelectedIds(new Set());
-		} catch (_error) {
-			console.error("ZIP Error:", _error);
-			toast.error("Failed to create ZIP. Please try again.", { id: toastId });
+			if (!completed) {
+				throw new Error("Download generation timed out.");
+			}
+		} catch (error: any) {
+			console.error("Bulk Download Error:", error);
+			toast.error(
+				error.message || "Failed to prepare download. Please try again.",
+				{ id: toastId },
+			);
 		}
 	};
 
@@ -290,7 +339,7 @@ const ImagesList: FC = () => {
 							<div
 								key={image.imageId}
 								className={`relative animate-in fade-in slide-in-from-bottom-4 duration-500 ${spanClass}`}
-								style={{ animationDelay: `${index * 50}ms` }}
+								style={{ animationDelay: `${(index % 50) * 50}ms` }}
 							>
 								<ImageGridItem
 									image={{

@@ -7,6 +7,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import {
@@ -54,6 +55,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	const [tasks, setTasks] = useState<UploadTask[]>([]);
 	const [isManagerOpen, setIsManagerOpen] = useState(false);
 	const queryClient = useQueryClient();
+	const abortControllers = useRef<Map<string, AbortController>>(new Map());
 
 	// Load persisted tasks from IndexedDB on mount
 	useEffect(() => {
@@ -110,6 +112,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			),
 		);
 
+		const controller = new AbortController();
+		abortControllers.current.set(nextTask.id, controller);
+
 		try {
 			let presignedData;
 
@@ -131,6 +136,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			// 2. Upload directly to Cloud (R2/S3/Local Direct)
 			await axios.put(presignedData.uploadUrl, nextTask.file, {
+				signal: controller.signal,
 				headers: {
 					"Content-Type": nextTask.file.type,
 				},
@@ -178,6 +184,10 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 				),
 			);
 		} catch (err: any) {
+			if (axios.isCancel(err)) {
+				console.log("Upload cancelled:", nextTask.fileName);
+				return;
+			}
 			setTasks((prev) =>
 				prev.map((t) =>
 					t.id === nextTask.id
@@ -185,6 +195,8 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 						: t,
 				),
 			);
+		} finally {
+			abortControllers.current.delete(nextTask.id);
 		}
 	}, [tasks, queryClient]);
 
@@ -196,6 +208,11 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	}, [tasks, processNextTask]);
 
 	const pauseUpload = (id: string) => {
+		const controller = abortControllers.current.get(id);
+		if (controller) {
+			controller.abort();
+			abortControllers.current.delete(id);
+		}
 		setTasks((prev) =>
 			prev.map((t) => (t.id === id ? { ...t, status: "paused" } : t)),
 		);

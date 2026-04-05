@@ -1,6 +1,10 @@
+import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
 import prisma from "../../config/src/db.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
-import { deleteImagesWithLogging } from "./images.model.ts";
+import {
+	cleanupImageSideEffects,
+	deleteImagesWithLogging,
+} from "./images.model.ts";
 
 const createNewAlbum = async (data) => {
 	return await prisma.albums.create({
@@ -109,57 +113,81 @@ const fetchAllAlbums = async () => {
 };
 
 const deleteAlbumById = async (albumId, userId) => {
-	const transaction = await prisma.$transaction(async (prisma) => {
-		// Find all images linked to this album
-		const albumLinks = await prisma.album_images.findMany({
-			where: { album_id: albumId },
+	// Find all images linked to this album first
+	const albumLinks = await prisma.album_images.findMany({
+		where: { album_id: albumId },
+	});
+
+	const imageIds = albumLinks
+		.map((link) => link.image_id)
+		.filter((id) => id !== null) as string[];
+
+	let images = [] as any[];
+	let albumStorageConfig = null;
+
+	if (imageIds.length > 0) {
+		images = await prisma.images.findMany({
+			where: { image_id: { in: imageIds } },
 		});
 
-		const imageIds = albumLinks
-			.map((link) => link.image_id)
-			.filter((id) => id !== null) as string[];
+		// Grab the storage config for the album in case it's a BYOS bucket
+		const album = await prisma.albums.findUnique({
+			where: { album_id: albumId },
+			include: { storage_config: true },
+		});
+		if (album?.storage_config) {
+			albumStorageConfig = album.storage_config;
+		}
+	}
 
+	const transaction = await prisma.$transaction(async (tx) => {
 		if (imageIds.length > 0) {
-			// Get paths for file deletion
-			const images = await prisma.images.findMany({
-				where: { image_id: { in: imageIds } },
-			});
-
 			// Delete faces
-			await prisma.faces.deleteMany({
+			await tx.faces.deleteMany({
 				where: { image_id: { in: imageIds } },
 			});
 
 			// Delete album links
-			await prisma.album_images.deleteMany({
+			await tx.album_images.deleteMany({
 				where: { album_id: albumId },
 			});
 
 			// Delete images
-			await deleteImagesWithLogging(imageIds);
-
-			// Delete local files after transaction
-			for (const img of images) {
-				if (img.image_path) {
-					await deleteFile(img.image_path);
-				}
-			}
+			await tx.images.deleteMany({
+				where: { image_id: { in: imageIds } },
+			});
 		}
 
 		// Finally delete the album
-		const existingAlbum = await prisma.albums.findUnique({
+		const existingAlbum = await tx.albums.findUnique({
 			where: { album_id: albumId },
 		});
 		if (!existingAlbum) {
 			return null;
 		}
-		return await prisma.albums.delete({
+		return await tx.albums.delete({
 			where: {
 				album_id: albumId,
 				created_by: userId,
 			},
 		});
 	});
+
+	// Handle side effects outside the transaction
+	if (images.length > 0) {
+		await cleanupImageSideEffects(images);
+
+		// Queue background deletion of physical files (local and cloud)
+		await queueServices.fileDeletionQueueLib.addJob(
+			"fileDeletion",
+			{
+				images,
+				albumStorageConfig,
+				worker: "fileDeletion",
+			},
+			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+		);
+	}
 
 	return transaction;
 };
@@ -178,30 +206,51 @@ const deleteAlbumsByIds = async (albumIds) => {
 };
 
 const deleteAlbumsByUserId = async (userId) => {
-	const transaction = await prisma.$transaction(async (prisma) => {
-		// Find all albums created by the user
-		const albumsToDelete = await prisma.albums.findMany({
-			where: {
-				created_by: userId,
-			},
+	// Find all albums created by the user
+	const albumsToDelete = await prisma.albums.findMany({
+		where: {
+			created_by: userId,
+		},
+	});
+
+	const albumIdsToDelete = albumsToDelete.map((album) => album.album_id);
+
+	// Find all album_images associated with the albums
+	const albumImagesToDelete = await prisma.album_images.findMany({
+		where: {
+			album_id: { in: albumIdsToDelete },
+		},
+	});
+
+	// Extract image IDs from the album_images to delete
+	const imageIdsToDelete = albumImagesToDelete
+		.map((albumImage) => albumImage.image_id)
+		.filter((imageId) => imageId !== null) as string[];
+
+	let images = [] as any[];
+	const albumStorageConfigs = new Map();
+
+	if (imageIdsToDelete.length > 0) {
+		images = await prisma.images.findMany({
+			where: { image_id: { in: imageIdsToDelete } },
 		});
 
-		// Extract album IDs from the albums to delete
-		const albumIdsToDelete = albumsToDelete.map((album) => album.album_id);
-		// Find all album_images associated with the albums
-		const albumImagesToDelete = await prisma.album_images.findMany({
-			where: {
-				album_id: { in: albumIdsToDelete },
-			},
+		// Grab storage configs for all albums being deleted
+		const albumsWithConfigs = await prisma.albums.findMany({
+			where: { album_id: { in: albumIdsToDelete } },
+			include: { storage_config: true },
 		});
 
-		// Extract image IDs from the album_images to delete
-		const imageIdsToDelete = albumImagesToDelete
-			.map((albumImage) => albumImage.image_id)
-			.filter((imageId) => imageId !== null);
+		for (const album of albumsWithConfigs) {
+			if (album.storage_config) {
+				albumStorageConfigs.set(album.album_id, album.storage_config);
+			}
+		}
+	}
 
-		if (imageIdsToDelete && Array.isArray(imageIdsToDelete)) {
-			await prisma.faces.deleteMany({
+	const transaction = await prisma.$transaction(async (tx) => {
+		if (imageIdsToDelete.length > 0) {
+			await tx.faces.deleteMany({
 				where: {
 					image_id: {
 						in: imageIdsToDelete,
@@ -209,9 +258,15 @@ const deleteAlbumsByUserId = async (userId) => {
 				},
 			});
 
-			await deleteImagesWithLogging(imageIdsToDelete);
+			await tx.album_images.deleteMany({
+				where: {
+					image_id: {
+						in: imageIdsToDelete,
+					},
+				},
+			});
 
-			await prisma.album_images.deleteMany({
+			await tx.images.deleteMany({
 				where: {
 					image_id: {
 						in: imageIdsToDelete,
@@ -219,7 +274,8 @@ const deleteAlbumsByUserId = async (userId) => {
 				},
 			});
 		}
-		await prisma.albums.deleteMany({
+
+		await tx.albums.deleteMany({
 			where: {
 				album_id: {
 					in: albumIdsToDelete,
@@ -227,6 +283,35 @@ const deleteAlbumsByUserId = async (userId) => {
 			},
 		});
 	});
+
+	// Handle side effects outside the transaction
+	if (images.length > 0) {
+		await cleanupImageSideEffects(images);
+
+		// Group images by their album to queue deletion properly with correct credentials
+		const imagesByAlbum = images.reduce((acc, img) => {
+			// Find which album this image belonged to from albumImagesToDelete
+			const link = albumImagesToDelete.find(
+				(ai) => ai.image_id === img.image_id,
+			);
+			const albumId = link ? link.album_id : "unknown";
+			if (!acc[albumId]) acc[albumId] = [];
+			acc[albumId].push(img);
+			return acc;
+		}, {});
+
+		for (const [albumId, albumImgs] of Object.entries(imagesByAlbum)) {
+			await queueServices.fileDeletionQueueLib.addJob(
+				"fileDeletion",
+				{
+					images: albumImgs,
+					albumStorageConfig: albumStorageConfigs.get(albumId) || null,
+					worker: "fileDeletion",
+				},
+				{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+			);
+		}
+	}
 
 	return transaction;
 };

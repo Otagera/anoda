@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
 import prisma from "../../config/src/db.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
 import { logUsage } from "./usage.model.ts";
@@ -146,13 +147,15 @@ const deleteImage = async (where) => {
 		}
 	});
 
-	if (image.image_path) {
-		await deleteFile(image.image_path);
-	}
-
-	if (image.optimized_path) {
-		await deleteFile(image.optimized_path);
-	}
+	await queueServices.fileDeletionQueueLib.addJob(
+		"fileDeletion",
+		{
+			images: [image],
+			albumStorageConfig: null,
+			worker: "fileDeletion",
+		},
+		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+	);
 
 	return transaction;
 };
@@ -201,13 +204,15 @@ const deleteImageById = async (image_id) => {
 		}
 	});
 
-	if (image.image_path) {
-		await deleteFile(image.image_path);
-	}
-
-	if (image.optimized_path) {
-		await deleteFile(image.optimized_path);
-	}
+	await queueServices.fileDeletionQueueLib.addJob(
+		"fileDeletion",
+		{
+			images: [image],
+			albumStorageConfig: null,
+			worker: "fileDeletion",
+		},
+		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+	);
 
 	return transaction;
 };
@@ -265,21 +270,25 @@ const deleteImagesByIds = async (imageIds) => {
 		}
 	});
 
-	for (const image of images) {
-		if (image.image_path) {
-			await deleteFile(image.image_path);
-		}
-		if (image.optimized_path) {
-			await deleteFile(image.optimized_path);
-		}
+	if (images.length > 0) {
+		await queueServices.fileDeletionQueueLib.addJob(
+			"fileDeletion",
+			{
+				images,
+				albumStorageConfig: null,
+				worker: "fileDeletion",
+			},
+			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+		);
 	}
 
 	return transaction;
 };
 
 const deleteImagesByUserId = async (uploaded_by) => {
+	let imagesToDelete = [];
 	const transaction = await prisma.$transaction(async (prisma) => {
-		const imagesToDelete = await prisma.images.findMany({
+		imagesToDelete = await prisma.images.findMany({
 			where: {
 				uploaded_by,
 			},
@@ -325,12 +334,25 @@ const deleteImagesByUserId = async (uploaded_by) => {
 		}
 	});
 
+	if (imagesToDelete.length > 0) {
+		await queueServices.fileDeletionQueueLib.addJob(
+			"fileDeletion",
+			{
+				images: imagesToDelete,
+				albumStorageConfig: null,
+				worker: "fileDeletion",
+			},
+			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+		);
+	}
+
 	return transaction;
 };
 
 const deleteAllImages = async () => {
+	let allImages = [];
 	const transaction = await prisma.$transaction(async (prisma) => {
-		const allImages = await prisma.images.findMany();
+		allImages = await prisma.images.findMany();
 
 		await prisma.faces.deleteMany({});
 
@@ -358,6 +380,18 @@ const deleteAllImages = async () => {
 			}
 		}
 	});
+
+	if (allImages.length > 0) {
+		await queueServices.fileDeletionQueueLib.addJob(
+			"fileDeletion",
+			{
+				images: allImages,
+				albumStorageConfig: null,
+				worker: "fileDeletion",
+			},
+			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+		);
+	}
 
 	return transaction;
 };
@@ -477,17 +511,7 @@ export {
 	moderateImagesQuery,
 };
 
-export const deleteImagesWithLogging = async (imageIds: string[]) => {
-	const images = await prisma.images.findMany({
-		where: { image_id: { in: imageIds } },
-	});
-
-	if (images.length === 0) return;
-
-	await prisma.images.deleteMany({
-		where: { image_id: { in: imageIds } },
-	});
-
+export const cleanupImageSideEffects = async (images: any[]) => {
 	for (const image of images) {
 		if (image.uploaded_by && image.size) {
 			await logUsage(image.uploaded_by, "storage", "delete", -image.size);
@@ -507,4 +531,18 @@ export const deleteImagesWithLogging = async (imageIds: string[]) => {
 			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
 		}
 	}
+};
+
+export const deleteImagesWithLogging = async (imageIds: string[]) => {
+	const images = await prisma.images.findMany({
+		where: { image_id: { in: imageIds } },
+	});
+
+	if (images.length === 0) return;
+
+	await prisma.images.deleteMany({
+		where: { image_id: { in: imageIds } },
+	});
+
+	await cleanupImageSideEffects(images);
 };

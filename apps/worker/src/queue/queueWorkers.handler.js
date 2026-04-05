@@ -7,6 +7,8 @@ const logger = createServiceLogger("worker");
 
 import { queueConnectionConfig } from "./queue.service";
 
+let cachedHandlers;
+
 // The handler class that is instantiated for each queue, with this handler,
 // it runs the worker when the worker server has started.
 class WorkersHandler {
@@ -48,7 +50,10 @@ class WorkersHandler {
 		});
 		try {
 			const handlersFilePath = path.join(import.meta.dir, "workers");
-			const handlers = fs.readdirSync(handlersFilePath);
+			if (!cachedHandlers) {
+				cachedHandlers = fs.readdirSync(handlersFilePath);
+			}
+			const handlers = cachedHandlers;
 
 			const workerFile = handlers.find((h) =>
 				h.startsWith(`${job.data.worker}.worker.`),

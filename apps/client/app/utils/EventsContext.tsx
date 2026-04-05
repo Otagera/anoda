@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./auth";
 
 interface EventsContextType {
 	lastEvent: any | null;
@@ -13,8 +14,11 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
 	const [lastEvent, setLastEvent] = useState<any>(null);
 	const queryClient = useQueryClient();
+	const { isAuthenticated } = useAuth();
 
 	useEffect(() => {
+		if (!isAuthenticated || typeof window === "undefined") return;
+
 		// Use relative URL to match whichever server the app is talking to
 		const eventSource = new EventSource("/api/v1/events");
 
@@ -43,7 +47,7 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({
 		return () => {
 			eventSource.close();
 		};
-	}, [queryClient]);
+	}, [queryClient, isAuthenticated]);
 
 	return (
 		<EventsContext.Provider value={{ lastEvent }}>
