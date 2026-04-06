@@ -30,7 +30,8 @@ describe("Auth Routes", () => {
 			expect(res.body.status).toBe("completed");
 			expect(res.body.message).toBe("User signed up successfully.");
 			expect(res.body.data.email).toBe(testEmail);
-			expect(res.body.data.accessToken).toBeDefined();
+			expect(res.headers.get("set-cookie")).toBeDefined();
+			expect(res.headers.get("set-cookie")).toContain("accessToken");
 		});
 
 		it("should fail to sign up with an existing email", async () => {
@@ -61,7 +62,8 @@ describe("Auth Routes", () => {
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
 			expect(res.body.status).toBe("completed");
-			expect(res.body.data.accessToken).toBeDefined();
+			expect(res.headers.get("set-cookie")).toBeDefined();
+			expect(res.headers.get("set-cookie")).toContain("accessToken");
 		});
 
 		it("should fail to log in with the wrong password", async () => {

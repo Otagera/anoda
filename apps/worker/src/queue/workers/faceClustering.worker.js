@@ -1,8 +1,6 @@
-const axios = require("axios");
-const prisma =
-	require("../../../../../packages/config/src/db.config.ts").default;
-const config =
-	require("../../../../../packages/config/src/index.config.ts").default;
+import axios from "axios";
+import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
 
 const run = async (jobData) => {
 	const { albumId } = jobData;
@@ -10,7 +8,6 @@ const run = async (jobData) => {
 	try {
 		console.log(`Starting background face clustering for album: ${albumId}`);
 
-		// Get album owner (user_id) for creating people
 		const album = await prisma.albums.findUnique({
 			where: { album_id: albumId },
 			select: { created_by: true },
@@ -23,8 +20,6 @@ const run = async (jobData) => {
 
 		const userId = album.created_by;
 
-		// 1. Fetch all faces in this album that DO NOT have a person_id assigned yet
-		// We only want to cluster new/unassigned faces to avoid overwriting user edits
 		const albumImages = await prisma.album_images.findMany({
 			where: { album_id: albumId },
 			select: { image_id: true },
@@ -53,30 +48,24 @@ const run = async (jobData) => {
 			`Sending ${unassignedFaces.length} faces to AI service for clustering...`,
 		);
 
-		// 2. Send embeddings to Python AI Service
 		const aiServiceUrl = config[config.env].ai_service_url;
 		const payload = {
 			faces: unassignedFaces.map((f) => ({
 				face_id: f.face_id,
-				embedding: Array.from(f.embedding), // Ensure it's a standard array
+				embedding: Array.from(f.embedding),
 			})),
 		};
 
 		const response = await axios.post(`${aiServiceUrl}/cluster`, payload);
-		const clusters = response.data.clusters; // Array of Arrays: [[faceId1, faceId2], [faceId3]]
+		const clusters = response.data.clusters;
 
 		console.log(`AI Service returned ${clusters.length} distinct clusters.`);
 
-		// 3. Process the clusters and update the database
 		let newPeopleCount = 0;
 		let updatedFacesCount = 0;
 
 		for (const cluster of clusters) {
-			// A cluster is an array of face_ids.
-			// The Python DBSCAN logic treats noise as clusters of length 1.
-			// We only want to group people if there are multiple photos of them.
 			if (cluster.length > 1) {
-				// Create a new "Person" in the database
 				const newPerson = await prisma.people.create({
 					data: {
 						name: `Unknown Person ${Math.floor(Math.random() * 1000)}`,
@@ -84,7 +73,6 @@ const run = async (jobData) => {
 					},
 				});
 
-				// Update all faces in this cluster to point to the new person
 				const updateResult = await prisma.faces.updateMany({
 					where: {
 						face_id: { in: cluster },
@@ -117,4 +105,4 @@ const run = async (jobData) => {
 	}
 };
 
-module.exports = run;
+export default run;

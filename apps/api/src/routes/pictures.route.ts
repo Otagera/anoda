@@ -167,8 +167,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				let convertedFiles = [];
 				let useExternalStorage = false;
 				let currentStorage = storage;
-				let storageProvider: string | undefined =
-					body.storageProvider || storage.getProviderName();
+				let storageProvider: string | undefined = storage.getProviderName();
 
 				// 1. Determine which storage provider to use
 				if (albumId && albumId !== "undefined" && albumId !== "null") {
@@ -194,26 +193,14 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 									: false,
 						}) as any;
 						storageProvider = album.storage_config.provider;
-					} else if (body.storageProvider && body.storageProvider !== "local") {
-						// Album uses default storage, and it's external (e.g. Managed R2)
-						const envConfig = config[config.env || "development"];
-						const r2 = envConfig?.r2;
-						if (r2) {
-							currentStorage = storage.getProvider({
-								provider: "r2",
-								credentials: {
-									accessKeyId: r2.access_key_id,
-									secretAccessKey: r2.secret_access_key,
-									bucket: r2.bucket,
-									endpoint: r2.endpoint,
-									region: r2.region,
-								},
-								skip_tls_verify: (envConfig as any).skip_tls_verify,
-							}) as any;
-						}
 					}
-				} else if (body.storageProvider && body.storageProvider !== "local") {
-					// No album, but external storage requested (e.g. guest upload to managed R2)
+				}
+
+				// Default to local storage if no provider set
+				if (!storageProvider || storageProvider === "local") {
+					currentStorage = storage;
+				} else {
+					// Use configured external storage (e.g., Managed R2)
 					const envConfig = config[config.env || "development"];
 					const r2 = envConfig?.r2;
 					if (r2) {
@@ -615,7 +602,12 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" }).put(
 
 			// Use absolute path based on app directory
 			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
-			const filePath = path.join(uploadsDir, key);
+			const filePath = path.resolve(uploadsDir, key);
+
+			if (!filePath.startsWith(uploadsDir + path.sep)) {
+				set.status = 400;
+				return { error: "Invalid key" };
+			}
 
 			console.log("[LOCAL UPLOAD] Writing to:", filePath);
 			console.log("[LOCAL UPLOAD] cwd:", process.cwd());

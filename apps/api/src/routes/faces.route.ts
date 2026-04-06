@@ -51,7 +51,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.patch(
 		"/:faceId",
-		async ({ params, body, set }) => {
+		async ({ params, body, set, userId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -63,7 +63,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					};
 				}
 
-				const data = await updateFaceService({ ...body, faceId });
+				const data = await updateFaceService({ ...body, faceId, userId });
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -124,7 +124,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.post(
 		"/:faceId/ignore",
-		async ({ params, body, set }) => {
+		async ({ params, body, set, userId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -132,14 +132,12 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					return { status: "error", message: "Invalid face ID format." };
 				}
 
-				// We need personId from the body to ignore it for that specific person search
 				const { personId } = body;
 
-				// Import inline to avoid circular dependency issues if they arise, or just rely on global import if you added it
 				const { ignoreFace } = await import(
 					"../../../../packages/models/src/faces.model.ts"
 				);
-				await ignoreFace(personId, faceId);
+				await ignoreFace(personId, faceId, userId);
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return { status: "completed", message: "Face ignored successfully." };
@@ -155,7 +153,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.post(
 		"/:faceId/unignore",
-		async ({ params, body, set }) => {
+		async ({ params, body, set, userId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -167,7 +165,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				const { unignoreFace } = await import(
 					"../../../../../packages/models/src/faces.model.ts"
 				);
-				await unignoreFace(personId, faceId);
+				await unignoreFace(personId, faceId, userId);
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {

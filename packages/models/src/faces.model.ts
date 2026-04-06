@@ -26,7 +26,31 @@ const deleteFacesByImageId = async (image_id) => {
 	});
 };
 
-const ignoreFace = async (personId: string, faceId: number) => {
+const ignoreFace = async (personId: string, faceId: number, userId: string) => {
+	const face = await prisma.faces.findUnique({
+		where: { face_id: faceId },
+		include: {
+			images: {
+				include: {
+					album_images: {
+						include: {
+							albums: true,
+						},
+					},
+				},
+			},
+		},
+	});
+
+	const album = face?.images?.album_images?.[0]?.albums;
+	if (!album?.created_by) {
+		throw new Error("Face not found or not accessible");
+	}
+
+	if (album.created_by !== userId) {
+		throw new Error("Not authorized to modify this face");
+	}
+
 	try {
 		return await prisma.ignored_faces.create({
 			data: {
@@ -35,13 +59,40 @@ const ignoreFace = async (personId: string, faceId: number) => {
 			},
 		});
 	} catch (e: any) {
-		// Ignore if it already exists (Unique constraint violation)
 		if (e.code === "P2002") return;
 		throw e;
 	}
 };
 
-const unignoreFace = async (personId: string, faceId: number) => {
+const unignoreFace = async (
+	personId: string,
+	faceId: number,
+	userId: string,
+) => {
+	const face = await prisma.faces.findUnique({
+		where: { face_id: faceId },
+		include: {
+			images: {
+				include: {
+					album_images: {
+						include: {
+							albums: true,
+						},
+					},
+				},
+			},
+		},
+	});
+
+	const album = face?.images?.album_images?.[0]?.albums;
+	if (!album?.created_by) {
+		throw new Error("Face not found or not accessible");
+	}
+
+	if (album.created_by !== userId) {
+		throw new Error("Not authorized to modify this face");
+	}
+
 	return await prisma.ignored_faces.deleteMany({
 		where: {
 			person_id: personId,
@@ -276,7 +327,34 @@ const searchFacesByEmbedding = async ({
 	return (await prisma.$queryRawUnsafe(query, ...params)) as any[];
 };
 
-const updateFacePerson = async (face_id: number, person_id: string | null) => {
+const updateFacePerson = async (
+	face_id: number,
+	person_id: string | null,
+	userId: string,
+) => {
+	const face = await prisma.faces.findUnique({
+		where: { face_id },
+		include: {
+			images: {
+				include: {
+					album_images: {
+						include: {
+							albums: true,
+						},
+					},
+				},
+			},
+		},
+	});
+
+	if (!face?.images?.album_images?.[0]?.albums?.created_by) {
+		throw new Error("Face not found or not accessible");
+	}
+
+	if (face.images.album_images[0].albums.created_by !== userId) {
+		throw new Error("Not authorized to modify this face");
+	}
+
 	return await prisma.faces.update({
 		where: {
 			face_id,

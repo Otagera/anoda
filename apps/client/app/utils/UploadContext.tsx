@@ -56,6 +56,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	const [isManagerOpen, setIsManagerOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const abortControllers = useRef<Map<string, AbortController>>(new Map());
+	const processingRef = useRef(false);
 
 	// Load persisted tasks from IndexedDB on mount
 	useEffect(() => {
@@ -103,8 +104,14 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	);
 
 	const processNextTask = useCallback(async () => {
+		if (processingRef.current) return;
+		processingRef.current = true;
+
 		const nextTask = tasks.find((t) => t.status === "pending");
-		if (!nextTask) return;
+		if (!nextTask) {
+			processingRef.current = false;
+			return;
+		}
 
 		setTasks((prev) =>
 			prev.map((t) =>
@@ -197,6 +204,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			);
 		} finally {
 			abortControllers.current.delete(nextTask.id);
+			processingRef.current = false;
 		}
 	}, [tasks, queryClient]);
 
