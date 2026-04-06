@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		try {
 			const response = await apiLogin(credentials);
 
-			if (response?.data?.status === "completed" && response?.data?.data) {
-				setUser(response.data.data);
+			if (response?.status === "completed" && response?.data) {
+				setUser(response.data);
 			} else {
 				throw new Error("Login failed");
 			}
@@ -73,8 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const signup = async (credentials: { email: string; password: string }) => {
 		try {
 			const response = await apiSignup(credentials);
-			if (response?.data?.status === "completed" && response?.data?.data) {
-				setUser(response.data.data);
+			if (response?.status === "completed" && response?.data) {
+				setUser(response.data);
 			} else {
 				throw new Error("Signup failed");
 			}

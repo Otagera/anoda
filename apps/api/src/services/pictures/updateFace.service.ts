@@ -12,12 +12,14 @@ import {
 const spec = Joi.object({
 	faceId: Joi.number().required(),
 	personId: Joi.string().uuid().allow(null),
+	userId: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {
 	request: {
 		faceId: "faceId",
 		personId: "personId",
+		userId: "userId",
 	},
 	response: {
 		face_id: "faceId",
@@ -34,7 +36,11 @@ const service = async (data) => {
 		throw new NotFoundError("Face not found.");
 	}
 
-	const updatedFace = await updateFacePerson(params.faceId, params.personId);
+	const updatedFace = await updateFacePerson(
+		params.faceId,
+		params.personId,
+		params.userId,
+	);
 
 	return aliaserSpec(aliasSpec.response, updatedFace);
 };
