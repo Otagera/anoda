@@ -36,7 +36,7 @@ export const createElysiaApp = async () => {
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
-		const serverAdapter = new ElysiaAdapter("/worker/admin");
+		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
 
 		createBullBoard({
 			queues: [
@@ -57,7 +57,9 @@ export const createElysiaApp = async () => {
 	eventEmitter.setMaxListeners(100);
 
 	const app = new Elysia({
-		bodyLimit: 10 * 1024 * 1024,
+		bodyParser: {
+			limit: "10mb",
+		},
 	})
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
@@ -69,7 +71,8 @@ export const createElysiaApp = async () => {
 			}
 		})
 		.onAfterHandle(({ request, set }) => {
-			if (set.status && set.status >= 400) {
+			const status = set.status as number;
+			if (status && status >= 400) {
 				const safeUrl = request.url.replace(
 					/(\/albums\/|\/images\/)[^/?]+/,
 					"$1***",
@@ -91,10 +94,11 @@ export const createElysiaApp = async () => {
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get(
 			"/api/v1/events",
-			({ signal, set }) => {
+			({ request, set }) => {
 				set.headers["Content-Type"] = "text/event-stream";
 				set.headers["Cache-Control"] = "no-cache";
 				set.headers.Connection = "keep-alive";
+				const abortSignal = request.signal;
 
 				return sse(
 					new ReadableStream({
@@ -103,31 +107,31 @@ export const createElysiaApp = async () => {
 								try {
 									const sseData = `data: ${JSON.stringify(data)}\n\n`;
 									controller.enqueue(new TextEncoder().encode(sseData));
-								} catch (_e) {}
+								} catch (_e) {
+									console.error("Error sending SSE:", _e);
+								}
 							};
 
 							eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
-
-							const heartbeat = setInterval(() => {
-								handler({
-									type: "heartbeat",
-									timestamp: new Date().toISOString(),
-								});
-							}, 30000);
+							eventEmitter.on(EVENTS.FACE_DETECTED, handler);
+							eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
+							eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
 
 							const cleanup = () => {
-								clearInterval(heartbeat);
 								eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
+								eventEmitter.off(EVENTS.FACE_DETECTED, handler);
+								eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
+								eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
 								try {
 									controller.close();
 								} catch (_e) {}
 								console.log("SSE connection cleaned up.");
 							};
 
-							if (signal.aborted) {
+							if (abortSignal.aborted) {
 								cleanup();
 							} else {
-								signal.addEventListener("abort", cleanup, { once: true });
+								abortSignal.addEventListener("abort", cleanup, { once: true });
 							}
 						},
 					}),
@@ -165,7 +169,7 @@ const start = async () => {
 	try {
 		logger.info("Initializing Elysia server...");
 		const app = await createElysiaApp();
-		const port = config[config.env].elysia_port || 3005;
+		const port = (config as any).development?.elysia_port || 3005;
 		app.listen(port);
 
 		logger.info(
