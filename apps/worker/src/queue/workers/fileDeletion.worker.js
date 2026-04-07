@@ -99,15 +99,22 @@ const run = async (jobData) => {
 
 			deletedCount++;
 		} catch (error) {
-			console.error(`Failed to delete files for image ${image.image_id}:`, error);
+			console.error(
+				`Failed to delete files for image ${image.image_id}:`,
+				error,
+			);
 			errorCount++;
 		}
 	}
 
-	console.log(`Background deletion complete. Deleted: ${deletedCount}, Errors: ${errorCount}`);
+	console.log(
+		`Background deletion complete. Deleted: ${deletedCount}, Errors: ${errorCount}`,
+	);
 
 	if (errorCount > 0) {
-		throw new Error(`Failed to delete ${errorCount} files. Check logs for details.`);
+		throw new Error(
+			`Failed to delete ${errorCount} files. Check logs for details.`,
+		);
 	}
 
 	return {

@@ -11,6 +11,8 @@ import {
 	deleteAlbumsByUserId,
 	fetchAlbum,
 	fetchAlbumsByUserids,
+	restoreAlbumById,
+	softDeleteAlbumById,
 	updateExistingAlbum,
 } from "../../../../../packages/models/src/albums.model.ts";
 import {
@@ -167,14 +169,31 @@ export const getAlbumLinksNoError = async (where) => {
 export const getAlbumLinks = async (where, options = {}) => {
 	await albumLinkValidation(where, { check_image_id: false });
 
-	const { image_id, album_id, status } = where;
+	const { image_id, album_id, status, startDate, endDate, uploaderId, minFaces } = where;
 
 	const filter: any = { album_id, image_id };
-	if (status) {
-		filter.images = {
-			status,
+	
+	// Complex image filters
+	const imageFilter: any = { deleted_at: null };
+	
+	if (status) imageFilter.status = status;
+	if (uploaderId) imageFilter.uploaded_by = uploaderId;
+	
+	if (startDate || endDate) {
+		imageFilter.upload_date = {};
+		if (startDate) imageFilter.upload_date.gte = new Date(startDate);
+		if (endDate) imageFilter.upload_date.lte = new Date(endDate);
+	}
+
+	if (minFaces !== undefined) {
+		imageFilter.faces = {
+			_count: {
+				gte: Number.parseInt(String(minFaces), 10),
+			}
 		};
 	}
+
+	filter.images = imageFilter;
 
 	const album = await fetchAlbumImages(filter, options);
 
@@ -210,7 +229,11 @@ export const deleteAlbum = async (album_id, created_by) => {
 	if (!created_by) {
 		throw new Error(`User id: ${created_by} is required`);
 	}
-	return await deleteAlbumById(album_id, created_by);
+	return await softDeleteAlbumById(album_id, created_by);
+};
+
+export const restoreAlbum = async (album_id, created_by) => {
+	return await restoreAlbumById(album_id, created_by);
 };
 
 export const deleteAlbums = async (created_by) => {

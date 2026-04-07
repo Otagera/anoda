@@ -125,9 +125,23 @@ const run = async (jobData) => {
 						let imageBuffer;
 
 						if (!isLocal && storageProviderInstance) {
-							imageBuffer = await storageProviderInstance.getObject(
-								image.storage_key,
-							);
+							try {
+								imageBuffer = await storageProviderInstance.getObject(
+									image.storage_key,
+								);
+							} catch (e) {
+								if (e.name === 'NoSuchKey' || e.code === 'NoSuchKey' || e.message?.includes('NoSuchKey') || e.name === 'NotFound' || e.code === 'NotFound') {
+									console.warn(`[Bulk Download] File not found in ${image.storage_provider} as ${image.storage_key}. Falling back to local file.`);
+									const localPath = path.resolve(
+										process.cwd(),
+										UPLOADS_DIR,
+										image.storage_key || image.image_path,
+									);
+									imageBuffer = await readFile(localPath);
+								} else {
+									throw e;
+								}
+							}
 						} else {
 							const localPath = path.resolve(
 								process.cwd(),

@@ -1,6 +1,7 @@
 import axios from "axios";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { queueServices } from "../queue.service.ts";
 
 const run = async (jobData) => {
 	const { albumId } = jobData;
@@ -10,7 +11,11 @@ const run = async (jobData) => {
 
 		const album = await prisma.albums.findUnique({
 			where: { album_id: albumId },
-			select: { created_by: true },
+			select: { 
+				created_by: true,
+				album_name: true,
+				users: { select: { email: true } }
+			},
 		});
 
 		if (!album) {
@@ -91,12 +96,24 @@ const run = async (jobData) => {
 			`Clustering complete. Created ${newPeopleCount} new people groups. Tagged ${updatedFacesCount} faces.`,
 		);
 
+		// Enqueue notification email
+		if (album.users?.email) {
+			await queueServices.emailQueueLib.addJob("email", {
+				worker: "email",
+				type: "clustering_complete",
+				data: {
+					email: album.users.email,
+					albumName: album.album_name || "your album"
+				}
+			});
+		}
+
 		return {
 			status: "success",
 			newPeople: newPeopleCount,
 			taggedFaces: updatedFacesCount,
 		};
-	} catch (error) {
+	} catch (error: any) {
 		console.error(
 			"Error processing face clustering task:",
 			error.response?.data || error.message,

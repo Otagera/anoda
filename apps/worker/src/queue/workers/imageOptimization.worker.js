@@ -99,7 +99,16 @@ const run = async (jobData) => {
 		if (!isLocal && storageProviderInstance) {
 			const key = image.storage_key || storageKey;
 			console.log(`Fetching image from ${image.storage_provider}: ${key}`);
-			imageBuffer = await storageProviderInstance.getObject(key);
+			try {
+				imageBuffer = await storageProviderInstance.getObject(key);
+			} catch (e) {
+				if (e.name === 'NoSuchKey' || e.code === 'NoSuchKey' || e.message.includes('NoSuchKey') || e.name === 'NotFound' || e.code === 'NotFound') {
+					console.warn(`[Image Optimization] File not found in ${image.storage_provider} as ${key}. Falling back to local file ${imagePath}.`);
+					imageBuffer = await fs.readFile(imagePath);
+				} else {
+					throw e;
+				}
+			}
 		} else {
 			imageBuffer = await fs.readFile(imagePath);
 		}

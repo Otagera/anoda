@@ -39,7 +39,11 @@ axiosAPI.interceptors.response.use(
 			}
 		}
 
-		console.error("API Error:", error.response?.data || error.message);
+		console.error(
+			"API Error:",
+			error.response?.data || error.message,
+			error.response?.data?.data,
+		);
 		return Promise.reject(error);
 	},
 );

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { ConfirmModal } from "~/components/ConfirmModal";
-import { reprocessImage } from "../utils/api";
+import { reprocessImage, downloadImage, editAlbum } from "../utils/api";
 
 interface ImageModalProps {
 	image: any;
@@ -35,6 +35,7 @@ const ImageModal = ({
 	});
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const [isReprocessing, setIsReprocessing] = useState(false);
+	const [isSettingCover, setIsSettingCover] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [showFaces, setShowFaces] = useState(isSearchMode);
 
@@ -159,6 +160,51 @@ const ImageModal = ({
 		}
 	};
 
+	const handleSetAsCover = async () => {
+		if (!albumId) return;
+		const targetId = image.imageId || image.id;
+		setIsSettingCover(true);
+		const toastId = toast.loading("Setting album cover...");
+		try {
+			await editAlbum({ albumId, coverImageId: targetId });
+			toast.success("Album cover updated!", { id: toastId });
+		} catch (_error) {
+			toast.error("Failed to update album cover.", { id: toastId });
+		} finally {
+			setIsSettingCover(false);
+		}
+	};
+
+	const handleDownload = async (e: React.MouseEvent) => {
+		e.stopPropagation();
+		const targetId = image.imageId || image.id;
+		const toastId = toast.loading("Preparing download...");
+		try {
+			let downloadUrl = image.imagePath;
+			
+			if (!shareToken) {
+				// For private images, get an authorized presigned URL
+				const res = await downloadImage(targetId);
+				downloadUrl = res.data.downloadUrl;
+			}
+
+			const response = await fetch(downloadUrl);
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `photo-${targetId}.jpg`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+			toast.success("Download started", { id: toastId });
+		} catch (error) {
+			console.error("Download error:", error);
+			toast.error("Failed to start download", { id: toastId });
+		}
+	};
+
 	const imageId = image.imageId || image.id;
 
 	return (
@@ -212,25 +258,14 @@ const ImageModal = ({
 							)}
 						</svg>
 					</button>
-					{shareToken && (
+					
+					{albumId && !shareToken && (
 						<button
 							type="button"
-							onClick={async (e) => {
-								e.stopPropagation();
-								const response = await fetch(image.imagePath);
-								const blob = await response.blob();
-								const url = window.URL.createObjectURL(blob);
-								const link = document.createElement("a");
-								link.href = url;
-								link.download = `photo-${imageId}.jpg`;
-								document.body.appendChild(link);
-								link.click();
-								document.body.removeChild(link);
-								window.URL.revokeObjectURL(url);
-								toast.success("Download started");
-							}}
+							onClick={handleSetAsCover}
+							disabled={isSettingCover}
 							className="p-3 bg-zinc-800/80 text-white rounded-full hover:bg-zinc-700 transition-all backdrop-blur-md border border-zinc-700 shadow-lg"
-							title="Download Photo"
+							title="Set as Album Cover"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -239,18 +274,44 @@ const ImageModal = ({
 								viewBox="0 0 24 24"
 								stroke="currentColor"
 								role="img"
-								aria-label="Download"
+								aria-label="Set as Cover"
 							>
-								<title>Download</title>
+								<title>Set as Cover</title>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
 									strokeWidth={2}
-									d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+									d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
 								/>
 							</svg>
 						</button>
 					)}
+
+					<button
+						type="button"
+						onClick={handleDownload}
+						className="p-3 bg-zinc-800/80 text-white rounded-full hover:bg-zinc-700 transition-all backdrop-blur-md border border-zinc-700 shadow-lg"
+						title="Download Photo"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							className="h-5 w-5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							role="img"
+							aria-label="Download"
+						>
+							<title>Download</title>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+							/>
+						</svg>
+					</button>
+
 					{!shareToken && onDelete && (
 						<button
 							type="button"
@@ -573,8 +634,8 @@ const ImageModal = ({
 			<ConfirmModal
 				isOpen={isDeleteModalOpen}
 				title="Delete Photo"
-				message="Are you sure you want to permanently delete this photo? This action cannot be undone."
-				confirmText="Delete"
+				message="Move this photo to trash? It will be permanently deleted after 30 days."
+				confirmText="Move to Trash"
 				onConfirm={() => {
 					if (onDelete && imageId) {
 						onDelete(imageId);

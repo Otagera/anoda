@@ -14,6 +14,7 @@ import {
 } from "../../../packages/utils/src/events.util.ts";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import { csrfPlugin } from "./routes/middleware/csrf.plugin.ts";
 
 Sentry.init({
 	dsn: process.env.SENTRY_DSN,
@@ -25,7 +26,9 @@ const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
 	const { default: albumsRoutes } = await import("./routes/albums.route");
-	const { default: authRoutes } = await import("./routes/auth.route");
+	const { default: authRoutes, unsubscribeRoutes } = await import(
+		"./routes/auth.route"
+	);
 	const { picturesRoutes, publicPicturesRoutes } = await import(
 		"./routes/pictures.route"
 	);
@@ -33,6 +36,7 @@ export const createElysiaApp = async () => {
 	const { default: publicRoutes } = await import("./routes/public.route");
 	const { default: peopleRoutes } = await import("./routes/people.route");
 	const { default: settingsRoutes } = await import("./routes/settings.route");
+	const { default: trashRoutes } = await import("./routes/trash.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -56,11 +60,8 @@ export const createElysiaApp = async () => {
 
 	eventEmitter.setMaxListeners(100);
 
-	const app = new Elysia({
-		bodyParser: {
-			limit: "10mb",
-		},
-	})
+	const app = new Elysia()
+		.use(csrfPlugin)
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
 				`[${new Date().toISOString()}] ${request.method} ${request.url}`,
@@ -147,13 +148,15 @@ export const createElysiaApp = async () => {
 		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
 		.group("/api/v1", (app) =>
 			app
+				.use(unsubscribeRoutes)
 				.use(authRoutes)
 				.use(albumsRoutes)
 				.use(picturesRoutes)
 				.use(facesRoutes)
 				.use(publicRoutes)
 				.use(peopleRoutes)
-				.use(settingsRoutes),
+				.use(settingsRoutes)
+				.use(trashRoutes),
 		);
 
 	if (bullBoardPlugin) {

@@ -115,6 +115,26 @@ export const signup = async (credentials: any) => {
 	}
 };
 
+export const forgotPassword = async (email: string) => {
+	try {
+		const response = await axiosAPI.post("/auth/forgot-password", { email });
+		return response.data;
+	} catch (error) {
+		console.error("Error sending forgot password link:", error);
+		throw error;
+	}
+};
+
+export const resetPassword = async (data: any) => {
+	try {
+		const response = await axiosAPI.post("/auth/reset-password", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error resetting password:", error);
+		throw error;
+	}
+};
+
 export const createAlbum = async (albumName: string) => {
 	try {
 		const response = await axiosAPI.post("/albums", { albumName });
@@ -169,6 +189,16 @@ export const reprocessImage = async (imageId: string) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error reprocessing image:", error);
+		throw error;
+	}
+};
+
+export const downloadImage = async (imageId: string) => {
+	try {
+		const response = await axiosAPI.post(`/images/${imageId}/download`);
+		return response.data;
+	} catch (error) {
+		console.error("Error downloading image:", error);
 		throw error;
 	}
 };
@@ -350,6 +380,10 @@ export const getPublicPresignedUrl = async (
 	data: {
 		fileName: string;
 		contentType: string;
+		isMultipart?: boolean;
+		uploadId?: string;
+		partNumber?: number;
+		key?: string;
 	},
 ) => {
 	try {
@@ -360,6 +394,74 @@ export const getPublicPresignedUrl = async (
 		return response.data;
 	} catch (error) {
 		console.error("Error getting public presigned URL:", error);
+		throw error;
+	}
+};
+
+export const completeMultipartUpload = async (data: {
+	albumId?: string;
+	key: string;
+	uploadId: string;
+	parts: { ETag: string; PartNumber: number }[];
+}) => {
+	try {
+		const response = await axiosAPI.post("/images/complete-multipart", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error completing multipart upload:", error);
+		throw error;
+	}
+};
+
+export const completePublicMultipartUpload = async (
+	token: string,
+	data: {
+		key: string;
+		uploadId: string;
+		parts: { ETag: string; PartNumber: number }[];
+	},
+) => {
+	try {
+		const response = await axiosAPI.post(`/public/images/complete-multipart`, {
+			...data,
+			shareToken: token,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error completing public multipart upload:", error);
+		throw error;
+	}
+};
+
+export const abortMultipartUpload = async (data: {
+	albumId?: string;
+	key: string;
+	uploadId: string;
+}) => {
+	try {
+		const response = await axiosAPI.post("/images/abort-multipart", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error aborting multipart upload:", error);
+		throw error;
+	}
+};
+
+export const abortPublicMultipartUpload = async (
+	token: string,
+	data: {
+		key: string;
+		uploadId: string;
+	},
+) => {
+	try {
+		const response = await axiosAPI.post(`/public/images/abort-multipart`, {
+			...data,
+			shareToken: token,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error aborting public multipart upload:", error);
 		throw error;
 	}
 };
@@ -399,8 +501,6 @@ export const moderateImages = async (
 	status: "APPROVED" | "REJECTED",
 ) => {
 	try {
-		// We might need a new endpoint for bulk moderation or just update each image
-		// For now, let's assume we have a bulk update endpoint or we'll implement it
 		const response = await axiosAPI.patch("/images/moderate", {
 			imageIds,
 			status,
@@ -408,6 +508,38 @@ export const moderateImages = async (
 		return response.data;
 	} catch (error) {
 		console.error("Error moderating images:", error);
+		throw error;
+	}
+};
+
+export const fetchTrash = async () => {
+	try {
+		const response = await axiosAPI.get("/trash");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching trash:", error);
+		throw error;
+	}
+};
+
+export const restoreImages = async (imageIds: string[]) => {
+	try {
+		const response = await axiosAPI.post("/trash/images/restore", {
+			imageIds,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error restoring images:", error);
+		throw error;
+	}
+};
+
+export const restoreAlbum = async (albumId: string) => {
+	try {
+		const response = await axiosAPI.post(`/trash/albums/${albumId}/restore`);
+		return response.data;
+	} catch (error) {
+		console.error("Error restoring album:", error);
 		throw error;
 	}
 };

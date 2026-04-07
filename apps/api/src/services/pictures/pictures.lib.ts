@@ -4,6 +4,8 @@ import {
 	fetchImage,
 	fetchImages,
 	fetchImagesByIds,
+	restoreImagesByIds,
+	softDeleteImagesByIds,
 	uploadImage,
 	uploadImages,
 } from "../../../../../packages/models/src/images.model.ts";
@@ -110,7 +112,7 @@ export const getImagesPaginaton = async (params) => {
 			nextCursorDecoded,
 			previousCursorDecoded,
 			model,
-			paramsRest,
+			{ ...paramsRest, deleted_at: null },
 		);
 	} else {
 		paginatedImages = await offsetPagination(
@@ -118,7 +120,7 @@ export const getImagesPaginaton = async (params) => {
 			page,
 			limit,
 			model,
-			paramsRest,
+			{ ...paramsRest, deleted_at: null },
 		);
 	}
 
@@ -142,5 +144,9 @@ export const removeImage = async (where) => {
 	if (!image) {
 		throw new NotFoundError("Image not found.");
 	}
-	return await deleteImage(where);
+	return await softDeleteImagesByIds([where.image_id]);
+};
+
+export const restoreImages = async (imageIds: string[]) => {
+	return await restoreImagesByIds(imageIds);
 };

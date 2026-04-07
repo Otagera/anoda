@@ -17,20 +17,20 @@ const fileSchema = Joi.object({
 	originalname: Joi.string().required(),
 	encoding: Joi.string().required(),
 	mimetype: Joi.string()
-		.valid("image/jpeg", "image/png", "image/gif", "image/webp")
 		.required(),
 	destination: Joi.string().required(),
 	filename: Joi.string().required(),
 	path: Joi.string().required(),
 	size: Joi.number()
-		.max(50 * 1024 * 1024)
-		.required(), // 50MB limit
+		.max(500 * 1024 * 1024)
+		.required(), // Increased to 500MB
 	storage_provider: Joi.string().optional(),
 	storage_key: Joi.string().optional(),
 });
 
 const spec = Joi.object({
-	uploaded_by: Joi.string().optional(),
+	uploaded_by: Joi.string().uuid().optional(),
+	guest_session_id: Joi.string().uuid().optional(),
 	status: Joi.string()
 		.valid("PENDING", "APPROVED", "REJECTED")
 		.default("APPROVED"),
@@ -41,6 +41,7 @@ const aliasSpec = {
 	request: {
 		files: "files",
 		userId: "uploaded_by",
+		guestSessionId: "guest_session_id",
 		status: "status",
 	},
 	response: {
@@ -55,10 +56,11 @@ const aliasSpec = {
 		update_date: "updateDate",
 		original_size: "originalSize",
 		uploaded_by: "userId",
+		guest_session_id: "guestSessionId",
 	},
 };
 
-const storeImage = async (file, uploaded_by, status) => {
+const storeImage = async (file, uploaded_by, guest_session_id, status) => {
 	const imagePath = file.path;
 	const imageSize = await getImageSize(imagePath);
 	const isCorrupted = await isImageCorrupted(imagePath);
@@ -66,12 +68,13 @@ const storeImage = async (file, uploaded_by, status) => {
 		throw new Error(`Image: ${file.filename} is corrupted`);
 	}
 
-	const imageData = {
+	const imageData: any = {
 		image_path: imagePath,
 		original_height: imageSize.height,
 		original_width: imageSize.width,
 		size: file.size,
 		uploaded_by,
+		guest_session_id,
 		status,
 	};
 
@@ -100,7 +103,7 @@ const service = async (data) => {
 	const imagesToProcess = [];
 	for (const file of params.files) {
 		imagesToProcess.push(
-			await storeImage(file, params.uploaded_by, params.status),
+			await storeImage(file, params.uploaded_by, params.guest_session_id, params.status),
 		);
 	}
 

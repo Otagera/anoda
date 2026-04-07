@@ -84,6 +84,12 @@ const Navbar = () => {
 							>
 								Settings
 							</Link>
+							<Link
+								to="/trash"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors"
+							>
+								Trash
+							</Link>
 							<button
 								type="button"
 								onClick={handleLogout}

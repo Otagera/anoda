@@ -24,6 +24,7 @@ const aliasSpec = {
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
 		coverImages: "coverImages",
+		coverImage: "coverImage",
 		_count: "_count",
 		settings: "settings",
 	},
@@ -36,15 +37,26 @@ const service = async (data) => {
 	const albums = await getAlbums(created_by);
 
 	const mappedAlbums = albums.map((album: any) => {
-		const coverImages =
-			album.album_images
-				?.map((ai: any) => ai.images?.image_path)
-				.filter(Boolean)
-				.map(normalizeImagePath) || [];
+		let coverImage: string | null = null;
+
+		// MANUAL: if cover_image is set and not deleted
+		if (album.cover_image && !album.cover_image.deleted_at) {
+			coverImage = normalizeImagePath(album.cover_image.image_path);
+		}
+
+		// FALLBACK: first 4 images if no manual cover set
+		const coverImages = coverImage
+			? []
+			: album.album_images
+					?.slice(0, 4)
+					.map((ai: any) => ai.images?.image_path)
+					.filter(Boolean)
+					.map(normalizeImagePath) || [];
 
 		return {
 			...album,
 			coverImages,
+			coverImage,
 			_count: {
 				images: album._count?.album_images || 0,
 			},

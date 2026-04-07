@@ -82,6 +82,16 @@ class AuthError extends OperationError {
 	}
 }
 
+class ForbiddenError extends OperationError {
+	name = "ForbiddenError";
+	statusCode = HTTP_STATUS_CODES.FORBIDDEN;
+
+	constructor(props) {
+		super(props);
+		this.message = getErrorMessageFromParams(props, "Forbidden request.");
+	}
+}
+
 class ValidationError extends OperationError {
 	name = "ValidationError";
 	statusCode = HTTP_STATUS_CODES.UNPROCESSABLE_ENTITY;
@@ -94,6 +104,7 @@ class ValidationError extends OperationError {
 
 export {
 	AuthError,
+	ForbiddenError,
 	NotFoundError,
 	OperationError,
 	RateLimitError,

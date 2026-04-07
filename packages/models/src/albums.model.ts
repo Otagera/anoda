@@ -42,12 +42,13 @@ const updateExistingAlbum = async (album_id, created_by, userData) => {
 		include: {
 			settings: true,
 			storage_config: true,
+			cover_image: true,
 		},
 	});
 };
 
 const fetchAlbum = async (where) => {
-	return await prisma.albums.findUnique({
+	const album = await prisma.albums.findUnique({
 		where: {
 			...where,
 			deleted_at: null,
@@ -55,8 +56,21 @@ const fetchAlbum = async (where) => {
 		include: {
 			settings: true,
 			storage_config: true,
+			cover_image: {
+				where: { deleted_at: null },
+			},
 		},
 	});
+
+	if (album && album.cover_image_id && !album.cover_image) {
+		await prisma.albums.update({
+			where: { album_id: album.album_id },
+			data: { cover_image_id: null },
+		});
+		album.cover_image_id = null;
+	}
+
+	return album;
 };
 
 const fetchAlbumsByIds = async (albumIds) => {
@@ -70,6 +84,7 @@ const fetchAlbumsByIds = async (albumIds) => {
 		include: {
 			settings: true,
 			storage_config: true,
+			cover_image: true,
 		},
 	});
 };
@@ -85,6 +100,7 @@ const fetchAlbumsByUserids = async (userIds) => {
 		include: {
 			settings: true,
 			storage_config: true,
+			cover_image: true,
 			_count: {
 				select: { album_images: true },
 			},
@@ -92,6 +108,11 @@ const fetchAlbumsByUserids = async (userIds) => {
 				take: 4,
 				include: {
 					images: true,
+				},
+				where: {
+					images: {
+						deleted_at: null,
+					},
 				},
 				orderBy: {
 					images: {
@@ -109,6 +130,30 @@ const fetchAlbumsByUserids = async (userIds) => {
 const fetchAllAlbums = async () => {
 	return await prisma.albums.findMany({
 		where: { deleted_at: null },
+	});
+};
+
+const softDeleteAlbumById = async (albumId: string, userId: string) => {
+	return await prisma.albums.update({
+		where: {
+			album_id: albumId,
+			created_by: userId,
+		},
+		data: {
+			deleted_at: new Date(),
+		},
+	});
+};
+
+const restoreAlbumById = async (albumId: string, userId: string) => {
+	return await prisma.albums.update({
+		where: {
+			album_id: albumId,
+			created_by: userId,
+		},
+		data: {
+			deleted_at: null,
+		},
 	});
 };
 
@@ -331,6 +376,8 @@ export {
 	fetchAlbumsByIds,
 	fetchAlbumsByUserids,
 	fetchAllAlbums,
+	softDeleteAlbumById,
+	restoreAlbumById,
 	deleteAlbumById,
 	deleteAlbumsByIds,
 	deleteAlbumsByUserId,

@@ -12,10 +12,15 @@ const spec = joi.object({
 	status: joi
 		.string()
 		.valid("APPROVED", "PENDING", "REJECTED")
-		.default("APPROVED"),
+		.optional(),
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),
+	// Filters
+	startDate: joi.date().optional(),
+	endDate: joi.date().optional(),
+	uploaderId: joi.string().uuid().optional(),
+	minFaces: joi.number().min(0).optional(),
 });
 
 const aliasSpec = {
@@ -26,6 +31,10 @@ const aliasSpec = {
 		limit: "limit",
 		nextCursor: "nextCursor",
 		paginationType: "paginationType",
+		startDate: "startDate",
+		endDate: "endDate",
+		uploaderId: "uploaderId",
+		minFaces: "minFaces",
 	},
 	response: {
 		album_id: "albumId",
