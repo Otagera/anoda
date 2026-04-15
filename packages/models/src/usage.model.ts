@@ -5,13 +5,37 @@ export const logUsage = async (
 	resource: string,
 	operation: string,
 	quantity: number = 1,
+	albumId?: string,
+	metadata?: Record<string, any>,
 ) => {
 	return await prisma.usage_logs.create({
 		data: {
 			user_id: userId,
+			album_id: albumId || null,
 			resource,
 			operation,
 			quantity,
+			metadata: metadata || {},
+		},
+	});
+};
+
+export const logStorageUsage = async (
+	userId: string,
+	operation: string,
+	quantity: number,
+	albumId?: string,
+	metadata?: Record<string, any>,
+) => {
+	// For storage, we track delta changes (positive for add, negative for delete)
+	return await prisma.usage_logs.create({
+		data: {
+			user_id: userId,
+			album_id: albumId || null,
+			resource: "storage",
+			operation,
+			quantity, // bytes
+			metadata: metadata || {},
 		},
 	});
 };
@@ -41,12 +65,40 @@ export const getUserUsage = async (
 
 export const getUserUsageStats = async (userId: string) => {
 	try {
+		// Get user plan
+		const user = await prisma.users.findUnique({
+			where: { user_id: userId },
+			select: { plan: true },
+		});
+
+		const plan = user?.plan || "free";
+		const env = process.env.NODE_ENV || "development";
+		const config = require("../../config/src/index.config.ts").default;
+		const planLimits = config[env]?.plans?.[plan] || config[env]?.plans?.free;
+
+		const storageLimitMB = planLimits?.storage_mb || 5 * 1024;
+		const computeLimit = planLimits?.compute_units_per_month || 100;
+
+		// Get start of current month
 		const startOfMonth = new Date();
 		startOfMonth.setDate(1);
 		startOfMonth.setHours(0, 0, 0, 0);
 
-		const imagesUsed = await getUserUsage(userId, "compute_unit", startOfMonth);
+		// Get compute units used this month
+		const computeLogs = await prisma.usage_logs.findMany({
+			where: {
+				user_id: userId,
+				resource: "compute",
+				timestamp: { gte: startOfMonth },
+			},
+		});
 
+		const computeUnitsUsed = computeLogs.reduce(
+			(acc, log) => acc + log.quantity,
+			0,
+		);
+
+		// Get total storage used (all time, positive deltas only)
 		const storageLogs = await prisma.usage_logs.findMany({
 			where: {
 				user_id: userId,
@@ -54,30 +106,32 @@ export const getUserUsageStats = async (userId: string) => {
 			},
 		});
 
+		// Calculate net storage: sum of all storage operations
+		// Positive = uploads, Negative = deletions
 		const storageUsedBytes = storageLogs.reduce(
 			(acc, log) => acc + log.quantity,
 			0,
 		);
 
-		const storageUsedMB = Math.round(storageUsedBytes / (1024 * 1024));
-
-		const FREE_TIER_IMAGES_LIMIT = 50;
-		const FREE_TIER_STORAGE_MB = 1024;
+		const storageUsedMB = Math.max(
+			0,
+			Math.round(storageUsedBytes / (1024 * 1024)),
+		);
 
 		return {
-			imagesUsed,
-			imagesLimit: FREE_TIER_IMAGES_LIMIT,
+			computeUnitsUsed,
+			computeUnitsLimit: computeLimit,
 			storageUsedMB,
-			storageLimitMB: FREE_TIER_STORAGE_MB,
-			plan: "free" as const,
+			storageLimitMB,
+			plan,
 		};
 	} catch (error) {
 		console.error("Error getting user usage stats:", error);
 		return {
-			imagesUsed: 0,
-			imagesLimit: 50,
+			computeUnitsUsed: 0,
+			computeUnitsLimit: 100,
 			storageUsedMB: 0,
-			storageLimitMB: 1024,
+			storageLimitMB: 5 * 1024,
 			plan: "free" as const,
 		};
 	}

@@ -6,6 +6,7 @@ import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
 	const provider =
@@ -179,6 +180,19 @@ const run = async (jobData) => {
 		if (fs.existsSync(zipPath)) {
 			await unlink(zipPath).catch(() => {});
 		}
+
+		// Log compute usage for bulk download (on failure too, to track attempts)
+		if (userId) {
+			await logUsage(
+				userId,
+				"compute",
+				"bulk_download",
+				Math.ceil(imageIds.length / 10), // 1 unit per 10 images
+				null,
+				{ image_count: imageIds.length, job_id: jobId },
+			);
+		}
+
 		throw error;
 	}
 };

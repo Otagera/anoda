@@ -12,6 +12,7 @@ import Settings from "./routes/settings";
 import SharedAlbum from "./routes/sharedAlbum";
 import Signup from "./routes/signup";
 import Trash from "./routes/trash";
+import Usage from "./routes/usage";
 import Welcome from "./welcome/Welcome";
 
 export default [
@@ -66,6 +67,10 @@ export default [
 					{
 						path: "settings",
 						element: <Settings />,
+					},
+					{
+						path: "usage",
+						element: <Usage />,
 					},
 					{
 						path: "trash",

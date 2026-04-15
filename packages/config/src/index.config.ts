@@ -76,6 +76,18 @@ const config = {
 			region: process.env.R2_REGION || "auto",
 			public_url: process.env.R2_PUBLIC_URL,
 		},
+
+		// Plan limits
+		plans: {
+			free: {
+				storage_mb: 5 * 1024, // 5GB
+				compute_units_per_month: 100,
+			},
+			pro: {
+				storage_mb: 50 * 1024, // 50GB
+				compute_units_per_month: -1, // unlimited
+			},
+		},
 	},
 	test: {
 		db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,

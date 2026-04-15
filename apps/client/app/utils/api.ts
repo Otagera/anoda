@@ -333,7 +333,7 @@ export const fetchSettings = async () => {
 
 export const fetchUsage = async () => {
 	try {
-		const response = await axiosAPI.get("/settings/usage");
+		const response = await axiosAPI.get("/usage");
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching usage:", error);
@@ -551,6 +551,40 @@ export const restoreAlbum = async (albumId: string) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error restoring album:", error);
+		throw error;
+	}
+};
+
+export const permanentlyDeleteImages = async (imageIds: string[]) => {
+	try {
+		const response = await axiosAPI.delete("/trash/images", {
+			data: { imageIds },
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error permanently deleting images:", error);
+		throw error;
+	}
+};
+
+export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
+	try {
+		const response = await axiosAPI.delete("/trash/albums", {
+			data: { albumIds },
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error permanently deleting albums:", error);
+		throw error;
+	}
+};
+
+export const emptyTrash = async () => {
+	try {
+		const response = await axiosAPI.delete("/trash");
+		return response.data;
+	} catch (error) {
+		console.error("Error emptying trash:", error);
 		throw error;
 	}
 };

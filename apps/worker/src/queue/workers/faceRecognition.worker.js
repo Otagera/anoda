@@ -10,6 +10,9 @@ const config =
 const {
 	storage,
 } = require("../../../../../packages/utils/src/storage.util.ts");
+const {
+	logUsage,
+} = require("../../../../../packages/models/src/usage.model.ts");
 const fs = require("node:fs/promises");
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
@@ -160,6 +163,18 @@ const run = async (jobData) => {
 							processed_time: new Date(),
 						},
 					});
+				}
+
+				// Log compute usage for face detection
+				if (image.uploaded_by) {
+					await logUsage(
+						image.uploaded_by,
+						"compute",
+						"face_detection",
+						imageResult.faces.length, // 1 unit per face detected
+						albumId,
+						{ image_id: imageId },
+					);
 				}
 			} else {
 				console.log(`No faces detected for image: ${imagePath || storageKey}`);

@@ -134,13 +134,15 @@ model user_storage_configs {
 }
 
 model usage_logs {
-  id        Int      @id @default(autoincrement())
-  user_id   String   @db.Uuid
-  resource  String
-  operation String
-  quantity  Int      @default(1)
-  timestamp DateTime @default(now()) @db.Timestamptz(6)
-  users     users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.Uuid
+  album_id   String?  @db.Uuid // For storage by album (no relation - just for reference)
+  resource   String   // storage, compute
+  operation  String   // image_optimization, face_recognition, face_search, face_clustering, bulk_download, file_deletion
+  quantity   Int      @default(1)
+  metadata   Json?    @default("{}") // Additional details (image_id, etc.)
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
 model notifications {
@@ -170,6 +172,7 @@ model users {
   user_id           String                 @id @default(uuid()) @db.Uuid
   email             String                 @unique
   password          String
+  plan              String                 @default("free") // free, pro
   albums            albums[]
   images            images[]
   people            people[]

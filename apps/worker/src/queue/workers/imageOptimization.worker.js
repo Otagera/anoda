@@ -96,6 +96,9 @@ const run = async (jobData) => {
 		);
 
 		let imageBuffer;
+		let localFilePath = imagePath;
+
+		// For local files, verify the file exists before attempting to read
 		if (!isLocal && storageProviderInstance) {
 			const key = image.storage_key || storageKey;
 			console.log(`Fetching image from ${image.storage_provider}: ${key}`);
@@ -112,18 +115,35 @@ const run = async (jobData) => {
 					console.warn(
 						`[Image Optimization] File not found in ${image.storage_provider} as ${key}. Falling back to local file ${imagePath}.`,
 					);
-					imageBuffer = await fs.readFile(imagePath);
+					localFilePath = imagePath;
 				} else {
 					throw e;
 				}
 			}
-		} else {
-			imageBuffer = await fs.readFile(imagePath);
+		}
+
+		// Validate local file exists before reading
+		if (isLocal || !imageBuffer) {
+			if (!localFilePath) {
+				throw new Error(`No file path available for image ${imageId}`);
+			}
+
+			// Check if file exists
+			try {
+				await fs.access(localFilePath);
+			} catch {
+				throw new Error(
+					`Original image file not found at path: ${localFilePath}. Cannot optimize. Please check if the file exists or was uploaded correctly.`,
+				);
+			}
+
+			console.log(`Reading local file: ${localFilePath}`);
+			imageBuffer = await fs.readFile(localFilePath);
 		}
 
 		const baseName = path.basename(
-			imagePath || storageKey,
-			path.extname(imagePath || storageKey),
+			localFilePath || storageKey,
+			path.extname(localFilePath || storageKey),
 		);
 		const optimizedFilename = `${baseName}_optimized.webp`;
 		const tempPath = `/tmp/${optimizedFilename}`;
@@ -156,7 +176,7 @@ const run = async (jobData) => {
 			}
 		} else {
 			const optimizedLocalPath = path.join(
-				path.dirname(imagePath),
+				path.dirname(localFilePath),
 				optimizedFilename,
 			);
 			await fs.rename(tempPath, optimizedLocalPath);

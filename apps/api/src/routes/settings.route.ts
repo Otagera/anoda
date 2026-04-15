@@ -30,25 +30,6 @@ const settingsRoutes = new Elysia({ prefix: "/settings" })
 			};
 		}
 	})
-	.get("/usage", async ({ set, userId }) => {
-		try {
-			const data = await fetchUsageService({ userId });
-
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: "Usage retrieved successfully.",
-				data,
-			};
-		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: error?.message || "Internal server error",
-				data: null,
-			};
-		}
-	})
 	.post(
 		"/storage",
 		async ({ body, set, userId }) => {
