@@ -305,6 +305,9 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				nextCursor: t.Optional(t.String()),
 				paginationType: t.Optional(t.String()),
 				status: t.Optional(t.String()),
+				uploaderId: t.Optional(t.String()),
+				startDate: t.Optional(t.String()),
+				endDate: t.Optional(t.String()),
 			}),
 		},
 	)

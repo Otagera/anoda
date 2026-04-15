@@ -1,7 +1,7 @@
-import { getPeople } from "../../../../../packages/models/src/people.model.ts";
-import { aliaserSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { getPeople } from "../../../../../packages/models/src/people.model.ts";
+import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
+import { aliaserSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const aliasSpec = {
 	response: {

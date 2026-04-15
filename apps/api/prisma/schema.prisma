@@ -107,6 +107,7 @@ model images {
   deleted_at       DateTime?      @db.Timestamptz(6)
   file_hash        String?
   perceptual_hash  String?
+  rejection_reason String?
   album_images     album_images[]
   faces            faces[]
   original_width   Int

@@ -12,8 +12,8 @@ import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
 import { SelfieSearchModal } from "../components/SelfieSearchModal";
 import { fetchSharedAlbum, searchFaces } from "../utils/api";
-import { useUpload } from "../utils/UploadContext";
 import axiosAPI from "../utils/axios";
+import { useUpload } from "../utils/UploadContext";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();

@@ -47,6 +47,7 @@ const aliasSpec = {
 		update_date: "updateDate",
 		original_size: "originalSize",
 		uploaded_by: "userId",
+		users: "user",
 		album_images_id: "albumImageId",
 		album_id: "albumId",
 	},

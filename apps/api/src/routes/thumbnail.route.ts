@@ -105,13 +105,13 @@ export const thumbnailRoutes = new Elysia({ prefix: "/thumbnail" }).get(
 				const paddingY = Math.floor(faceHeight * 0.3);
 
 				// Calculate padded coordinates, respecting image bounds
-				let paddedLeft = Math.max(0, faceLeft - paddingX);
-				let paddedTop = Math.max(0, faceTop - paddingY);
-				let paddedWidth = Math.min(
+				const paddedLeft = Math.max(0, faceLeft - paddingX);
+				const paddedTop = Math.max(0, faceTop - paddingY);
+				const paddedWidth = Math.min(
 					faceWidth + paddingX * 2,
 					actualWidth - paddedLeft,
 				);
-				let paddedHeight = Math.min(
+				const paddedHeight = Math.min(
 					faceHeight + paddingY * 2,
 					actualHeight - paddedTop,
 				);

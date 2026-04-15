@@ -120,8 +120,9 @@ export const NotificationDropdown = () => {
 									{notifications.map((notification) => (
 										<div
 											key={notification.id}
-											className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${!notification.is_read ? "bg-sage/5 dark:bg-sage/10" : ""
-												}`}
+											className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${
+												!notification.is_read ? "bg-sage/5 dark:bg-sage/10" : ""
+											}`}
 											onClick={() => {
 												if (!notification.is_read) {
 													markReadMutation.mutate({

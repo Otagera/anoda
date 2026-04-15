@@ -1,8 +1,8 @@
 import axios from "axios";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import { queueServices } from "../queue.service.ts";
 import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
+import { queueServices } from "../queue.service.ts";
 
 const run = async (jobData) => {
 	const { albumId } = jobData;

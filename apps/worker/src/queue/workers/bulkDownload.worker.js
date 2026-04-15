@@ -4,9 +4,9 @@ import path from "node:path";
 import archiver from "archiver";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
 import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
 	const provider =

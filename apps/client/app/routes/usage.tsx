@@ -1,24 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	Cell,
-	PieChart,
-	Pie,
-	Legend,
-} from "recharts";
-import {
 	Download,
 	HardDrive,
 	PieChart as PieChartIcon,
 	Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	Cell,
+	Legend,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Card } from "~/components/standard/Card";

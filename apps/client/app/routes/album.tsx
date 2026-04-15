@@ -5,7 +5,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { CheckCircle, Settings2, Trash2, Upload, XCircle } from "lucide-react";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -21,7 +21,11 @@ import { Heading } from "~/components/standard/Heading";
 import { UsageIndicator } from "~/components/UsageIndicator";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
+import ModerationGridItem from "~/Images/ModerationGridItem";
 import { getBentoSpanClass } from "~/utils/bento";
+import { AlbumFilters } from "../components/AlbumFilters";
+import { AlbumPermissionsModal } from "../components/AlbumPermissionsModal";
+import { RejectReasonModal } from "../components/RejectReasonModal";
 import { ShareModal } from "../components/ShareModal";
 import {
 	deleteAlbum,
@@ -46,6 +50,8 @@ const AlbumPage = () => {
 	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 	const [isAlbumSettingsModalOpen, setIsAlbumSettingsModalOpen] =
 		useState(false);
+	const [isAlbumPermissionsModalOpen, setIsAlbumPermissionsModalOpen] =
+		useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [confirmDeleteAlbum, setConfirmDeleteAlbum] = useState(false);
 	const [editAlbumName, setEditAlbumName] = useState("");
@@ -56,6 +62,15 @@ const AlbumPage = () => {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [isAddToAlbumOpen, setIsAddToAlbumOpen] = useState(false);
 	const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+	const [rejectModal, setRejectModal] = useState<{
+		isOpen: boolean;
+		imageIds: string[];
+	}>({ isOpen: false, imageIds: [] });
+	const [moderationFilters, setModerationFilters] = useState<{
+		startDate?: string;
+		endDate?: string;
+		uploaderId?: string;
+	}>({});
 
 	const {
 		data: imagesData,
@@ -80,9 +95,14 @@ const AlbumPage = () => {
 		hasNextPage: hasNextPendingPage,
 		isFetchingNextPage: isFetchingNextPendingPage,
 	} = useInfiniteQuery({
-		queryKey: ["images", albumId, "PENDING"],
+		queryKey: ["images", albumId, "PENDING", moderationFilters],
 		queryFn: ({ pageParam }) =>
-			fetchImagesInAlbum({ albumId: albumId!, pageParam, status: "PENDING" }),
+			fetchImagesInAlbum({
+				albumId: albumId!,
+				pageParam,
+				status: "PENDING",
+				...moderationFilters,
+			}),
 		enabled: !!albumId && view === "moderation",
 		getNextPageParam: (lastPage) =>
 			lastPage?.data?.pagination?.nextCursor || null,
@@ -194,10 +214,12 @@ const AlbumPage = () => {
 		mutationFn: ({
 			imageIds,
 			status,
+			reason,
 		}: {
 			imageIds: string[];
 			status: "APPROVED" | "REJECTED";
-		}) => moderateImages(albumId!, imageIds, status),
+			reason?: string;
+		}) => moderateImages(albumId!, imageIds, status, reason),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["images", albumId] });
 			setSelectedIds(new Set());
@@ -214,10 +236,25 @@ const AlbumPage = () => {
 	) => {
 		const targetIds = singleId ? [singleId] : Array.from(selectedIds);
 		if (targetIds.length === 0) return;
+
+		if (status === "REJECTED") {
+			setRejectModal({ isOpen: true, imageIds: targetIds });
+			return;
+		}
+
 		moderateImagesMutation.mutate({
 			imageIds: targetIds,
 			status,
 		});
+	};
+
+	const handleConfirmReject = (reason: string) => {
+		moderateImagesMutation.mutate({
+			imageIds: rejectModal.imageIds,
+			status: "REJECTED",
+			reason,
+		});
+		setRejectModal({ isOpen: false, imageIds: [] });
 	};
 
 	// Keyboard shortcuts for moderation view
@@ -601,6 +638,15 @@ const AlbumPage = () => {
 					</Button>
 
 					<Button
+						variant="outline"
+						onClick={() => setIsAlbumPermissionsModalOpen(true)}
+						className="flex-1 md:flex-none"
+					>
+						<Settings2 size={16} className="mr-2" />
+						Permissions
+					</Button>
+
+					<Button
 						variant="primary"
 						onClick={() => setIsUploadModalOpen(true)}
 						className="flex-1 md:flex-none"
@@ -610,7 +656,17 @@ const AlbumPage = () => {
 				</div>
 			</div>
 
-			<div className="mt-12">
+			<div className="mt-8">
+				{view === "moderation" && (
+					<div className="mb-6">
+						<AlbumFilters
+							filters={moderationFilters}
+							onFilterChange={setModerationFilters}
+							members={albumData?.data?.members}
+						/>
+					</div>
+				)}
+
 				{(isImagesDataLoading || isPendingImagesLoading) &&
 				isAlbumDataLoading ? (
 					<div className="flex justify-center py-20">
@@ -646,19 +702,34 @@ const AlbumPage = () => {
 									className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
 									style={{ animationDelay: `${index * 50}ms` }}
 								>
-									<ImageGridItem
-										image={{
-											id: image.imageId,
-											width: width,
-											height: height,
-											url: image.imagePath,
-											alt: image.imagePath,
-										}}
-										onClick={() => setSelectedImage(image)}
-										isSelected={selectedIds.has(image.imageId)}
-										onToggleSelect={() => handleToggleSelect(image.imageId)}
-										showSelect={selectedIds.size > 0}
-									/>
+									{view === "moderation" ? (
+										<ModerationGridItem
+											image={{
+												...image,
+												id: image.imageId,
+												url: image.imagePath,
+												alt: image.imagePath,
+											}}
+											onClick={() => setSelectedImage(image)}
+											isSelected={selectedIds.has(image.imageId)}
+											onToggleSelect={() => handleToggleSelect(image.imageId)}
+										/>
+									) : (
+										<ImageGridItem
+											image={{
+												id: image.imageId,
+												width: width,
+												height: height,
+												url: image.imagePath,
+												alt: image.imagePath,
+											}}
+											onClick={() => setSelectedImage(image)}
+											isSelected={selectedIds.has(image.imageId)}
+											onToggleSelect={() => handleToggleSelect(image.imageId)}
+											onDelete={handleDeleteImage}
+											selectionMode={selectedIds.size > 0}
+										/>
+									)}
 								</div>
 							);
 						})}
@@ -688,6 +759,14 @@ const AlbumPage = () => {
 				onDelete={handleDeleteImage}
 				onNavigate={(img) => setSelectedImage(img)}
 				onModerate={handleModerate}
+			/>
+
+			<RejectReasonModal
+				isOpen={rejectModal.isOpen}
+				onClose={() => setRejectModal({ isOpen: false, imageIds: [] })}
+				onConfirm={handleConfirmReject}
+				isBatch={rejectModal.imageIds.length > 1}
+				count={rejectModal.imageIds.length}
 			/>
 
 			{/* Custom Bulk Bar for Moderation */}
@@ -809,6 +888,14 @@ const AlbumPage = () => {
 					settings={albumData?.data?.settings}
 					storageConfigId={albumData?.data?.storageConfigId}
 					onClose={() => setIsAlbumSettingsModalOpen(false)}
+				/>
+			)}
+
+			{isAlbumPermissionsModalOpen && (
+				<AlbumPermissionsModal
+					albumId={albumId!}
+					members={albumData?.data?.members}
+					onClose={() => setIsAlbumPermissionsModalOpen(false)}
 				/>
 			)}
 

@@ -70,15 +70,24 @@ export const fetchImagesInAlbum = async ({
 	albumId,
 	pageParam = null,
 	status = "APPROVED",
+	startDate,
+	endDate,
+	uploaderId,
 }: {
 	albumId: string;
 	pageParam?: string | null;
 	status?: "APPROVED" | "PENDING" | "REJECTED";
+	startDate?: string;
+	endDate?: string;
+	uploaderId?: string;
 }) => {
 	try {
-		const url = pageParam
-			? `/albums/${albumId}/images?paginationType=cursor&limit=25&nextCursor=${pageParam}&status=${status}`
-			: `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
+		let url = `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
+		if (pageParam) url += `&nextCursor=${pageParam}`;
+		if (startDate) url += `&startDate=${startDate}`;
+		if (endDate) url += `&endDate=${endDate}`;
+		if (uploaderId) url += `&uploaderId=${uploaderId}`;
+
 		const response = await axiosAPI.get(url);
 		return response.data;
 	} catch (error) {
@@ -510,15 +519,41 @@ export const moderateImages = async (
 	albumId: string,
 	imageIds: string[],
 	status: "APPROVED" | "REJECTED",
+	reason?: string,
 ) => {
 	try {
 		const response = await axiosAPI.post(`/albums/${albumId}/moderate`, {
 			imageIds,
 			status,
+			reason,
 		});
 		return response.data;
 	} catch (error) {
 		console.error("Error moderating images:", error);
+		throw error;
+	}
+};
+
+export const generateInvite = async (albumId: string, role: string) => {
+	try {
+		const response = await axiosAPI.post(`/albums/${albumId}/invites`, {
+			role,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error generating invite:", error);
+		throw error;
+	}
+};
+
+export const joinAlbum = async (inviteToken: string) => {
+	try {
+		const response = await axiosAPI.post("/albums/join", {
+			inviteToken,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error joining album:", error);
 		throw error;
 	}
 };

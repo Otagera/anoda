@@ -12,6 +12,7 @@ const spec = Joi.object({
 	albumId: Joi.string().uuid().required(),
 	imageIds: Joi.array().items(Joi.string().uuid()).required(),
 	status: Joi.string().valid("APPROVED", "REJECTED").required(),
+	reason: Joi.string().optional(),
 });
 
 const service = async (data: any) => {
@@ -33,7 +34,11 @@ const service = async (data: any) => {
 		);
 	}
 
-	const result = await moderateImagesQuery(validImageIds, params.status);
+	const result = await moderateImagesQuery(
+		validImageIds,
+		params.status,
+		params.reason,
+	);
 
 	// Dispatch webhooks for each moderated image
 	for (const imageId of validImageIds) {
@@ -41,6 +46,7 @@ const service = async (data: any) => {
 			imageId,
 			status: params.status,
 			albumId: params.albumId,
+			reason: params.reason,
 		});
 	}
 

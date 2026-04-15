@@ -1,3 +1,4 @@
+import path from "node:path";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ElysiaAdapter } from "@bull-board/elysia";
@@ -6,7 +7,6 @@ import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
 import * as Sentry from "@sentry/bun";
 import { Elysia, sse } from "elysia";
-import path from "node:path";
 import config from "../../../packages/config/src/index.config.ts";
 import { AuthError } from "../../../packages/utils/src/error.util.ts";
 import {

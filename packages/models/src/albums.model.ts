@@ -56,6 +56,16 @@ const fetchAlbum = async (where) => {
 		include: {
 			settings: true,
 			storage_config: true,
+			album_members: {
+				include: {
+					user: {
+						select: {
+							user_id: true,
+							email: true,
+						},
+					},
+				},
+			},
 			cover_image: {
 				where: { deleted_at: null },
 			},
@@ -94,7 +104,7 @@ const fetchAlbumsByUserids = async (userIds) => {
 		where: {
 			OR: [
 				{ created_by: { in: userIds } },
-				{ album_members: { some: { user_id: { in: userIds } } } }
+				{ album_members: { some: { user_id: { in: userIds } } } },
 			],
 			deleted_at: null,
 		},
