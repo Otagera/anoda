@@ -130,8 +130,16 @@ const run = async (jobData) => {
 									image.storage_key,
 								);
 							} catch (e) {
-								if (e.name === 'NoSuchKey' || e.code === 'NoSuchKey' || e.message?.includes('NoSuchKey') || e.name === 'NotFound' || e.code === 'NotFound') {
-									console.warn(`[Bulk Download] File not found in ${image.storage_provider} as ${image.storage_key}. Falling back to local file.`);
+								if (
+									e.name === "NoSuchKey" ||
+									e.code === "NoSuchKey" ||
+									e.message?.includes("NoSuchKey") ||
+									e.name === "NotFound" ||
+									e.code === "NotFound"
+								) {
+									console.warn(
+										`[Bulk Download] File not found in ${image.storage_provider} as ${image.storage_key}. Falling back to local file.`,
+									);
 									const localPath = path.resolve(
 										process.cwd(),
 										UPLOADS_DIR,

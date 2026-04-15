@@ -1,6 +1,13 @@
 import { isObject, isString } from "lodash";
 import { HTTP_STATUS_CODES } from "./constants.util";
 
+interface ErrorProps {
+	field?: string;
+	action?: string;
+	value?: unknown;
+	message?: string;
+}
+
 const getErrorMessageFromParams = (props, defaultMessage = "") => {
 	if (isString(props)) {
 		return props;
@@ -13,8 +20,12 @@ const getErrorMessageFromParams = (props, defaultMessage = "") => {
 
 class OperationError extends Error {
 	message = "An error occurred.";
+	field?: string;
+	action?: string;
+	value?: string;
+	statusCode?: number;
 
-	constructor(props) {
+	constructor(props: ErrorProps | string) {
 		super();
 
 		if (isObject(props)) {
@@ -102,13 +113,24 @@ class ValidationError extends OperationError {
 	}
 }
 
+class BadRequestError extends OperationError {
+	name = "BadRequestError";
+	statusCode = HTTP_STATUS_CODES.BAD_REQUEST;
+
+	constructor(props) {
+		super(props);
+		this.message = getErrorMessageFromParams(props, "Bad request.");
+	}
+}
+
 export {
 	AuthError,
-	ForbiddenError,
 	NotFoundError,
 	OperationError,
+	ForbiddenError,
 	RateLimitError,
 	ValidationError,
+	BadRequestError,
 	ResourceInUseError,
 	InvalidRequestError,
 };

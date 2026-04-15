@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { fileTypeFromBuffer } from "file-type";
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -41,6 +42,9 @@ export const validateFileFromBuffer = async (
 		throw new Error(`File type ${type.mime} is not allowed`);
 	}
 
+	// Calculate SHA-256 hash for duplicate detection
+	const hash = crypto.createHash("sha256").update(buffer).digest("hex");
+
 	// Optional: check extension match
 	const extension = originalName.split(".").pop()?.toLowerCase();
 	if (extension && type.ext.toLowerCase() !== extension) {
@@ -56,5 +60,5 @@ export const validateFileFromBuffer = async (
 		}
 	}
 
-	return type;
+	return { type, hash };
 };

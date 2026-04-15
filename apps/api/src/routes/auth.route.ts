@@ -1,6 +1,5 @@
 import { Elysia, t } from "elysia";
 import { verify } from "jsonwebtoken";
-import prisma from "../../../../packages/config/src/db.config.ts";
 import {
 	forgotPasswordService,
 	loginService,
@@ -9,6 +8,7 @@ import {
 	resetPasswordService,
 	signupService,
 } from "../../../../packages/auth/index.ts";
+import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
 import { getUser } from "../../../../packages/models/src/users.lib.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";

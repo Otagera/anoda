@@ -38,22 +38,23 @@ const service = async (data: any) => {
 					users: { select: { email: true } },
 					album_images: {
 						include: { albums: { select: { album_name: true } } },
-						take: 1
-					}
-				}
+						take: 1,
+					},
+				},
 			});
 
 			for (const img of imagesWithContext) {
 				if (img.users?.email) {
-					const albumName = img.album_images[0]?.albums?.album_name || "a shared album";
-					
+					const albumName =
+						img.album_images[0]?.albums?.album_name || "a shared album";
+
 					await queueServices.emailQueueLib.addJob("email", {
 						worker: "email",
 						type: "photo_approved",
 						data: {
 							email: img.users.email,
-							albumName
-						}
+							albumName,
+						},
 					});
 				}
 			}

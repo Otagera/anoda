@@ -1,4 +1,5 @@
 import joi from "joi";
+import { queueServices } from "../../apps/worker/src/queue/queue.service.ts";
 import { createRefreshToken } from "../models/src/refreshTokens.lib.ts";
 import { createUser, getUser } from "../models/src/users.lib.ts";
 import {
@@ -7,7 +8,6 @@ import {
 } from "../utils/src/auth.util.ts";
 import { ResourceInUseError } from "../utils/src/error.util.ts";
 import { aliaserSpec, validateSpec } from "../utils/src/specValidator.util.ts";
-import { queueServices } from "../../apps/worker/src/queue/queue.service.ts";
 
 const spec = joi.object({
 	email: joi.string().email().required(),

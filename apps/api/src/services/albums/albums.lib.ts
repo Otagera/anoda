@@ -169,16 +169,24 @@ export const getAlbumLinksNoError = async (where) => {
 export const getAlbumLinks = async (where, options = {}) => {
 	await albumLinkValidation(where, { check_image_id: false });
 
-	const { image_id, album_id, status, startDate, endDate, uploaderId, minFaces } = where;
+	const {
+		image_id,
+		album_id,
+		status,
+		startDate,
+		endDate,
+		uploaderId,
+		minFaces,
+	} = where;
 
 	const filter: any = { album_id, image_id };
-	
+
 	// Complex image filters
 	const imageFilter: any = { deleted_at: null };
-	
+
 	if (status) imageFilter.status = status;
 	if (uploaderId) imageFilter.uploaded_by = uploaderId;
-	
+
 	if (startDate || endDate) {
 		imageFilter.upload_date = {};
 		if (startDate) imageFilter.upload_date.gte = new Date(startDate);
@@ -189,7 +197,7 @@ export const getAlbumLinks = async (where, options = {}) => {
 		imageFilter.faces = {
 			_count: {
 				gte: Number.parseInt(String(minFaces), 10),
-			}
+			},
 		};
 	}
 

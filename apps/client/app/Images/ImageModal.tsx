@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { ConfirmModal } from "~/components/ConfirmModal";
-import { reprocessImage, downloadImage, editAlbum } from "../utils/api";
+import { downloadImage, editAlbum, reprocessImage } from "../utils/api";
 
 interface ImageModalProps {
 	image: any;
@@ -14,6 +14,7 @@ interface ImageModalProps {
 	onNavigate?: (image: any) => void;
 	onFaceSearch?: (faceId: number) => void;
 	isSearchMode?: boolean;
+	onModerate?: (status: "APPROVED" | "REJECTED", imageId: string) => void;
 }
 
 const ImageModal = ({
@@ -26,6 +27,7 @@ const ImageModal = ({
 	onNavigate,
 	onFaceSearch,
 	isSearchMode = false,
+	onModerate,
 }: ImageModalProps) => {
 	const imgRef = useRef<HTMLImageElement>(null);
 	const navigate = useNavigate();
@@ -73,14 +75,36 @@ const ImageModal = ({
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (!image) return;
+
+			// Ignore shortcuts if user is typing in an input
+			if (
+				e.target instanceof HTMLInputElement ||
+				e.target instanceof HTMLTextAreaElement
+			)
+				return;
+
 			if (e.key === "Escape") onClose();
 			if (e.key === "ArrowLeft") handlePrevious();
 			if (e.key === "ArrowRight") handleNext();
+
+			// Moderation shortcuts
+			if (onModerate && image.status === "PENDING" && !isDetailsOpen) {
+				if (e.key.toLowerCase() === "a") {
+					e.preventDefault();
+					onModerate("APPROVED", image.imageId || image.id);
+					handleNext();
+				}
+				if (e.key.toLowerCase() === "r") {
+					e.preventDefault();
+					onModerate("REJECTED", image.imageId || image.id);
+					handleNext();
+				}
+			}
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [image, onClose, handlePrevious, handleNext]);
+	}, [image, onClose, handlePrevious, handleNext, onModerate, isDetailsOpen]);
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -181,7 +205,7 @@ const ImageModal = ({
 		const toastId = toast.loading("Preparing download...");
 		try {
 			let downloadUrl = image.imagePath;
-			
+
 			if (!shareToken) {
 				// For private images, get an authorized presigned URL
 				const res = await downloadImage(targetId);
@@ -258,7 +282,7 @@ const ImageModal = ({
 							)}
 						</svg>
 					</button>
-					
+
 					{albumId && !shareToken && (
 						<button
 							type="button"

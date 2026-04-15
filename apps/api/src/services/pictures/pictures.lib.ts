@@ -115,13 +115,10 @@ export const getImagesPaginaton = async (params) => {
 			{ ...paramsRest, deleted_at: null },
 		);
 	} else {
-		paginatedImages = await offsetPagination(
-			model,
-			page,
-			limit,
-			model,
-			{ ...paramsRest, deleted_at: null },
-		);
+		paginatedImages = await offsetPagination(model, page, limit, model, {
+			...paramsRest,
+			deleted_at: null,
+		});
 	}
 
 	return paginatedImages;

@@ -6,6 +6,7 @@ import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
 import * as Sentry from "@sentry/bun";
 import { Elysia, sse } from "elysia";
+import path from "node:path";
 import config from "../../../packages/config/src/index.config.ts";
 import { AuthError } from "../../../packages/utils/src/error.util.ts";
 import {
@@ -37,6 +38,10 @@ export const createElysiaApp = async () => {
 	const { default: peopleRoutes } = await import("./routes/people.route");
 	const { default: settingsRoutes } = await import("./routes/settings.route");
 	const { default: trashRoutes } = await import("./routes/trash.route");
+	const { default: notificationsRoutes } = await import(
+		"./routes/notifications.route"
+	);
+	const { default: usageRoutes } = await import("./routes/usage.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -156,7 +161,9 @@ export const createElysiaApp = async () => {
 				.use(publicRoutes)
 				.use(peopleRoutes)
 				.use(settingsRoutes)
-				.use(trashRoutes),
+				.use(trashRoutes)
+				.use(notificationsRoutes)
+				.use(usageRoutes),
 		);
 
 	if (bullBoardPlugin) {
@@ -180,6 +187,7 @@ const start = async () => {
 		);
 		return app;
 	} catch (error: any) {
+		console.log("Failed to start Elysia server:", error);
 		logger.error("Failed to start Elysia server", {
 			error: error.message,
 			stack: error.stack,

@@ -18,7 +18,7 @@ export const publicRateLimit = rateLimit({
 	storage: "redis",
 	redis: redisClient,
 	// Add scoping to prevent collision
-	name: "public-limiter"
+	name: "public-limiter",
 });
 
 export const strictPublicRateLimit = rateLimit({
@@ -36,5 +36,5 @@ export const strictPublicRateLimit = rateLimit({
 	},
 	storage: "redis",
 	redis: redisClient,
-	name: "strict-limiter"
+	name: "strict-limiter",
 });

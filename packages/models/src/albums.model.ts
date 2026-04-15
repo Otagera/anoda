@@ -92,12 +92,14 @@ const fetchAlbumsByIds = async (albumIds) => {
 const fetchAlbumsByUserids = async (userIds) => {
 	return await prisma.albums.findMany({
 		where: {
-			created_by: {
-				in: userIds,
-			},
+			OR: [
+				{ created_by: { in: userIds } },
+				{ album_members: { some: { user_id: { in: userIds } } } }
+			],
 			deleted_at: null,
 		},
 		include: {
+			album_members: true,
 			settings: true,
 			storage_config: true,
 			cover_image: true,

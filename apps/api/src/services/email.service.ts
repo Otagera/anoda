@@ -1,6 +1,6 @@
 export {
+	sendClusteringCompleteEmail,
+	sendPhotoApprovedEmail,
 	sendResetPasswordEmail,
 	sendWelcomeEmail,
-	sendPhotoApprovedEmail,
-	sendClusteringCompleteEmail,
 } from "@anoda-facematch/email/email.service";

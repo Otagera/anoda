@@ -106,8 +106,16 @@ const run = async (jobData) => {
 				await fs.writeFile(tempPath, imageBuffer);
 				imagePathForAI = tempPath;
 			} catch (e) {
-				if (e.name === 'NoSuchKey' || e.code === 'NoSuchKey' || e.message.includes('NoSuchKey') || e.name === 'NotFound' || e.code === 'NotFound') {
-					console.warn(`[Face Recognition] File not found in ${image.storage_provider} as ${key}. Falling back to local file ${imagePath}.`);
+				if (
+					e.name === "NoSuchKey" ||
+					e.code === "NoSuchKey" ||
+					e.message.includes("NoSuchKey") ||
+					e.name === "NotFound" ||
+					e.code === "NotFound"
+				) {
+					console.warn(
+						`[Face Recognition] File not found in ${image.storage_provider} as ${key}. Falling back to local file ${imagePath}.`,
+					);
 					imagePathForAI = imagePath;
 					// Important: Clear storage fields so AI service uses local path
 					image.storage_provider = null;

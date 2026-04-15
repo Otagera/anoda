@@ -9,10 +9,7 @@ import { getAlbumLinks } from "./albums.lib";
 const spec = joi.object({
 	album_id: joi.string().required(),
 	user_id: joi.string().required(),
-	status: joi
-		.string()
-		.valid("APPROVED", "PENDING", "REJECTED")
-		.optional(),
+	status: joi.string().valid("APPROVED", "PENDING", "REJECTED").optional(),
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),

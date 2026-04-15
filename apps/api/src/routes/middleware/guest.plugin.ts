@@ -1,8 +1,9 @@
-import { Elysia } from "elysia";
 import crypto from "node:crypto";
+import { Elysia } from "elysia";
 
-export const guestPlugin = new Elysia({ name: "guest-plugin" })
-	.derive({ as: 'global' }, ({ cookie: { guestSessionId } }) => {
+export const guestPlugin = new Elysia({ name: "guest-plugin" }).derive(
+	{ as: "global" },
+	({ cookie: { guestSessionId } }) => {
 		if (!guestSessionId.value) {
 			const newId = crypto.randomUUID();
 			guestSessionId.set({
@@ -18,4 +19,5 @@ export const guestPlugin = new Elysia({ name: "guest-plugin" })
 		return {
 			guestSessionId: guestSessionId.value,
 		};
-	});
+	},
+);

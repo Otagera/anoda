@@ -274,6 +274,16 @@ export const updatePerson = async (personId: string, name: string) => {
 	}
 };
 
+export const deletePerson = async (personId: string) => {
+	try {
+		const response = await axiosAPI.delete(`/people/${personId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error deleting person:", error);
+		throw error;
+	}
+};
+
 export const updateFace = async (
 	faceId: number,
 	data: { personId: string | null },
@@ -497,11 +507,12 @@ export const editAlbumSettings = async (albumId: string, data: any) => {
 };
 
 export const moderateImages = async (
+	albumId: string,
 	imageIds: string[],
 	status: "APPROVED" | "REJECTED",
 ) => {
 	try {
-		const response = await axiosAPI.patch("/images/moderate", {
+		const response = await axiosAPI.post(`/albums/${albumId}/moderate`, {
 			imageIds,
 			status,
 		});

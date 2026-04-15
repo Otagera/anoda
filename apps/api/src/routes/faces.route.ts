@@ -69,7 +69,11 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				// Enforce policy
 				await checkTaggingPolicy({ faceId, userId, guestSessionId });
 
-				const data = await updateFaceService({ ...body, faceId, userId: userId || crypto.randomUUID() });
+				const data = await updateFaceService({
+					...body,
+					faceId,
+					userId: userId || crypto.randomUUID(),
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {

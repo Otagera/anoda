@@ -494,9 +494,11 @@ const deleteImagesByIdsQuery = async (imageIds) => {
 const deleteAllImagesQuery = async (userId: string) => {
 	try {
 		// Only delete images belonging to the user
-		const images = await prisma.images.findMany({ where: { uploaded_by: userId } });
-		const imageIds = images.map(i => i.image_id);
-		
+		const images = await prisma.images.findMany({
+			where: { uploaded_by: userId },
+		});
+		const imageIds = images.map((i) => i.image_id);
+
 		return await prisma.$transaction([
 			prisma.faces.deleteMany({ where: { image_id: { in: imageIds } } }),
 			prisma.images.deleteMany({ where: { image_id: { in: imageIds } } }),

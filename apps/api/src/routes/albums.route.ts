@@ -1,11 +1,15 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { checkAlbumPermissions } from "../../../../packages/utils/src/permissions.util.ts";
 import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
 import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
 import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
 import { fetchAlbumsService } from "../services/albums/fetchAlbums.service.ts";
 import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum.service.ts";
+import { generateInviteService } from "../services/albums/generateInvite.service.ts";
+import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
+import { moderateImagesService } from "../services/albums/moderateImages.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
 import { removeAlbumsService } from "../services/albums/removeAlbums.service.ts";
 import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlbum.service.ts";
@@ -29,7 +33,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Album created successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -54,7 +58,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				message: `Albums retrieved successfully.`,
 				data,
 			};
-		} catch (error) {
+		} catch (error: any) {
 			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 			return {
 				status: "error",
@@ -63,6 +67,36 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			};
 		}
 	})
+	.post(
+		"/join",
+		async ({ body, set, userId }) => {
+			try {
+				const data = await joinAlbumService({
+					userId,
+					inviteToken: body.inviteToken,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: `Successfully joined album.`,
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			body: t.Object({
+				inviteToken: t.String(),
+			}),
+		},
+	)
 	.get(
 		"/:albumId",
 		async ({ params, set, userId }) => {
@@ -77,7 +111,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Album: ${albumId} retrieved successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -97,7 +131,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		async ({ params, body, set, userId }) => {
 			try {
 				const albumId = params.albumId;
-				console.log("body", body);
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
 				const data = await alterAlbumService({ ...body, userId, albumId });
 
@@ -107,8 +141,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Album: ${albumId} updated successfully.`,
 					data,
 				};
-			} catch (error) {
-				console.log("Error occurred while editing album:", error);
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -137,11 +170,81 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	)
+	.post(
+		"/:albumId/invites",
+		async ({ params, body, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await generateInviteService({
+					albumId,
+					role: body.role,
+				});
+
+				set.status = HTTP_STATUS_CODES.CREATED;
+				return {
+					status: "completed",
+					message: `Invite generated successfully.`,
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String() }),
+			body: t.Object({
+				role: t.Optional(t.String()),
+			}),
+		},
+	)
+	.post(
+		"/:albumId/moderate",
+		async ({ params, body, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await moderateImagesService({
+					albumId,
+					...body,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: `Successfully moderated ${data.count} images.`,
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String() }),
+			body: t.Object({
+				imageIds: t.Array(t.String()),
+				status: t.String(),
+			}),
+		},
+	)
 	.delete(
 		"/:albumId",
 		async ({ params, set, userId }) => {
 			try {
 				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
 				const data = await removeAlbumService({ userId, albumId });
 
@@ -151,7 +254,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Album: ${albumId} deleted successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -184,7 +287,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Album images retrieved successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -231,7 +334,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Image added to album successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -267,7 +370,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					message: `Image(s) removed from album successfully.`,
 					data,
 				};
-			} catch (error) {
+			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
@@ -347,7 +450,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				message: `Albums deleted successfully.`,
 				data,
 			};
-		} catch (error) {
+		} catch (error: any) {
 			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 			return {
 				status: "error",

@@ -96,6 +96,22 @@ const run = async (jobData) => {
 			`Clustering complete. Created ${newPeopleCount} new people groups. Tagged ${updatedFacesCount} faces.`,
 		);
 
+		// Enqueue in-app notification
+		if (userId) {
+			await prisma.notifications.create({
+				data: {
+					user_id: userId,
+					type: "CLUSTERING_COMPLETE",
+					metadata: {
+						albumId,
+						albumName: album.album_name || "your album",
+						newPeople: newPeopleCount,
+						taggedFaces: updatedFacesCount,
+					}
+				}
+			});
+		}
+
 		// Enqueue notification email
 		if (album.users?.email) {
 			await queueServices.emailQueueLib.addJob("email", {
@@ -113,7 +129,7 @@ const run = async (jobData) => {
 			newPeople: newPeopleCount,
 			taggedFaces: updatedFacesCount,
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error(
 			"Error processing face clustering task:",
 			error.response?.data || error.message,

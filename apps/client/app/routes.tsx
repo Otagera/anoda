@@ -5,6 +5,7 @@ import Album from "./routes/album";
 import ForgotPassword from "./routes/forgot-password";
 import Home from "./routes/home";
 import Login from "./routes/login";
+import People from "./routes/people";
 import ResetPassword from "./routes/reset-password";
 import Search from "./routes/search";
 import Settings from "./routes/settings";
@@ -57,6 +58,10 @@ export default [
 					{
 						path: "search",
 						element: <Search />,
+					},
+					{
+						path: "people",
+						element: <People />,
 					},
 					{
 						path: "settings",

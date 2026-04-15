@@ -1,5 +1,5 @@
-import { Resend } from "resend";
 import { PrismaClient } from "@prisma/client";
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const prisma = new PrismaClient();

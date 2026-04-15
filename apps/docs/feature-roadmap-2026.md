@@ -705,6 +705,11 @@ These are technically complex, high-impact projects that differentiate the appli
 
 **Cons:** Higher support burden and API stability requirements. Requires robust auth scopes, quotas, and versioning.
 
+## Phase 5: Python
+**Quantization:** You can "quantize" your AI models (e.g., converting 32-bit floats to 8-bit integers). This can reduce memory usage and increase speed by 2x-4x with minimal loss in accuracy,
+      allowing you to run the AI on much cheaper, lower-RAM servers.
+**Batching:** If you are processing many faces, modify the Python code to process them in batches rather than one by one. The underlying C++ libraries are highly optimized for batch processing.
+
 ---
 
 ## Implementation Dependencies

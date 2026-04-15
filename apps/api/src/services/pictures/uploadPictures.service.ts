@@ -16,8 +16,7 @@ const fileSchema = Joi.object({
 	fieldname: Joi.string().valid("uploadedImages").required(),
 	originalname: Joi.string().required(),
 	encoding: Joi.string().required(),
-	mimetype: Joi.string()
-		.required(),
+	mimetype: Joi.string().required(),
 	destination: Joi.string().required(),
 	filename: Joi.string().required(),
 	path: Joi.string().required(),
@@ -26,6 +25,7 @@ const fileSchema = Joi.object({
 		.required(), // Increased to 500MB
 	storage_provider: Joi.string().optional(),
 	storage_key: Joi.string().optional(),
+	file_hash: Joi.string().optional(),
 });
 
 const spec = Joi.object({
@@ -76,6 +76,7 @@ const storeImage = async (file, uploaded_by, guest_session_id, status) => {
 		uploaded_by,
 		guest_session_id,
 		status,
+		file_hash: file.file_hash,
 	};
 
 	if (file.storage_provider && file.storage_key) {
@@ -103,7 +104,12 @@ const service = async (data) => {
 	const imagesToProcess = [];
 	for (const file of params.files) {
 		imagesToProcess.push(
-			await storeImage(file, params.uploaded_by, params.guest_session_id, params.status),
+			await storeImage(
+				file,
+				params.uploaded_by,
+				params.guest_session_id,
+				params.status,
+			),
 		);
 	}
 
