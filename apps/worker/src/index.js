@@ -19,6 +19,7 @@ new QueueWorkersHandler(BULL_QUEUE_NAMES.FACE_CLUSTERING);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.BULK_DOWNLOAD);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.FILE_DELETION);
 new QueueWorkersHandler(BULL_QUEUE_NAMES.EMAIL);
+new QueueWorkersHandler(BULL_QUEUE_NAMES.TRASH_CLEANUP);
 
 logger.info("Worker Server started successfully", {
 	duration_seconds: (Date.now() - now) / 1000,

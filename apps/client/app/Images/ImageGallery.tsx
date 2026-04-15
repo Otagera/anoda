@@ -117,6 +117,18 @@ const ImagesList: FC = () => {
 		});
 	};
 
+	const toggleSelectAll = () => {
+		if (!images) return;
+		const allImageIds = images.map((img: any) => img.imageId);
+		const allSelected = allImageIds.every((id: string) => selectedIds.has(id));
+
+		if (allSelected) {
+			setSelectedIds(new Set());
+		} else {
+			setSelectedIds(new Set(allImageIds));
+		}
+	};
+
 	const handleBulkDelete = async () => {
 		const ids = Array.from(selectedIds);
 		setIsBatchProcessing(true);
@@ -387,7 +399,9 @@ const ImagesList: FC = () => {
 
 			<BulkActionBar
 				selectedCount={selectedIds.size}
+				totalCount={images?.length || 0}
 				onClear={() => setSelectedIds(new Set())}
+				onSelectAll={toggleSelectAll}
 				onDelete={handleBulkDelete}
 				onAddToAlbum={() => setIsAddToAlbumOpen(true)}
 				onDownload={handleBulkDownload}

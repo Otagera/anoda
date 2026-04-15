@@ -93,8 +93,8 @@ const ImageGridItem = ({
 				</button>
 			</div>
 
-			{/* Delete Button */}
-			{!shared && (
+			{/* Delete Button - hide when in selection mode */}
+			{!shared && !selectionMode && (
 				<button
 					type="button"
 					className="absolute top-4 right-4 p-2.5 bg-black/40 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-plum shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
@@ -102,7 +102,7 @@ const ImageGridItem = ({
 						e.stopPropagation();
 						onDelete(image.id);
 					}}
-					title="Delete image"
+					title="Move to trash"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

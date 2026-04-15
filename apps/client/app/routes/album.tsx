@@ -140,6 +140,17 @@ const AlbumPage = () => {
 		);
 	}, [imagesData, pendingImagesData, view]);
 
+	const toggleSelectAll = () => {
+		const allImageIds = images.map((img: any) => img.imageId);
+		const allSelected = allImageIds.every((id: string) => selectedIds.has(id));
+
+		if (allSelected) {
+			setSelectedIds(new Set());
+		} else {
+			setSelectedIds(new Set(allImageIds));
+		}
+	};
+
 	const selectedImageId = searchParams.get("imageId");
 	const selectedImage = useMemo(() => {
 		if (!selectedImageId || !images.length) return null;
@@ -726,7 +737,9 @@ const AlbumPage = () => {
 			) : (
 				<BulkActionBar
 					selectedCount={selectedIds.size}
+					totalCount={images.length}
 					onClear={() => setSelectedIds(new Set())}
+					onSelectAll={toggleSelectAll}
 					onDelete={handleBatchDelete}
 					onDownload={handleBulkDownload}
 					onMove={() => setIsAddToAlbumOpen(true)}
@@ -801,8 +814,8 @@ const AlbumPage = () => {
 
 			<ConfirmModal
 				isOpen={confirmDeleteAlbum}
-				title="Delete Album"
-				message={`Are you sure you want to delete "${albumData?.data?.albumName}"? This action cannot be undone and all photos in this album will be permanently removed.`}
+				title="Move Album to Trash"
+				message={`Are you sure you want to move "${albumData?.data?.albumName}" to trash? It will be permanently deleted after 30 days if not restored.`}
 				onConfirm={() => {
 					deleteAlbumMutation.mutate(albumId!);
 					setConfirmDeleteAlbum(false);

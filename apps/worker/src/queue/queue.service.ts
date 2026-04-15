@@ -31,6 +31,10 @@ const fileDeletionQueue = new Queue(
 	queueConnectionConfig,
 );
 const emailQueue = new Queue(BULL_QUEUE_NAMES.EMAIL, queueConnectionConfig);
+const trashCleanupQueue = new Queue(
+	BULL_QUEUE_NAMES.TRASH_CLEANUP,
+	queueConnectionConfig,
+);
 
 // The lib that contain adding the job and getting the queue
 export class QueueLib {
@@ -56,6 +60,7 @@ class QueueServices {
 	bulkDownloadQueueLib;
 	fileDeletionQueueLib;
 	emailQueueLib;
+	trashCleanupQueueLib;
 
 	constructor() {
 		this.defaultQueueLib = new QueueLib(defaultQueue);
@@ -66,6 +71,7 @@ class QueueServices {
 		this.bulkDownloadQueueLib = new QueueLib(bulkDownloadQueue);
 		this.fileDeletionQueueLib = new QueueLib(fileDeletionQueue);
 		this.emailQueueLib = new QueueLib(emailQueue);
+		this.trashCleanupQueueLib = new QueueLib(trashCleanupQueue);
 	}
 }
 

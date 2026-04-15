@@ -166,13 +166,26 @@ export default function PeoplePage() {
 												alt={person.name}
 												className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
 												onError={(e) => {
-													(e.target as HTMLImageElement).src = "";
-													(e.target as HTMLImageElement).className = "hidden";
+													const target = e.target as HTMLImageElement;
+													target.style.display = "none";
+													const parent = target.parentElement;
+													if (parent) {
+														const fallback = document.createElement("div");
+														fallback.className =
+															"w-full h-full flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800";
+														fallback.innerHTML = `
+															<svg class="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+															</svg>
+															<span class="text-[10px] text-zinc-400 mt-1">Face unavailable</span>
+														`;
+														parent.appendChild(fallback);
+													}
 												}}
 											/>
 										) : null}
-										
-										{(!person.faceUrl) && (
+
+										{!person.faceUrl && (
 											<div className="w-full h-full flex items-center justify-center">
 												<User className="w-12 h-12 text-zinc-300" />
 											</div>

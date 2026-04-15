@@ -1,16 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
-import { fetchTrash, restoreAlbum, restoreImages } from "~/utils/api";
+import {
+	emptyTrash,
+	fetchTrash,
+	permanentlyDeleteAlbums,
+	permanentlyDeleteImages,
+	restoreAlbum,
+	restoreImages,
+} from "~/utils/api";
 
 const Trash = () => {
 	const queryClient = useQueryClient();
 	const [selectedImages, setSelectedImages] = useState<string[]>([]);
 	const [selectedAlbums, setSelectedAlbums] = useState<string[]>([]);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteType, setDeleteType] = useState<"images" | "albums" | "all">(
+		"all",
+	);
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["trash"],
@@ -41,6 +52,60 @@ const Trash = () => {
 		},
 	});
 
+	const permanentlyDeleteImagesMutation = useMutation({
+		mutationFn: permanentlyDeleteImages,
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ["trash"] });
+			queryClient.invalidateQueries({ queryKey: ["settings"] });
+			queryClient.invalidateQueries({ queryKey: ["usage"] });
+			setSelectedImages([]);
+			setShowDeleteModal(false);
+			toast.success(
+				data?.message ||
+					`${selectedImages.length} image(s) permanently deleted. Quota credited.`,
+			);
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to permanently delete images");
+		},
+	});
+
+	const permanentlyDeleteAlbumsMutation = useMutation({
+		mutationFn: permanentlyDeleteAlbums,
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ["trash"] });
+			queryClient.invalidateQueries({ queryKey: ["settings"] });
+			queryClient.invalidateQueries({ queryKey: ["usage"] });
+			setSelectedAlbums([]);
+			setShowDeleteModal(false);
+			toast.success(
+				data?.message ||
+					`${selectedAlbums.length} album(s) permanently deleted. Quota credited.`,
+			);
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to permanently delete albums");
+		},
+	});
+
+	const emptyTrashMutation = useMutation({
+		mutationFn: emptyTrash,
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ["trash"] });
+			queryClient.invalidateQueries({ queryKey: ["settings"] });
+			queryClient.invalidateQueries({ queryKey: ["usage"] });
+			setSelectedImages([]);
+			setSelectedAlbums([]);
+			setShowDeleteModal(false);
+			toast.success(
+				data?.message || "Trash emptied successfully. Quota credited.",
+			);
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to empty trash");
+		},
+	});
+
 	const handleRestoreImages = () => {
 		if (selectedImages.length === 0) return;
 		restoreImagesMutation.mutate(selectedImages);
@@ -48,6 +113,16 @@ const Trash = () => {
 
 	const handleRestoreAlbum = (albumId: string) => {
 		restoreAlbumMutation.mutate(albumId);
+	};
+
+	const handlePermanentDelete = () => {
+		if (deleteType === "images") {
+			permanentlyDeleteImagesMutation.mutate(selectedImages);
+		} else if (deleteType === "albums") {
+			permanentlyDeleteAlbumsMutation.mutate(selectedAlbums);
+		} else {
+			emptyTrashMutation.mutate();
+		}
 	};
 
 	const toggleImage = (id: string) => {
@@ -64,6 +139,7 @@ const Trash = () => {
 
 	const albums = data?.data?.albums || [];
 	const images = data?.data?.images || [];
+	const totalItems = albums.length + images.length;
 
 	const formatDate = (dateStr: string | null) => {
 		if (!dateStr) return "Unknown";
@@ -73,6 +149,16 @@ const Trash = () => {
 			year: "numeric",
 		});
 	};
+
+	const getDeleteButtonLabel = () => {
+		if (deleteType === "images")
+			return `Delete ${selectedImages.length} Image(s)`;
+		if (deleteType === "albums")
+			return `Delete ${selectedAlbums.length} Album(s)`;
+		return "Empty Trash";
+	};
+
+	const hasSelection = selectedImages.length > 0 || selectedAlbums.length > 0;
 
 	if (isLoading) {
 		return (
@@ -86,12 +172,73 @@ const Trash = () => {
 
 	return (
 		<MainContainer className="space-y-12 pb-20">
+			{/* Delete Confirmation Modal */}
+			{showDeleteModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+					<div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+						<div className="flex items-center gap-3 mb-4 text-plum">
+							<AlertTriangle size={24} />
+							<Heading level={2} className="text-xl font-bold">
+								Permanently Delete?
+							</Heading>
+						</div>
+						<p className="text-zinc-600 dark:text-zinc-300 mb-4">
+							{deleteType === "all"
+								? `This will permanently delete ${totalItems} item(s). This action cannot be undone.`
+								: deleteType === "images"
+									? `This will permanently delete ${selectedImages.length} image(s). This action cannot be undone.`
+									: `This will permanently delete ${selectedAlbums.length} album(s). This action cannot be undone.`}
+						</p>
+						<p className="text-sm text-sage font-medium mb-6">
+							✓ This will free up {selectedImages.length || 0} images from your
+							quota
+						</p>
+						<div className="flex gap-3">
+							<Button
+								variant="secondary"
+								className="flex-1"
+								onClick={() => setShowDeleteModal(false)}
+								disabled={
+									permanentlyDeleteImagesMutation.isPending ||
+									permanentlyDeleteAlbumsMutation.isPending ||
+									emptyTrashMutation.isPending
+								}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="danger"
+								className="flex-1"
+								onClick={handlePermanentDelete}
+								disabled={
+									permanentlyDeleteImagesMutation.isPending ||
+									permanentlyDeleteAlbumsMutation.isPending ||
+									emptyTrashMutation.isPending
+								}
+							>
+								{permanentlyDeleteImagesMutation.isPending ||
+								permanentlyDeleteAlbumsMutation.isPending ||
+								emptyTrashMutation.isPending
+									? "Deleting..."
+									: getDeleteButtonLabel()}
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			<div>
 				<Heading level={1} className="text-4xl font-black">
 					Trash
 				</Heading>
 				<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
 					Items will be permanently deleted after 30 days
+					{totalItems > 0 && (
+						<span className="ml-2 text-sage">
+							• {totalItems} item(s) • freeing {images.length} images from quota
+							when permanently deleted
+						</span>
+					)}
 				</p>
 			</div>
 
@@ -102,12 +249,47 @@ const Trash = () => {
 				</div>
 			) : (
 				<>
+					{/* Action Bar */}
+					{(selectedImages.length > 0 || selectedAlbums.length > 0) && (
+						<div className="flex items-center justify-between bg-sage/10 dark:bg-sage/5 rounded-xl p-4 border border-sage/20">
+							<span className="text-sm font-medium text-sage">
+								{selectedImages.length + selectedAlbums.length} item(s) selected
+							</span>
+							<div className="flex gap-2">
+								<Button
+									onClick={() => {
+										setDeleteType("images");
+										setShowDeleteModal(true);
+									}}
+									variant="danger"
+									size="sm"
+									disabled={selectedImages.length === 0}
+								>
+									Delete Permanently
+								</Button>
+							</div>
+						</div>
+					)}
+
 					{albums.length > 0 && (
 						<section>
 							<div className="flex items-center justify-between mb-6">
 								<Heading level={2} className="text-xl font-bold">
 									Deleted Albums ({albums.length})
 								</Heading>
+								{albums.length > 0 && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => {
+											setDeleteType("albums");
+											setSelectedAlbums(albums.map((a: any) => a.id));
+											setShowDeleteModal(true);
+										}}
+									>
+										Delete All Albums
+									</Button>
+								)}
 							</div>
 							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 								{albums.map((album: any) => (
@@ -193,6 +375,22 @@ const Trash = () => {
 								))}
 							</div>
 						</section>
+					)}
+
+					{totalItems > 0 && (
+						<div className="flex justify-center pt-8">
+							<Button
+								variant="ghost"
+								onClick={() => {
+									setDeleteType("all");
+									setShowDeleteModal(true);
+								}}
+								className="text-plum hover:text-plum"
+							>
+								<Trash2 size={16} className="mr-2" />
+								Empty Trash ({totalItems} items)
+							</Button>
+						</div>
 					)}
 				</>
 			)}
