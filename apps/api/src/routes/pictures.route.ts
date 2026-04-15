@@ -10,6 +10,8 @@ import {
 } from "../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
 import { queueServices } from "../../../worker/src/queue/queue.service";
+import { abortMultipartUploadService } from "../services/pictures/abortMultipartUpload.service.ts";
+import { completeMultipartUploadService } from "../services/pictures/completeMultipartUpload.service.ts";
 import deletePictureService from "../services/pictures/deletePicture.service.ts";
 import fetchFacesService from "../services/pictures/fetchFaces.service.ts";
 import fetchPictureService from "../services/pictures/fetchPicture.service.ts";
@@ -18,11 +20,9 @@ import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.ser
 import { moderatePicturesService } from "../services/pictures/moderatePictures.service.ts";
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
-import { completeMultipartUploadService } from "../services/pictures/completeMultipartUpload.service.ts";
-import { abortMultipartUploadService } from "../services/pictures/abortMultipartUpload.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
-import { checkQuota } from "./middleware/quota.middleware.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
+import { checkQuota } from "./middleware/quota.middleware.ts";
 
 const picturesRoutes = new Elysia({ prefix: "/images" })
 	.use(guestPlugin)
@@ -368,6 +368,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}
 		},
 		{
+			beforeHandle: [checkQuota as any],
 			body: t.Object({
 				albumId: t.Optional(t.String()),
 				fileName: t.String(),

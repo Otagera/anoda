@@ -1,6 +1,6 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import crypto from "node:crypto";
 import axios from "axios";
 import { Elysia, t } from "elysia";
 import prisma from "../../../../packages/config/src/db.config.ts";
@@ -15,17 +15,17 @@ import {
 	UPLOADS_DIR,
 } from "../../../../packages/utils/src/constants.util.ts";
 import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
+import { validateFileFromBuffer } from "../../../../packages/utils/src/file-validator.ts";
 import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
+import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware";
 import {
 	publicRateLimit,
 	strictPublicRateLimit,
 } from "./middleware/rate-limit.plugin.ts";
-import { validateFileFromBuffer } from "../../../../packages/utils/src/file-validator.ts";
-import { guestPlugin } from "./middleware/guest.plugin.ts";
 
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.use(guestPlugin)
@@ -382,6 +382,20 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						body,
 					);
 					try {
+						const album = await prisma.albums.findUnique({
+							where: { share_token: params.token },
+							select: { created_by: true },
+						});
+
+						if (!album) throw new NotFoundError("Album not found.");
+
+						// Check Host Quota before generating presigned URL
+						const hostId = album.created_by;
+						if (hostId) {
+							const quotaError = await checkQuota({ userId: hostId, set });
+							if (quotaError) return quotaError;
+						}
+
 						const data = await getPresignedUrlService({
 							...body,
 							shareToken: params.token,
@@ -539,6 +553,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						if (existingKey) {
 							let filePath: string;
 							let fileSize = 0;
+							let fileHash = "";
 
 							// Generate a secure UUID-based key for the actual storage
 							const secureKey = `${crypto.randomUUID()}-${existingKey.split("-").pop() || "guest.jpg"}`;
@@ -547,7 +562,27 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 								const imageBuffer = await currentStorage.getObject(existingKey);
 
 								// Validate magic bytes
-								await validateFileFromBuffer(imageBuffer, existingKey);
+								const { type: _fileType, hash: hashResult } =
+									await validateFileFromBuffer(imageBuffer, existingKey);
+								fileHash = hashResult;
+
+								// Duplicate Check
+								const existingImage = await prisma.images.findFirst({
+									where: {
+										file_hash: fileHash,
+										album_images: { some: { album_id: album.album_id } },
+										deleted_at: null,
+									},
+								});
+
+								if (existingImage) {
+									set.status = HTTP_STATUS_CODES.OK;
+									return {
+										status: "completed",
+										message: "Image already exists in this album.",
+										data: { imageId: existingImage.image_id },
+									};
+								}
 
 								const absolutePath = path.resolve(
 									process.cwd(),
@@ -570,12 +605,29 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 									const stats = await fs.stat(oldPath);
 									fileSize = stats.size;
 
-									// Read a small chunk to validate magic bytes without loading whole file
-									const handle = await fs.open(oldPath, "r");
-									const buffer = Buffer.alloc(4100); // Recommended size for file-type
-									await handle.read(buffer, 0, 4100, 0);
-									await handle.close();
-									await validateFileFromBuffer(buffer, existingKey);
+									// For local existing key, we calculate hash of the full file for duplicate check
+									const fullBuffer = await fs.readFile(oldPath);
+									const { type: _fileType, hash: hashResult } =
+										await validateFileFromBuffer(fullBuffer, existingKey);
+									fileHash = hashResult;
+
+									// Duplicate Check
+									const existingImage = await prisma.images.findFirst({
+										where: {
+											file_hash: fileHash,
+											album_images: { some: { album_id: album.album_id } },
+											deleted_at: null,
+										},
+									});
+
+									if (existingImage) {
+										set.status = HTTP_STATUS_CODES.OK;
+										return {
+											status: "completed",
+											message: "Image already exists in this album.",
+											data: { imageId: existingImage.image_id },
+										};
+									}
 
 									// Rename to secure UUID-based key
 									const absolutePath = path.resolve(
@@ -604,6 +656,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 										? storageProvider
 										: "local",
 									storage_key: useExternalStorage ? existingKey : secureKey,
+									file_hash: fileHash,
 								},
 							];
 						} else {
@@ -612,10 +665,26 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 									const fileBuffer = Buffer.from(await file.arrayBuffer());
 
 									// Validate magic bytes
-									const fileType = await validateFileFromBuffer(
-										fileBuffer,
-										file.name,
-									);
+									const { type: fileType, hash: fileHash } =
+										await validateFileFromBuffer(fileBuffer, file.name);
+
+									// Duplicate Check
+									const existingImage = await prisma.images.findFirst({
+										where: {
+											file_hash: fileHash,
+											album_images: { some: { album_id: album.album_id } },
+											deleted_at: null,
+										},
+									});
+
+									if (existingImage) {
+										// If it's a batch upload, we might want to skip instead of returning 200 immediately
+										// but for now let's follow the single-file behavior or return existing
+										return {
+											imageId: existingImage.image_id,
+											isDuplicate: true,
+										};
+									}
 
 									// Secure key
 									const secureKey = `${crypto.randomUUID()}.${fileType.ext}`;
@@ -644,6 +713,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 											? storageProvider
 											: "local",
 										storage_key: storedKey,
+										file_hash: fileHash,
 									};
 								}),
 							);
@@ -653,16 +723,29 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							? "PENDING"
 							: "APPROVED";
 
-						const uploadResult = await uploadPicturesService({
-							files: convertedFiles,
-							status,
-							guestSessionId,
-							userId: hostId || undefined, // Charge compute to host
-						});
+						// Filter out duplicates for the upload service
+						const newFiles = convertedFiles.filter((f) => !f.isDuplicate);
+						const duplicateIds = convertedFiles
+							.filter((f) => f.isDuplicate)
+							.map((f) => f.imageId);
 
-						const imageIds = uploadResult.images.map((img: any) => img.imageId);
+						let uploadResult = { images: [] };
+						if (newFiles.length > 0) {
+							uploadResult = await uploadPicturesService({
+								files: newFiles,
+								status,
+								guestSessionId,
+								userId: hostId || undefined, // Charge compute to host
+							});
+						}
+
+						const newImageIds = uploadResult.images.map(
+							(img: any) => img.imageId,
+						);
+						const allImageIds = [...newImageIds, ...duplicateIds];
+
 						await createAlbumImageLinks(
-							imageIds.map((id) => ({
+							allImageIds.map((id) => ({
 								album_id: album.album_id,
 								image_id: id,
 							})),
@@ -675,7 +758,10 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 								status === "PENDING"
 									? "Images uploaded and pending approval."
 									: "Images uploaded successfully.",
-							data: uploadResult,
+							data: {
+								...uploadResult,
+								duplicateCount: duplicateIds.length,
+							},
 						};
 					} catch (error: any) {
 						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;

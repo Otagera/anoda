@@ -10,6 +10,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import toast from "react-hot-toast";
 import {
 	abortMultipartUpload,
 	abortPublicMultipartUpload,
@@ -19,6 +20,7 @@ import {
 	getPublicPresignedUrl,
 	uploadGuestImages,
 	uploadImages,
+	fetchUsage,
 } from "./api";
 
 export interface UploadTask {
@@ -87,24 +89,66 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 	}, [tasks]);
 
 	const addUploads = useCallback(
-		(
+		async (
 			files: FileList,
 			albumId: string,
 			initialStatus?: "PENDING" | "APPROVED",
 			shareToken?: string,
 		) => {
-			const newTasks: UploadTask[] = Array.from(files).map((file) => ({
-				id: Math.random().toString(36).substring(2, 11),
-				fileName: file.name,
-				file,
-				progress: 0,
-				status: "pending",
-				albumId,
-				initialStatus,
-				shareToken,
-			}));
-			setTasks((prev) => [...prev, ...newTasks]);
-			setIsManagerOpen(true);
+			try {
+				const usageRes = await fetchUsage();
+				const usage = usageRes?.data?.usage;
+				const imagesUsed = usage?.imagesUsed || 0;
+				const imagesLimit = usage?.imagesLimit || 50;
+				const remaining = imagesLimit - imagesUsed;
+
+				if (remaining <= 0) {
+					toast.error(
+						`Monthly image limit reached (${imagesLimit}). Please upgrade your plan.`,
+					);
+					return;
+				}
+
+				const fileCount = files.length;
+				if (fileCount > remaining) {
+					toast.error(
+						`You can only upload ${remaining} more image(s). Selected ${fileCount} - will upload first ${remaining}.`,
+					);
+				}
+
+				const filesToUpload =
+					fileCount > remaining
+						? Array.from(files).slice(0, remaining)
+						: Array.from(files);
+
+				const newTasks: UploadTask[] = filesToUpload.map((file) => ({
+					id: Math.random().toString(36).substring(2, 11),
+					fileName: file.name,
+					file,
+					progress: 0,
+					status: "pending",
+					albumId,
+					initialStatus,
+					shareToken,
+				}));
+				setTasks((prev) => [...prev, ...newTasks]);
+				setIsManagerOpen(true);
+			} catch (error) {
+				console.error("Error checking quota:", error);
+				toast.error("Could not verify quota. Proceeding with upload.");
+				const newTasks: UploadTask[] = Array.from(files).map((file) => ({
+					id: Math.random().toString(36).substring(2, 11),
+					fileName: file.name,
+					file,
+					progress: 0,
+					status: "pending",
+					albumId,
+					initialStatus,
+					shareToken,
+				}));
+				setTasks((prev) => [...prev, ...newTasks]);
+				setIsManagerOpen(true);
+			}
 		},
 		[],
 	);
@@ -285,18 +329,29 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 				formData.append("status", nextTask.initialStatus);
 			}
 
+			let uploadResponse;
 			if (nextTask.shareToken) {
-				await uploadGuestImages(nextTask.shareToken, formData);
+				uploadResponse = await uploadGuestImages(nextTask.shareToken, formData);
 				queryClient.invalidateQueries({
 					queryKey: ["shared-album", nextTask.shareToken],
 				});
 			} else {
-				await uploadImages(formData);
+				uploadResponse = await uploadImages(formData);
 				queryClient.invalidateQueries({
 					queryKey: ["images", nextTask.albumId],
 				});
 				queryClient.invalidateQueries({ queryKey: ["settings"] });
 				queryClient.invalidateQueries({ queryKey: ["usage"] });
+			}
+
+			// Handle duplicate detection toast
+			if (uploadResponse?.data?.data?.duplicateCount > 0) {
+				toast(
+					`${uploadResponse.data.data.duplicateCount} duplicate photo(s) skipped`,
+					{
+						icon: "ℹ️",
+					},
+				);
 			}
 
 			setTasks((prev) =>
@@ -307,6 +362,37 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 				),
 			);
 		} catch (err: any) {
+			const isQuotaError =
+				err.response?.status === 402 ||
+				err.message?.includes("limit") ||
+				err.message?.includes("quota") ||
+				err.message?.includes("Monthly compute limit reached");
+
+			if (isQuotaError) {
+				const quotaMessage =
+					err.response?.data?.message ||
+					"Monthly image limit reached. Please upgrade your plan.";
+
+				toast.error(quotaMessage);
+
+				setTasks((prev) =>
+					prev.map((t) =>
+						t.id === nextTask.id
+							? { ...t, status: "error", error: quotaMessage }
+							: t.status === "pending"
+								? {
+										...t,
+										status: "paused",
+										error: "Upload paused: quota limit reached",
+									}
+								: t,
+					),
+				);
+
+				processingRef.current = false;
+				return;
+			}
+
 			if (axios.isCancel(err) || err.message === "Upload aborted") {
 				console.log("Upload cancelled:", nextTask.fileName);
 

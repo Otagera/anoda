@@ -44,6 +44,26 @@ const UsageBar = ({
 		terracotta: "bg-terracotta/10",
 	};
 
+	const getAlertLevel = () => {
+		if (percentage >= 90) return "critical";
+		if (percentage >= 80) return "warning";
+		return null;
+	};
+
+	const alertLevel = getAlertLevel();
+	const alertStyles = {
+		warning: {
+			bg: "bg-amber-500/10 dark:bg-amber-500/20",
+			text: "text-amber-700 dark:text-amber-400",
+			icon: "⚠️",
+		},
+		critical: {
+			bg: "bg-red-500/10 dark:bg-red-500/20",
+			text: "text-red-700 dark:text-red-400",
+			icon: "🚨",
+		},
+	};
+
 	return (
 		<div className="space-y-2">
 			<div className="flex justify-between text-sm">
@@ -60,6 +80,18 @@ const UsageBar = ({
 					style={{ width: `${percentage}%` }}
 				/>
 			</div>
+			{alertLevel && (
+				<div
+					className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 ${alertStyles[alertLevel].bg} ${alertStyles[alertLevel].text}`}
+				>
+					<span>{alertStyles[alertLevel].icon}</span>
+					<span>
+						{alertLevel === "critical"
+							? `Critical: You've used ${Math.round(percentage)}% of your ${label.toLowerCase().replace(" this month", "")} limit!`
+							: `Warning: Approaching ${Math.round(percentage)}% of your ${label.toLowerCase().replace(" this month", "")} limit`}
+					</span>
+				</div>
+			)}
 		</div>
 	);
 };
