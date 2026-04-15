@@ -42,6 +42,7 @@ export const createElysiaApp = async () => {
 		"./routes/notifications.route"
 	);
 	const { default: usageRoutes } = await import("./routes/usage.route");
+	const { thumbnailRoutes } = await import("./routes/thumbnail.route");
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -153,6 +154,7 @@ export const createElysiaApp = async () => {
 		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
 		.group("/api/v1", (app) =>
 			app
+				.use(thumbnailRoutes)
 				.use(unsubscribeRoutes)
 				.use(authRoutes)
 				.use(albumsRoutes)

@@ -74,6 +74,7 @@ const config = {
 			bucket: process.env.R2_BUCKET,
 			endpoint: process.env.R2_ENDPOINT,
 			region: process.env.R2_REGION || "auto",
+			public_url: process.env.R2_PUBLIC_URL,
 		},
 	},
 	test: {
