@@ -175,7 +175,9 @@ model users {
   user_id           String                 @id @default(uuid()) @db.Uuid
   email             String                 @unique
   password          String
-  plan              String                 @default("free") // free, pro
+  plan_name         String                 @default("free") // kept for convenience
+  plan_id           String?                @db.Uuid
+  plan              plans?                 @relation(fields: [plan_id], references: [id])
   albums            albums[]
   images            images[]
   people            people[]
@@ -187,6 +189,16 @@ model users {
   email_preferences Json?                  @default("{\"welcome\":true,\"photoApproved\":true,\"clustering\":true,\"marketing\":false}")
   refresh_tokens    refresh_tokens[]
   password_resets   password_resets[]
+}
+
+model plans {
+  id                      String   @id @default(uuid()) @db.Uuid
+  name                    String   @unique // free, pro, enterprise
+  storage_mb              Int      @default(5120)
+  compute_units_per_month Int      @default(100)
+  created_at              DateTime @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime @default(now()) @db.Timestamptz(6)
+  users                   users[]
 }
 
 model password_resets {

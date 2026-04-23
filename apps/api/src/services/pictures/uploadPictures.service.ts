@@ -1,5 +1,9 @@
 import Joi from "joi";
-import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
+import {
+	getUserPlanLimits,
+	getUserUsage,
+	logUsage,
+} from "../../../../../packages/models/src/usage.model.ts";
 import {
 	getImageSize,
 	isImageCorrupted,
@@ -101,6 +105,26 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
+	// Quota Check
+	let hasQuota = true;
+	if (params.uploaded_by) {
+		const startOfMonth = new Date();
+		startOfMonth.setDate(1);
+		startOfMonth.setHours(0, 0, 0, 0);
+
+		const { computeLimit } = await getUserPlanLimits(params.uploaded_by);
+		if (computeLimit !== -1) {
+			const usage = await getUserUsage(
+				params.uploaded_by,
+				"compute",
+				startOfMonth,
+			);
+			if (usage >= computeLimit) {
+				hasQuota = false;
+			}
+		}
+	}
+
 	const imagesToProcess = [];
 	for (const file of params.files) {
 		imagesToProcess.push(
@@ -108,27 +132,33 @@ const service = async (data) => {
 				file,
 				params.uploaded_by,
 				params.guest_session_id,
-				params.status,
+				hasQuota ? params.status : "QUOTA_EXCEEDED",
 			),
 		);
 	}
 
 	for (const imageInfo of imagesToProcess) {
-		await queueServices.imageOptimizationQueueLib.addJob(
-			"imageOptimization",
-			{
-				imageId: imageInfo.imageId,
-				imagePath: imageInfo.imagePath,
-				storageProvider: imageInfo.storageProvider,
-				storageKey: imageInfo.storageKey,
-				worker: "imageOptimization",
-			},
-			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
-		);
+		if (hasQuota) {
+			await queueServices.imageOptimizationQueueLib.addJob(
+				"imageOptimization",
+				{
+					imageId: imageInfo.imageId,
+					imagePath: imageInfo.imagePath,
+					storageProvider: imageInfo.storageProvider,
+					storageKey: imageInfo.storageKey,
+					worker: "imageOptimization",
+				},
+				{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+			);
 
-		// Log usage for each image processed
+			// Log usage for each image processed
+			if (params.uploaded_by) {
+				await logUsage(params.uploaded_by, "compute", "face_detection", 1);
+			}
+		}
+
+		// Always log storage usage as the file IS stored
 		if (params.uploaded_by) {
-			await logUsage(params.uploaded_by, "compute_unit", "face_detection", 1);
 			await logUsage(
 				params.uploaded_by,
 				"storage",

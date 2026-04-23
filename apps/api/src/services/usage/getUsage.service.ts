@@ -1,5 +1,6 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
+import { getUserPlanLimits } from "../../../../../packages/models/src/usage.model.ts";
 import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
@@ -9,22 +10,10 @@ const spec = Joi.object({
 const service = async (data: any) => {
 	const params = validateSpec(spec, data);
 
-	// Get user and their plan
-	const user = await prisma.users.findUnique({
-		where: { user_id: params.userId },
-		select: { plan: true },
-	});
-
-	const plan = user?.plan || "free";
-
-	// Get plan limits from config
-	const env = process.env.NODE_ENV || "development";
-	const config =
-		require("../../../../../packages/config/src/index.config.ts").default;
-	const planLimits = config[env]?.plans?.[plan] || config[env]?.plans?.free;
-
-	const storageLimitMB = planLimits?.storage_mb || 5 * 1024;
-	const computeLimit = planLimits?.compute_units_per_month || 100;
+	// Get user plan and limits
+	const { plan, storageLimitMB, computeLimit } = await getUserPlanLimits(
+		params.userId,
+	);
 
 	// Get start of current month
 	const now = new Date();

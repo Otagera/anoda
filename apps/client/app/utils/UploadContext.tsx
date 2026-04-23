@@ -97,31 +97,28 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 		) => {
 			try {
 				const usageRes = await fetchUsage();
-				const usage = usageRes?.data?.usage;
-				const imagesUsed = usage?.imagesUsed || 0;
-				const imagesLimit = usage?.imagesLimit || 50;
-				const remaining = imagesLimit - imagesUsed;
+				const usage = usageRes?.data;
+				const computeUsed = usage?.computeUnitsUsed || 0;
+				const computeLimit = usage?.computeUnitsLimit || 100;
 
-				if (remaining <= 0) {
-					toast.error(
-						`Monthly image limit reached (${imagesLimit}). Please upgrade your plan.`,
-					);
-					return;
+				// -1 means unlimited
+				if (computeLimit !== -1) {
+					const remaining = computeLimit - computeUsed;
+
+					if (remaining <= 0) {
+						toast.error(
+							`Monthly processing limit reached (${computeLimit} images). Your images will be uploaded but NOT processed by AI.`,
+							{ duration: 5000 },
+						);
+					} else if (files.length > remaining) {
+						toast.error(
+							`You only have ${remaining} processing units left. Only the first ${remaining} images will be processed by AI.`,
+							{ duration: 5000 },
+						);
+					}
 				}
 
-				const fileCount = files.length;
-				if (fileCount > remaining) {
-					toast.error(
-						`You can only upload ${remaining} more image(s). Selected ${fileCount} - will upload first ${remaining}.`,
-					);
-				}
-
-				const filesToUpload =
-					fileCount > remaining
-						? Array.from(files).slice(0, remaining)
-						: Array.from(files);
-
-				const newTasks: UploadTask[] = filesToUpload.map((file) => ({
+				const newTasks: UploadTask[] = Array.from(files).map((file) => ({
 					id: Math.random().toString(36).substring(2, 11),
 					fileName: file.name,
 					file,

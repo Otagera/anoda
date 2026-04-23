@@ -360,6 +360,7 @@ const ImagesList: FC = () => {
 										height: height,
 										url: image.imagePath,
 										alt: image.imagePath,
+										status: image.status,
 									}}
 									isSelected={selectedIds.has(image.imageId)}
 									onToggleSelect={toggleSelect}

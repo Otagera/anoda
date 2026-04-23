@@ -63,21 +63,36 @@ export const getUserUsage = async (
 	return logs.reduce((acc, log) => acc + log.quantity, 0);
 };
 
+export const getUserPlanLimits = async (userId: string) => {
+	const user = await prisma.users.findUnique({
+		where: { user_id: userId },
+		select: {
+			plan_id: true,
+			plan: true,
+		},
+	});
+
+	if (user?.plan) {
+		return {
+			plan: user.plan.name,
+			storageLimitMB: user.plan.storage_mb,
+			computeLimit: user.plan.compute_units_per_month,
+		};
+	}
+
+	// Fallback to free plan defaults if no plan assigned
+	return {
+		plan: "free",
+		storageLimitMB: 5 * 1024,
+		computeLimit: 100,
+	};
+};
+
 export const getUserUsageStats = async (userId: string) => {
 	try {
-		// Get user plan
-		const user = await prisma.users.findUnique({
-			where: { user_id: userId },
-			select: { plan: true },
-		});
-
-		const plan = user?.plan || "free";
-		const env = process.env.NODE_ENV || "development";
-		const config = require("../../config/src/index.config.ts").default;
-		const planLimits = config[env]?.plans?.[plan] || config[env]?.plans?.free;
-
-		const storageLimitMB = planLimits?.storage_mb || 5 * 1024;
-		const computeLimit = planLimits?.compute_units_per_month || 100;
+		// Get user plan and limits from DB
+		const { plan, storageLimitMB, computeLimit } =
+			await getUserPlanLimits(userId);
 
 		// Get start of current month
 		const startOfMonth = new Date();

@@ -165,7 +165,7 @@ const deleteImage = async (where) => {
 		}
 
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	});
 
@@ -222,7 +222,7 @@ const deleteImageById = async (image_id) => {
 		}
 
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	});
 
@@ -287,7 +287,7 @@ const deleteImagesByIds = async (imageIds) => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -351,7 +351,7 @@ const deleteImagesByUserId = async (uploaded_by) => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -398,7 +398,7 @@ const deleteAllImages = async () => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -564,7 +564,7 @@ export const cleanupImageSideEffects = async (images: any[]) => {
 			} catch (_e) {}
 		}
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	}
 };
