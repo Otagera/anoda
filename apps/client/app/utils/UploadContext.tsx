@@ -370,7 +370,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 					err.response?.data?.message ||
 					"Monthly image limit reached. Please upgrade your plan.";
 
-				toast.error(quotaMessage);
+				// We don't show a toast here because we either showed a proactive warning
+				// in addUploads, or the global axios interceptor will show a consolidated one.
+				console.warn("Upload quota exceeded:", quotaMessage);
 
 				setTasks((prev) =>
 					prev.map((t) =>

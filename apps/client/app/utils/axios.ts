@@ -88,8 +88,8 @@ axiosAPI.interceptors.response.use(
 			if (typeof window !== "undefined") {
 				window.dispatchEvent(new CustomEvent("quota-exceeded"));
 				import("react-hot-toast").then(({ default: toast }) => {
-					toast.error("Quota Exceeded. Please upgrade your plan.", {
-						id: "quota-402",
+					toast.error("Processing limit reached. Please upgrade your plan.", {
+						id: "quota-limit-reached",
 					});
 				});
 			}
