@@ -25,14 +25,29 @@ const billingWebhookRoutes = new Elysia({ prefix: "/webhooks" }).post(
 
 			switch (event) {
 				case "plan_changed":
-					// Update user's plan
-					await prisma.users.update({
-						where: { user_id },
-						data: { plan: plan || "free" },
-					});
-					console.log(
-						`[Billing Webhook] User ${user_id} plan changed to ${plan}`,
-					);
+					if (plan) {
+						// Fetch target plan from DB
+						const targetPlan = await prisma.plans.findUnique({
+							where: { name: plan.toLowerCase() },
+						});
+
+						if (!targetPlan) {
+							set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+							return { status: "error", message: `Plan ${plan} not found` };
+						}
+
+						// Update user's plan
+						await prisma.users.update({
+							where: { user_id },
+							data: {
+								plan_id: targetPlan.id,
+								plan_name: targetPlan.name,
+							},
+						});
+						console.log(
+							`[Billing Webhook] User ${user_id} plan changed to ${plan}`,
+						);
+					}
 					break;
 
 				case "usage_threshold_warning":
@@ -58,8 +73,8 @@ const billingWebhookRoutes = new Elysia({ prefix: "/webhooks" }).post(
 							operation: "billing_report",
 							quantity: 1,
 							metadata: {
-								compute_units: compute_units_used,
-								storage_mb: storage_mb_used,
+								compute: compute_units_used,
+								storage: storage_mb_used,
 								report_timestamp: timestamp,
 							},
 						},

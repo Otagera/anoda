@@ -151,6 +151,100 @@ const Home = () => {
 				<ImagesList />
 			</section>
 
+			{/* Plans Section */}
+			<section className="pt-20 border-t border-zinc-100 dark:border-zinc-800">
+				<div className="text-center mb-16">
+					<span className="text-xs font-black uppercase tracking-widest text-plum mb-3 block">
+						Tiers
+					</span>
+					<Heading level={2} className="text-4xl font-black mb-4">
+						Plans & Limits
+					</Heading>
+					<p className="text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto font-medium">
+						Choose the plan that fits your storage and processing needs.
+					</p>
+				</div>
+
+				<div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+					{/* Free Plan */}
+					<div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-10 border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group hover:border-sage/30 transition-all duration-500">
+						<div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+							<Zap size={80} className="text-sage" />
+						</div>
+						<h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-2">
+							Free Tier
+						</h3>
+						<p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8 font-medium">
+							Great for personal use and small events.
+						</p>
+						<div className="space-y-4 mb-10">
+							{[
+								{ label: "Storage", value: "5 GB" },
+								{ label: "AI Processing", value: "100 Images / mo" },
+								{ label: "Collaborative Albums", value: "Unlimited" },
+								{ label: "Face Search", value: "Included" },
+							].map((feature) => (
+								<div
+									key={feature.label}
+									className="flex justify-between items-center py-3 border-b border-zinc-50 dark:border-zinc-800/50 last:border-0"
+								>
+									<span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+										{feature.label}
+									</span>
+									<span className="text-sm text-zinc-900 dark:text-zinc-100 font-bold">
+										{feature.value}
+									</span>
+								</div>
+							))}
+						</div>
+						<div className="text-center">
+							<span className="text-xs font-black uppercase tracking-widest text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-full">
+								Current Plan
+							</span>
+						</div>
+					</div>
+
+					{/* Pro Plan */}
+					<div className="bg-gradient-to-br from-plum to-plum/80 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-plum/20 relative overflow-hidden group">
+						<div className="absolute top-0 right-0 p-8 opacity-20 group-hover:rotate-12 transition-transform duration-500">
+							<Sparkles size={80} />
+						</div>
+						<div className="inline-flex bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+							Most Popular
+						</div>
+						<h3 className="text-2xl font-black mb-2">Pro Tier</h3>
+						<p className="text-white/70 text-sm mb-8 font-medium">
+							For professional photographers and large events.
+						</p>
+						<div className="space-y-4 mb-10">
+							{[
+								{ label: "Storage", value: "50 GB" },
+								{ label: "AI Processing", value: "Unlimited" },
+								{ label: "Custom Storage (R2/S3)", value: "Included" },
+								{ label: "Priority Support", value: "Included" },
+							].map((feature) => (
+								<div
+									key={feature.label}
+									className="flex justify-between items-center py-3 border-b border-white/10 last:border-0"
+								>
+									<span className="text-sm text-white/70 font-medium">
+										{feature.label}
+									</span>
+									<span className="text-sm font-bold">{feature.value}</span>
+								</div>
+							))}
+						</div>
+						<Button
+							variant="outline"
+							className="w-full bg-white text-plum border-white hover:bg-zinc-100 font-black uppercase tracking-widest text-xs py-6 rounded-2xl"
+							onClick={() => toast.success("Contact support to upgrade to Pro")}
+						>
+							Upgrade to Pro
+						</Button>
+					</div>
+				</div>
+			</section>
+
 			{/* Modals */}
 			<ConfirmModal
 				isOpen={!!confirmDeleteAlbumId}

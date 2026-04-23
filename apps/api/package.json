@@ -20,6 +20,9 @@
 		"lint": "bunx biome lint ./src",
 		"check": "bunx biome check"
 	},
+	"prisma": {
+		"seed": "bun prisma/seed.ts"
+	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
