@@ -39,7 +39,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(JSONFormatter())
 logger.addHandler(handler)
 
-app = FastAPI(title="Anoda AI Face Service")
+app = FastAPI(title="Lumina AI Face Service")
 
 class ProcessRequest(BaseModel):
     image_path: str

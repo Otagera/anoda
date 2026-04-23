@@ -1,4 +1,4 @@
-# Anoda Facematch - Deployment Plan (Parked)
+# Lumina - Deployment Plan (Parked)
 
 ## Current Status: PAUSED
 

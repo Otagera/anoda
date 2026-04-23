@@ -94,7 +94,7 @@ const Welcome = () => {
 								.
 							</h1>
 							<p className="max-w-2xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
-								Anoda Facematch turns your photo library into a collaborative
+								Lumina turns your photo library into a collaborative
 								intelligence layer. Host events where everyone contributes, and
 								anyone can find their own photos in seconds.
 							</p>

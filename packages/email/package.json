@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/email",
+	"name": "@lumina/email",
 	"version": "1.0.0",
 	"description": "Email service for Anoda Facematch monorepo",
 	"main": "src/email.service.ts",

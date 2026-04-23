@@ -12,7 +12,7 @@ dotenv.config();
 
 const config = {
 	env: process.env.NODE_ENV || "development",
-	app_name: process.env.APP_NAME || "Anoda Facematch",
+	app_name: process.env.APP_NAME || "Lumina",
 	development: {
 		// DB
 		db_user: process.env.PG_USERNAME,
@@ -40,7 +40,7 @@ const config = {
 		chatterbox_max_bulk_log: process.env.MAX_BULK_LOG || 10,
 		chatterbox_api_url:
 			process.env.CHATTERBOX_API_URL || "http://localhost:3005",
-		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
+		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "lumina",
 		chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
 
 		chatterbox: {
@@ -143,7 +143,7 @@ const config = {
 		chatterbox_max_bulk_log: process.env.MAX_BULK_LOG || 10,
 		chatterbox_api_url:
 			process.env.CHATTERBOX_API_URL || "http://localhost:3005",
-		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
+		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "lumina",
 		chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
 
 		chatterbox: {

@@ -1,6 +1,9 @@
 import joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { NotFoundError, BadRequestError } from "../../../../../packages/utils/src/error.util.ts";
+import {
+	BadRequestError,
+	NotFoundError,
+} from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
@@ -31,7 +34,9 @@ const service = async (data: unknown) => {
 	}
 
 	if (member.user_id) {
-		throw new BadRequestError("Cannot delete invite - user has already joined. Remove member instead.");
+		throw new BadRequestError(
+			"Cannot delete invite - user has already joined. Remove member instead.",
+		);
 	}
 
 	await prisma.album_members.delete({

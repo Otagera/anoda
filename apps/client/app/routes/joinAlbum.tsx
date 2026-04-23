@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Shield, Upload, Users } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { joinAlbum } from "../utils/api";
-import { useAuth } from "../utils/auth";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/standard/Button";
 import { Heading } from "../components/standard/Heading";
+import { joinAlbum } from "../utils/api";
+import { useAuth } from "../utils/auth";
 
 const fetchInviteDetails = async (token: string) => {
 	const response = await fetch(`/api/v1/public/invite/${token}`);
@@ -23,7 +22,8 @@ const JoinAlbum = () => {
 	const { isAuthenticated, isInitialized } = useAuth();
 	const [error, setError] = useState<string | null>(null);
 
-	const inviteToken = searchParams.get("token") || window.location.pathname.split("/join/")[1];
+	const inviteToken =
+		searchParams.get("token") || window.location.pathname.split("/join/")[1];
 
 	const { data: invite, isLoading } = useQuery({
 		queryKey: ["invite", inviteToken],
@@ -101,7 +101,9 @@ const JoinAlbum = () => {
 						<Shield className="w-8 h-8 text-red-500" />
 					</div>
 					<Heading level={2}>Invalid Invite</Heading>
-					<p className="text-zinc-500 mt-2">This invite link is invalid or has expired.</p>
+					<p className="text-zinc-500 mt-2">
+						This invite link is invalid or has expired.
+					</p>
 					<Link to="/">
 						<Button className="mt-6">
 							<ArrowLeft className="w-4 h-4 mr-2" />
@@ -116,7 +118,10 @@ const JoinAlbum = () => {
 	return (
 		<div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6">
 			<div className="max-w-md w-full">
-				<Link to="/" className="inline-flex items-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 mb-8">
+				<Link
+					to="/"
+					className="inline-flex items-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 mb-8"
+				>
 					<ArrowLeft className="w-4 h-4 mr-1" />
 					Back
 				</Link>
@@ -132,7 +137,9 @@ const JoinAlbum = () => {
 					<div className="space-y-4 mb-6">
 						<div className="p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl">
 							<p className="text-xs text-zinc-500 mb-1">Album</p>
-							<p className="font-bold text-zinc-900 dark:text-white">{invite.albumName}</p>
+							<p className="font-bold text-zinc-900 dark:text-white">
+								{invite.albumName}
+							</p>
 						</div>
 						<div className="flex gap-4">
 							<div className="flex-1 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl">
@@ -152,7 +159,9 @@ const JoinAlbum = () => {
 						</div>
 					</div>
 
-					<p className="text-sm text-zinc-500 text-center mb-4">Joining album...</p>
+					<p className="text-sm text-zinc-500 text-center mb-4">
+						Joining album...
+					</p>
 				</div>
 			</div>
 		</div>

@@ -1,6 +1,9 @@
 import joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { NotFoundError, BadRequestError } from "../../../../../packages/utils/src/error.util.ts";
+import {
+	BadRequestError,
+	NotFoundError,
+} from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,

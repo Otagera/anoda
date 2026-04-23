@@ -64,7 +64,7 @@ const Navbar = () => {
 						<div className="w-2 h-2 sm:w-3 sm:h-3 bg-zinc-950 rounded-full" />
 					</div>
 					<span className="text-base sm:text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
-						anoda<span className="text-sage hidden sm:inline">.</span>facematch
+						lumina<span className="text-sage hidden sm:inline">.</span>io
 					</span>
 				</Link>
 

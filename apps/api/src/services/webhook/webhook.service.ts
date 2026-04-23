@@ -57,8 +57,8 @@ const sendWebhook = async (
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"X-Anoda-Signature": signature,
-				"X-Anoda-Event": eventType,
+				"X-Lumina-Signature": signature,
+				"X-Lumina-Event": eventType,
 			},
 			body,
 		});

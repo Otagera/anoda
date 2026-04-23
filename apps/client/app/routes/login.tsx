@@ -2,8 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../utils/auth";
 import { joinAlbum } from "../utils/api";
+import { useAuth } from "../utils/auth";
 
 const LoginPage = () => {
 	const navigate = useNavigate();
@@ -43,7 +43,13 @@ const LoginPage = () => {
 			const token = redirectParam.replace("/join/", "");
 			sessionStorage.setItem("pendingJoinToken", token);
 		}
-	}, [isInitialized, isAuthenticated, navigate, redirectParam, pendingJoinToken]);
+	}, [
+		isInitialized,
+		isAuthenticated,
+		navigate,
+		redirectParam,
+		pendingJoinToken,
+	]);
 
 	const mutation = useMutation({
 		mutationFn: login,

@@ -3,4 +3,4 @@ export {
 	sendPhotoApprovedEmail,
 	sendResetPasswordEmail,
 	sendWelcomeEmail,
-} from "@anoda-facematch/email/email.service";
+} from "@lumina/email/email.service";

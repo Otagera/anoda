@@ -1,5 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, MoreVertical, Plus, RefreshCw, Shield, Trash2, User, X } from "lucide-react";
+import {
+	Copy,
+	MoreVertical,
+	Plus,
+	RefreshCw,
+	Shield,
+	Trash2,
+	User,
+	X,
+} from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -30,11 +39,18 @@ export const AlbumPermissionsModal = ({
 	const [openMenu, setOpenMenu] = useState<string | null>(null);
 
 	const generateInviteMutation = useMutation({
-		mutationFn: ({ role, expiresInDays }: { role: string; expiresInDays: number }) =>
-			generateInvite(albumId, role, expiresInDays),
+		mutationFn: ({
+			role,
+			expiresInDays,
+		}: {
+			role: string;
+			expiresInDays: number;
+		}) => generateInvite(albumId, role, expiresInDays),
 		onSuccess: (data) => {
 			setGeneratedToken(data.data.inviteToken);
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			queryClient.invalidateQueries({
+				queryKey: [`album-${albumId}`, albumId],
+			});
 			toast.success("Invite link generated!");
 		},
 		onError: (error: any) => {
@@ -46,7 +62,9 @@ export const AlbumPermissionsModal = ({
 		mutationFn: ({ memberId, role }: { memberId: string; role: string }) =>
 			updateMemberRole(albumId, memberId, role),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			queryClient.invalidateQueries({
+				queryKey: [`album-${albumId}`, albumId],
+			});
 			toast.success("Role updated!");
 			setOpenMenu(null);
 		},
@@ -56,9 +74,12 @@ export const AlbumPermissionsModal = ({
 	});
 
 	const removeMemberMutation = useMutation({
-		mutationFn: ({ memberId }: { memberId: string }) => removeMember(albumId, memberId),
+		mutationFn: ({ memberId }: { memberId: string }) =>
+			removeMember(albumId, memberId),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			queryClient.invalidateQueries({
+				queryKey: [`album-${albumId}`, albumId],
+			});
 			toast.success("Member removed!");
 			setOpenMenu(null);
 		},
@@ -68,9 +89,12 @@ export const AlbumPermissionsModal = ({
 	});
 
 	const deleteInviteMutation = useMutation({
-		mutationFn: ({ memberId }: { memberId: string }) => deleteInvite(albumId, memberId),
+		mutationFn: ({ memberId }: { memberId: string }) =>
+			deleteInvite(albumId, memberId),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			queryClient.invalidateQueries({
+				queryKey: [`album-${albumId}`, albumId],
+			});
 			toast.success("Invite deleted!");
 			setOpenMenu(null);
 		},
@@ -80,10 +104,13 @@ export const AlbumPermissionsModal = ({
 	});
 
 	const resendInviteMutation = useMutation({
-		mutationFn: ({ memberId }: { memberId: string }) => resendInvite(albumId, memberId),
+		mutationFn: ({ memberId }: { memberId: string }) =>
+			resendInvite(albumId, memberId),
 		onSuccess: (data) => {
 			setGeneratedToken(data.data.inviteToken);
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`, albumId] });
+			queryClient.invalidateQueries({
+				queryKey: [`album-${albumId}`, albumId],
+			});
 			toast.success("Invite resent!");
 			setOpenMenu(null);
 		},
@@ -109,7 +136,9 @@ export const AlbumPermissionsModal = ({
 		if (!date) return null;
 		const expiry = new Date(date);
 		const now = new Date();
-		const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+		const diffDays = Math.ceil(
+			(expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+		);
 
 		if (diffDays < 0) return "Expired";
 		if (diffDays === 0) return "Expires today";
@@ -188,7 +217,10 @@ export const AlbumPermissionsModal = ({
 								<Button
 									className="w-full py-4 font-bold"
 									onClick={() =>
-										generateInviteMutation.mutate({ role: selectedRole, expiresInDays })
+										generateInviteMutation.mutate({
+											role: selectedRole,
+											expiresInDays,
+										})
 									}
 									disabled={generateInviteMutation.isPending}
 								>
@@ -261,9 +293,9 @@ export const AlbumPermissionsModal = ({
 															key={role}
 															onClick={() =>
 																updateRoleMutation.mutate({
-																memberId: member.id,
-																role,
-															})
+																	memberId: member.id,
+																	role,
+																})
 															}
 															disabled={member.role === role}
 															className="w-full px-3 py-2 text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -274,7 +306,9 @@ export const AlbumPermissionsModal = ({
 													<hr className="my-1 border-zinc-200 dark:border-zinc-800" />
 													<button
 														onClick={() =>
-															removeMemberMutation.mutate({ memberId: member.id })
+															removeMemberMutation.mutate({
+																memberId: member.id,
+															})
 														}
 														className="w-full px-3 py-2 text-xs text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
 													>
@@ -320,9 +354,7 @@ export const AlbumPermissionsModal = ({
 													</p>
 													<p
 														className={`text-[10px] font-medium ${
-															expired
-																? "text-red-500"
-																: "text-zinc-500"
+															expired ? "text-red-500" : "text-zinc-500"
 														}`}
 													>
 														{formatExpiry(member.expires_at)}
@@ -340,7 +372,9 @@ export const AlbumPermissionsModal = ({
 												{!expired && (
 													<button
 														onClick={() =>
-															resendInviteMutation.mutate({ memberId: member.id })
+															resendInviteMutation.mutate({
+																memberId: member.id,
+															})
 														}
 														disabled={resendInviteMutation.isPending}
 														className="p-2 text-zinc-400 hover:text-sage hover:bg-sage/10 rounded-lg transition-colors"
@@ -368,7 +402,11 @@ export const AlbumPermissionsModal = ({
 				</div>
 
 				<div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-					<Button variant="ghost" onClick={onClose} className="w-full rounded-xl py-4 font-bold">
+					<Button
+						variant="ghost"
+						onClick={onClose}
+						className="w-full rounded-xl py-4 font-bold"
+					>
 						Done
 					</Button>
 				</div>

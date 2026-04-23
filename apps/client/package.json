@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/client",
+	"name": "@lumina/client",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",

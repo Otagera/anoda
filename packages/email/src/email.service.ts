@@ -4,7 +4,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const prisma = new PrismaClient();
 
-const FROM_EMAIL = "Anoda FaceMatch <noreply@anoda.io>";
+const FROM_EMAIL = "Lumina <noreply@lumina.io>";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const getUnsubscribeLink = (email: string, type: string) => {
@@ -13,7 +13,7 @@ const getUnsubscribeLink = (email: string, type: string) => {
 
 const emailFooter = (email: string, type: string) => `
   <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-    <p>You're receiving this email because you have an account with Anoda FaceMatch.</p>
+    <p>You're receiving this email because you have an account with Lumina.</p>
     <p>
       <a href="${getUnsubscribeLink(email, type)}" style="color: #666;">Unsubscribe</a> from ${type} emails.
     </p>
@@ -55,7 +55,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
 			to: [email],
 			subject: "Reset your password",
 			html: `
-        <p>You requested a password reset for your Anoda FaceMatch account.</p>
+        <p>You requested a password reset for your Lumina account.</p>
         <p>Click the link below to reset your password. This link will expire in 15 minutes.</p>
         <a href="${resetLink}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background: #007AFF; color: white; text-decoration: none; border-radius: 6px;">Reset Password</a>
         <p>If you didn't request this, you can safely ignore this email.</p>
@@ -80,9 +80,9 @@ export const sendWelcomeEmail = async (email: string) => {
 		const data = await resend.emails.send({
 			from: FROM_EMAIL,
 			to: [email],
-			subject: "Welcome to Anoda FaceMatch",
+			subject: "Welcome to Lumina",
 			html: `
-        <h1>Welcome to Anoda FaceMatch!</h1>
+        <h1>Welcome to Lumina!</h1>
         <p>We're excited to have you on board. Start creating albums and matching faces today!</p>
         <p>Here's what you can do:</p>
         <ul>

@@ -18,6 +18,7 @@ import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
 import { validateFileFromBuffer } from "../../../../packages/utils/src/file-validator.ts";
 import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
+import { getInviteDetailsService } from "../services/albums/getInviteDetails.service.ts";
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
@@ -26,7 +27,6 @@ import {
 	publicRateLimit,
 	strictPublicRateLimit,
 } from "./middleware/rate-limit.plugin.ts";
-import { getInviteDetailsService } from "../services/albums/getInviteDetails.service.ts";
 
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.use(guestPlugin)
@@ -808,7 +808,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 		},
 		{
 			params: t.Object({ token: t.String() }),
-		}
+		},
 	);
 
 export default publicRoutes;

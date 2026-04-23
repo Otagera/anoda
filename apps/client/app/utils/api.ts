@@ -534,7 +534,11 @@ export const moderateImages = async (
 	}
 };
 
-export const generateInvite = async (albumId: string, role: string, expiresInDays?: number) => {
+export const generateInvite = async (
+	albumId: string,
+	role: string,
+	expiresInDays?: number,
+) => {
 	try {
 		const response = await axiosAPI.post(`/albums/${albumId}/invites`, {
 			role,
@@ -547,11 +551,18 @@ export const generateInvite = async (albumId: string, role: string, expiresInDay
 	}
 };
 
-export const updateMemberRole = async (albumId: string, memberId: string, role: string) => {
+export const updateMemberRole = async (
+	albumId: string,
+	memberId: string,
+	role: string,
+) => {
 	try {
-		const response = await axiosAPI.patch(`/albums/${albumId}/members/${memberId}`, {
-			role,
-		});
+		const response = await axiosAPI.patch(
+			`/albums/${albumId}/members/${memberId}`,
+			{
+				role,
+			},
+		);
 		return response.data;
 	} catch (error) {
 		console.error("Error updating member role:", error);
@@ -561,7 +572,9 @@ export const updateMemberRole = async (albumId: string, memberId: string, role: 
 
 export const removeMember = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/albums/${albumId}/members/${memberId}`);
+		const response = await axiosAPI.delete(
+			`/albums/${albumId}/members/${memberId}`,
+		);
 		return response.data;
 	} catch (error) {
 		console.error("Error removing member:", error);
@@ -571,7 +584,9 @@ export const removeMember = async (albumId: string, memberId: string) => {
 
 export const deleteInvite = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/albums/${albumId}/invites/${memberId}`);
+		const response = await axiosAPI.delete(
+			`/albums/${albumId}/invites/${memberId}`,
+		);
 		return response.data;
 	} catch (error) {
 		console.error("Error deleting invite:", error);
@@ -581,7 +596,9 @@ export const deleteInvite = async (albumId: string, memberId: string) => {
 
 export const resendInvite = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.post(`/albums/${albumId}/invites/${memberId}/resend`);
+		const response = await axiosAPI.post(
+			`/albums/${albumId}/invites/${memberId}/resend`,
+		);
 		return response.data;
 	} catch (error) {
 		console.error("Error resending invite:", error);

@@ -19,14 +19,19 @@ const rewriteImageUrls = (data: unknown, origin: string): unknown => {
 			const result: Record<string, unknown> = {};
 			for (const [key, value] of Object.entries(obj)) {
 				if (
-					(key === "coverImages" || key === "imagePath" || key === "url" || key === "src") &&
+					(key === "coverImages" ||
+						key === "imagePath" ||
+						key === "url" ||
+						key === "src") &&
 					typeof value === "string" &&
 					value.includes("localhost")
 				) {
 					result[key] = value.replace(/^http:\/\/localhost:\d+/, origin);
 				} else if (key === "coverImages" && Array.isArray(value)) {
 					result[key] = (value as string[]).map((url) =>
-						url.includes("localhost") ? url.replace(/^http:\/\/localhost:\d+/, origin) : url,
+						url.includes("localhost")
+							? url.replace(/^http:\/\/localhost:\d+/, origin)
+							: url,
 					);
 				} else {
 					result[key] = rewrite(value);
@@ -68,7 +73,10 @@ axiosAPI.interceptors.response.use(
 				const url = error.config?.url || "";
 				const isLoginPage = window.location.pathname === "/login";
 				const isAuthMe = url.includes("/auth/me");
-				const isPublicEndpoint = url.includes("/public/") || url.includes("/share/") || url.includes("/join/");
+				const isPublicEndpoint =
+					url.includes("/public/") ||
+					url.includes("/share/") ||
+					url.includes("/join/");
 
 				if (!isLoginPage && !isAuthMe && !isPublicEndpoint) {
 					window.location.href = "/login";

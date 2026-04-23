@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { checkAlbumPermissions } from "../../../../packages/utils/src/permissions.util.ts";
 import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
+import { getAlbumForUser } from "../services/albums/albums.lib";
 import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
 import { deleteInviteService } from "../services/albums/deleteInvite.service.ts";
@@ -9,7 +10,6 @@ import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
 import { fetchAlbumsService } from "../services/albums/fetchAlbums.service.ts";
 import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum.service.ts";
 import { generateInviteService } from "../services/albums/generateInvite.service.ts";
-import { getAlbumForUser } from "../services/albums/albums.lib";
 import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
 import { moderateImagesService } from "../services/albums/moderateImages.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
@@ -549,7 +549,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					"../../../worker/src/queue/queue.service.ts"
 				);
 
-if (!localQueueServices) {
+				if (!localQueueServices) {
 					throw new Error("Queue services not initialized");
 				}
 

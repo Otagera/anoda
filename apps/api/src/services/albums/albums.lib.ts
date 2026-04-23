@@ -1,3 +1,4 @@
+import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	createAlbumImageLink,
 	createAlbumImageLinks,
@@ -15,7 +16,6 @@ import {
 	softDeleteAlbumById,
 	updateExistingAlbum,
 } from "../../../../../packages/models/src/albums.model.ts";
-import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	fetchImage,
 	fetchImagesByIds,
@@ -154,7 +154,8 @@ export const getAlbumsForUser = async (userId) => {
 
 	const allAlbums = [...ownedAlbums, ...invitedAlbums];
 	const uniqueAlbums = allAlbums.filter(
-		(album, index, self) => index === self.findIndex((a) => a.album_id === album.album_id)
+		(album, index, self) =>
+			index === self.findIndex((a) => a.album_id === album.album_id),
 	);
 
 	return uniqueAlbums;
