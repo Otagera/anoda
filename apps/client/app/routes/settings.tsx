@@ -20,7 +20,7 @@ import {
 	deleteStorageConfig,
 	fetchPlans,
 	fetchSettings,
-	updatePreferences,
+	updateStorageConfig,
 } from "../utils/api";
 
 const formatBytes = (bytes: number) => {
