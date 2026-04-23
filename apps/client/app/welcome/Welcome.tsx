@@ -1,15 +1,23 @@
+import { useQuery } from "@tanstack/react-query";
 import {
 	ArrowRight,
 	CheckCircle2,
 	HardDrive,
 	Search,
 	Users,
+	Zap,
 } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
+import { fetchPlans } from "../utils/api";
 import { useAuth } from "../utils/auth";
 
 const Welcome = () => {
 	const { isAuthenticated, isInitialized } = useAuth();
+
+	const { data: plansData, isLoading: isPlansLoading } = useQuery({
+		queryKey: ["plans"],
+		queryFn: fetchPlans,
+	});
 
 	if (isInitialized && isAuthenticated) {
 		return <Navigate to="/home" replace />;
@@ -36,40 +44,7 @@ const Welcome = () => {
 		},
 	];
 
-	const plans = [
-		{
-			name: "Free",
-			price: "Free",
-			priceNgn: "Free",
-			images: "50",
-			storage: "1 GB",
-			highlight: false,
-		},
-		{
-			name: "Pro",
-			price: "$9.99",
-			priceNgn: "₦12,500",
-			images: "1,500",
-			storage: "50 GB",
-			highlight: true,
-		},
-		{
-			name: "BYOS Power",
-			price: "$14.99",
-			priceNgn: "₦19,500",
-			images: "5,000",
-			storage: "Unlimited",
-			highlight: false,
-		},
-		{
-			name: "Enterprise",
-			price: "$49",
-			priceNgn: "₦65,000",
-			images: "25,000",
-			storage: "Unlimited",
-			highlight: false,
-		},
-	];
+	const plans = plansData?.data || [];
 
 	return (
 		<div className="relative min-h-[calc(100vh-73px)] overflow-hidden bg-zinc-50 dark:bg-zinc-950">
@@ -187,74 +162,63 @@ const Welcome = () => {
 						</p>
 					</div>
 
-					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-						{plans.map((plan) => (
-							<div
-								key={plan.name}
-								className={`relative rounded-3xl border p-8 flex flex-col ${
-									plan.highlight
-										? "border-sage bg-sage/5 dark:bg-sage/5"
-										: "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
-								}`}
-							>
-								{plan.highlight && (
-									<div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sage px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
-										Most Popular
-									</div>
-								)}
-								<h3 className="text-xl font-black text-zinc-900 dark:text-white">
-									{plan.name}
-								</h3>
-								<div className="mt-4 mb-6">
-									<span className="text-3xl font-black text-zinc-900 dark:text-white">
-										{plan.price}
-									</span>
-									<span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-										{" "}
-										/ month
-									</span>
-									<p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">
-										{plan.priceNgn}
-									</p>
-								</div>
-								<ul className="space-y-3 text-sm flex-1 mb-8">
-									<li className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-										<CheckCircle2 className="h-4 w-4 text-sage" />
-										{plan.images} images / month
-									</li>
-									<li className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-										<CheckCircle2 className="h-4 w-4 text-sage" />
-										{plan.storage} storage
-									</li>
-									{plan.name === "Free" && (
-										<li className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-											<CheckCircle2 className="h-4 w-4 text-sage" />
-											Managed storage included
-										</li>
-									)}
-									{plan.name.includes("BYOS") && (
-										<li className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-											<CheckCircle2 className="h-4 w-4 text-sage" />
-											Bring your own S3/R2
-										</li>
-									)}
-									{plan.name === "Enterprise" && (
-										<li className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-											<CheckCircle2 className="h-4 w-4 text-sage" />
-											API access & webhooks
-										</li>
-									)}
-								</ul>
-								<div>
-									<Link
-										to="/signup"
-										className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center transition-all ${plan.highlight ? "bg-sage text-white shadow-xl shadow-sage/20 hover:bg-sage/90" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
-									>
-										{plan.name === "Free" ? "Get Started" : "Select Plan"}
-									</Link>
-								</div>
+					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 justify-center">
+						{isPlansLoading ? (
+							<div className="col-span-full flex justify-center py-20">
+								<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 							</div>
-						))}
+						) : (
+							plans.map((plan: any) => (
+								<div
+									key={plan.name}
+									className={`relative rounded-3xl border p-8 flex flex-col transition-all duration-500 hover:border-sage/30 ${
+										plan.is_highlighted
+											? "border-sage bg-sage/5 dark:bg-sage/5 scale-[1.02] shadow-xl shadow-sage/10"
+											: "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+									}`}
+								>
+									{plan.is_highlighted && (
+										<div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sage px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
+											Most Popular
+										</div>
+									)}
+									<h3 className="text-xl font-black text-zinc-900 dark:text-white capitalize">
+										{plan.name}
+									</h3>
+									<div className="mt-4 mb-6">
+										<span className="text-3xl font-black text-zinc-900 dark:text-white">
+											{plan.price_usd}
+										</span>
+										<span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+											{" "}
+											/ month
+										</span>
+										<p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">
+											{plan.price_ngn}
+										</p>
+									</div>
+									<ul className="space-y-3 text-sm flex-1 mb-8">
+										{plan.features?.map((feature: string) => (
+											<li
+												key={feature}
+												className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300"
+											>
+												<CheckCircle2 className="h-4 w-4 text-sage" />
+												{feature}
+											</li>
+										))}
+									</ul>
+									<div>
+										<Link
+											to="/signup"
+											className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center transition-all ${plan.is_highlighted ? "bg-sage text-white shadow-xl shadow-sage/20 hover:bg-sage/90" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+										>
+											{plan.name === "free" ? "Get Started" : "Select Plan"}
+										</Link>
+									</div>
+								</div>
+							))
+						)}
 					</div>
 				</section>
 			</div>

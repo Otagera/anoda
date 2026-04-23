@@ -194,8 +194,13 @@ model users {
 model plans {
   id                      String   @id @default(uuid()) @db.Uuid
   name                    String   @unique // free, pro, enterprise
+  description             String?
   storage_mb              Int      @default(5120)
   compute_units_per_month Int      @default(100)
+  price_usd               String   @default("0")
+  price_ngn               String   @default("0")
+  is_highlighted          Boolean  @default(false)
+  features                Json?    @default("[]")
   created_at              DateTime @default(now()) @db.Timestamptz(6)
   updated_at              DateTime @default(now()) @db.Timestamptz(6)
   users                   users[]

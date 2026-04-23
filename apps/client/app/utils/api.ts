@@ -66,6 +66,15 @@ export const fetchAlbums = async () => {
 	}
 };
 
+export const fetchPlans = async () => {
+	try {
+		const response = await axiosAPI.get("/public/plans");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching plans:", error);
+	}
+};
+
 export const fetchImagesInAlbum = async ({
 	albumId,
 	pageParam = null,

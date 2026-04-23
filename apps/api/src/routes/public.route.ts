@@ -31,6 +31,20 @@ import {
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.use(guestPlugin)
 	.use(publicRateLimit)
+	.get("/plans", async () => {
+		const plans = await prisma.plans.findMany({
+			orderBy: { compute_units_per_month: "asc" },
+		});
+		return {
+			status: "completed",
+			message: "Plans fetched successfully",
+			data: plans.map((p) => ({
+				...p,
+				features:
+					typeof p.features === "string" ? JSON.parse(p.features) : p.features,
+			})),
+		};
+	})
 	.get(
 		"/albums/:token",
 		async ({ params, query, set, guestSessionId }) => {

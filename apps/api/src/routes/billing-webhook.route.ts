@@ -4,8 +4,15 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 
 const billingWebhookRoutes = new Elysia({ prefix: "/webhooks" }).post(
 	"/billing",
-	async ({ body, set }) => {
+	async ({ body, set, headers }) => {
 		try {
+			// Validate webhook secret
+			const secret = process.env.BILLING_WEBHOOK_SECRET;
+			if (secret && headers["x-billing-secret"] !== secret) {
+				set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
+				return { status: "error", message: "Unauthorized" };
+			}
+
 			const {
 				event,
 				user_id,

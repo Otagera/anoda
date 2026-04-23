@@ -1,5 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit2, Gauge, HardDrive, Plus, Trash2, Zap } from "lucide-react";
+import {
+	CheckCircle2,
+	Edit2,
+	Gauge,
+	HardDrive,
+	Plus,
+	Sparkles,
+	Trash2,
+	Zap,
+} from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { MainContainer } from "~/components/MainContainer";
@@ -9,8 +18,9 @@ import { Heading } from "~/components/standard/Heading";
 import {
 	createStorageConfig,
 	deleteStorageConfig,
+	fetchPlans,
 	fetchSettings,
-	updateStorageConfig,
+	updatePreferences,
 } from "../utils/api";
 
 const formatBytes = (bytes: number) => {
@@ -101,6 +111,11 @@ const Settings = () => {
 	const { data: settingsData, isLoading } = useQuery({
 		queryKey: ["settings"],
 		queryFn: fetchSettings,
+	});
+
+	const { data: plansData, isLoading: isPlansLoading } = useQuery({
+		queryKey: ["plans"],
+		queryFn: fetchPlans,
 	});
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
@@ -519,6 +534,91 @@ const Settings = () => {
 								</p>
 							</div>
 						)}
+				</div>
+			</section>
+
+			{/* Plans & Upgrades Section */}
+			<section className="space-y-12 pt-10">
+				<div>
+					<Heading level={2} className="text-3xl font-black">
+						Plans & Upgrades
+					</Heading>
+					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
+						Scale your storage and AI processing limits.
+					</p>
+				</div>
+
+				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-10">
+					{isPlansLoading ? (
+						<div className="col-span-full flex justify-center py-10">
+							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
+						</div>
+					) : (
+						plansData?.data?.map((plan: any) => {
+							const isCurrentPlan =
+								settingsData?.data?.usage?.plan?.toLowerCase() ===
+								plan.name.toLowerCase();
+							return (
+								<div
+									key={plan.name}
+									className={`relative rounded-[2.5rem] border p-8 flex flex-col transition-all duration-500 ${
+										isCurrentPlan
+											? "border-sage bg-sage/5 dark:bg-sage/5 shadow-xl shadow-sage/5"
+											: "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700"
+									}`}
+								>
+									{plan.is_highlighted && (
+										<div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-plum px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+											Most Popular
+										</div>
+									)}
+									<h3 className="text-xl font-black text-zinc-900 dark:text-white capitalize">
+										{plan.name} Tier
+									</h3>
+									<div className="mt-4 mb-6">
+										<span className="text-3xl font-black text-zinc-900 dark:text-white">
+											{plan.price_usd}
+										</span>
+										<span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+											{" "}
+											/ month
+										</span>
+									</div>
+									<ul className="space-y-3 text-sm flex-1 mb-8">
+										{plan.features?.map((feature: string) => (
+											<li
+												key={feature}
+												className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300"
+											>
+												<CheckCircle2 className="h-4 w-4 text-sage" />
+												{feature}
+											</li>
+										))}
+									</ul>
+									<div>
+										{isCurrentPlan ? (
+											<div className="w-full py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2">
+												<CheckCircle2 size={14} />
+												Current Plan
+											</div>
+										) : (
+											<Button
+												className="w-full py-6 rounded-2xl font-black uppercase tracking-widest text-[10px]"
+												variant={plan.is_highlighted ? "default" : "outline"}
+												onClick={() =>
+													toast.success(
+														`Contact support to upgrade to ${plan.name}`,
+													)
+												}
+											>
+												Upgrade to {plan.name}
+											</Button>
+										)}
+									</div>
+								</div>
+							);
+						})
+					)}
 				</div>
 			</section>
 		</MainContainer>
