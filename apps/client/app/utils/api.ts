@@ -534,14 +534,57 @@ export const moderateImages = async (
 	}
 };
 
-export const generateInvite = async (albumId: string, role: string) => {
+export const generateInvite = async (albumId: string, role: string, expiresInDays?: number) => {
 	try {
 		const response = await axiosAPI.post(`/albums/${albumId}/invites`, {
 			role,
+			expiresInDays,
 		});
 		return response.data;
 	} catch (error) {
 		console.error("Error generating invite:", error);
+		throw error;
+	}
+};
+
+export const updateMemberRole = async (albumId: string, memberId: string, role: string) => {
+	try {
+		const response = await axiosAPI.patch(`/albums/${albumId}/members/${memberId}`, {
+			role,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error updating member role:", error);
+		throw error;
+	}
+};
+
+export const removeMember = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.delete(`/albums/${albumId}/members/${memberId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error removing member:", error);
+		throw error;
+	}
+};
+
+export const deleteInvite = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.delete(`/albums/${albumId}/invites/${memberId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error deleting invite:", error);
+		throw error;
+	}
+};
+
+export const resendInvite = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.post(`/albums/${albumId}/invites/${memberId}/resend`);
+		return response.data;
+	} catch (error) {
+		console.error("Error resending invite:", error);
 		throw error;
 	}
 };

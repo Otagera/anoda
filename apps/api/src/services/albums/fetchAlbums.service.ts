@@ -4,7 +4,7 @@ import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { getAlbums } from "./albums.lib";
+import { getAlbumsForUser } from "./albums.lib";
 
 const spec = joi.object({
 	created_by: joi.string().required(),
@@ -34,7 +34,7 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const { created_by } = validateSpec(spec, aliasReq);
 
-	const albums = await getAlbums(created_by);
+	const albums = await getAlbumsForUser(created_by);
 
 	const mappedAlbums = albums.map((album: any) => {
 		let coverImage: string | null = null;

@@ -523,60 +523,51 @@ const AlbumPage = () => {
 					{/* Tab Toggle */}
 					{(albumData?.data?.settings?.is_event ||
 						albumData?.data?.settings?.requires_approval) && (
-						<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner mr-4">
-							<button
-								type="button"
-								onClick={() => setView("gallery")}
-								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-									view === "gallery"
-										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-								}`}
-							>
-								Gallery
-							</button>
-							<button
-								type="button"
-								onClick={() => setView("moderation")}
-								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-									view === "moderation"
-										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-								}`}
-							>
-								Moderation
-							</button>
-						</div>
-					)}
+							<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner mr-4">
+								<button
+									type="button"
+									onClick={() => setView("gallery")}
+									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "gallery"
+											? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+											: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+										}`}
+								>
+									Gallery
+								</button>
+								<button
+									type="button"
+									onClick={() => setView("moderation")}
+									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "moderation"
+											? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+											: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+										}`}
+								>
+									Moderation
+								</button>
+							</div>
+						)}
 
 					{/* View Toggle */}
 					<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
 						<button
 							type="button"
 							onClick={() => setViewMode("grid")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "grid"
+							className={`p-2 rounded-xl transition-all ${viewMode === "grid"
 									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+								}`}
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								className="h-5 w-5"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2a2 2 0 012-2h2z" />
+							<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+								<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
 							</svg>{" "}
 						</button>
 						<button
 							type="button"
 							onClick={() => setViewMode("list")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "list"
+							className={`p-2 rounded-xl transition-all ${viewMode === "list"
 									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+								}`}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -668,7 +659,7 @@ const AlbumPage = () => {
 				)}
 
 				{(isImagesDataLoading || isPendingImagesLoading) &&
-				isAlbumDataLoading ? (
+					isAlbumDataLoading ? (
 					<div className="flex justify-center py-20">
 						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 					</div>

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
+import { NotFoundError, BadRequestError } from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
@@ -8,14 +9,14 @@ import {
 
 const spec = joi.object({
 	album_id: joi.string().required(),
-	role: joi.string().valid("VIEWER", "CONTRIBUTOR", "ADMIN").default("VIEWER"),
+	member_id: joi.string().required(),
 	expires_in_days: joi.number().default(7),
 });
 
 const aliasSpec = {
 	request: {
 		albumId: "album_id",
-		role: "role",
+		memberId: "member_id",
 		expiresInDays: "expires_in_days",
 	},
 	response: {
@@ -29,18 +30,28 @@ const service = async (data: unknown) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	// Generate a random secure token
+	const member = await prisma.album_members.findUnique({
+		where: { id: params.member_id },
+	});
+
+	if (!member || member.album_id !== params.album_id) {
+		throw new NotFoundError("Invite not found");
+	}
+
+	if (member.user_id) {
+		throw new BadRequestError("Cannot resend invite - user has already joined");
+	}
+
+	// Generate new token
 	const inviteToken = crypto.randomBytes(32).toString("hex");
 
-	// Calculate expiry date
+	// Calculate new expiry
 	const expiresAt = new Date();
 	expiresAt.setDate(expiresAt.getDate() + params.expires_in_days);
 
-	// We save the token as a "pending" member by leaving user_id null
-	await prisma.album_members.create({
+	const updatedMember = await prisma.album_members.update({
+		where: { id: params.member_id },
 		data: {
-			album_id: params.album_id,
-			role: params.role,
 			invite_token: inviteToken,
 			expires_at: expiresAt,
 		},
@@ -48,9 +59,9 @@ const service = async (data: unknown) => {
 
 	return aliaserSpec(aliasSpec.response, {
 		inviteToken,
-		role: params.role,
+		role: updatedMember.role,
 		expiresAt: expiresAt.toISOString(),
 	});
 };
 
-export const generateInviteService = service;
+export const resendInviteService = service;

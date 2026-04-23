@@ -37,6 +37,10 @@ const service = async (data: unknown) => {
 		throw new NotFoundError("Invalid or expired invite token");
 	}
 
+	if (member.expires_at && new Date() > member.expires_at) {
+		throw new BadRequestError("This invite has expired");
+	}
+
 	if (member.user_id) {
 		throw new BadRequestError("This invite token has already been used");
 	}

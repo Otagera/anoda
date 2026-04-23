@@ -15,6 +15,7 @@ import {
 	softDeleteAlbumById,
 	updateExistingAlbum,
 } from "../../../../../packages/models/src/albums.model.ts";
+import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	fetchImage,
 	fetchImagesByIds,
@@ -56,7 +57,7 @@ const albumLinkValidation = async (
 		}
 	}
 
-	const album = await getAlbum({ album_id, created_by: user_id });
+	const album = await getAlbumForUser(album_id, user_id);
 	if (!album) {
 		throw new NotFoundError("Album not found.");
 	}
@@ -112,6 +113,53 @@ export const getAlbums = async (albumIds) => {
 	return fetchAlbumsByUserids(albumIds);
 };
 
+export const getAlbumsForUser = async (userId) => {
+	if (!userId) {
+		throw new Error("User id: userId is required");
+	}
+
+	const ownedAlbums = await fetchAlbumsByUserids([userId]);
+
+	const memberAlbums = await prisma.album_members.findMany({
+		where: { user_id: userId },
+		select: { album_id: true },
+	});
+
+	const memberAlbumIds = memberAlbums.map((m) => m.album_id);
+
+	let invitedAlbums = [];
+	if (memberAlbumIds.length > 0) {
+		invitedAlbums = await prisma.albums.findMany({
+			where: { album_id: { in: memberAlbumIds } },
+			include: {
+				settings: true,
+				storage_config: true,
+				album_members: {
+					include: {
+						user: {
+							select: { user_id: true, email: true },
+						},
+					},
+				},
+				cover_image: true,
+				album_images: {
+					take: 4,
+					include: { images: true },
+				},
+			},
+		});
+
+		invitedAlbums = invitedAlbums.filter((a) => !a.deleted_at);
+	}
+
+	const allAlbums = [...ownedAlbums, ...invitedAlbums];
+	const uniqueAlbums = allAlbums.filter(
+		(album, index, self) => index === self.findIndex((a) => a.album_id === album.album_id)
+	);
+
+	return uniqueAlbums;
+};
+
 export const getAlbum = async (where) => {
 	if (!where) {
 		throw new Error("No where clause provided");
@@ -120,11 +168,59 @@ export const getAlbum = async (where) => {
 		throw new Error("No created_by or album_id provided");
 	}
 
-	const album = await fetchAlbum(where);
+	try {
+		const album = await fetchAlbum(where);
+		if (!album) {
+			throw new NotFoundError("Album not found.");
+		}
+		return album;
+	} catch (error: any) {
+		if (error.message === "Album not found." || error.statusCode === 404) {
+			throw new NotFoundError("Album not found.");
+		}
+		throw error;
+	}
+};
+
+export const getAlbumForUser = async (albumId: string, userId: string) => {
+	if (!albumId) {
+		throw new Error("Album id: albumId is required");
+	}
+	if (!userId) {
+		throw new Error("User id: userId is required");
+	}
+
+	const album = await prisma.albums.findFirst({
+		where: { album_id: albumId, deleted_at: null },
+		include: {
+			settings: true,
+			storage_config: true,
+			album_members: {
+				include: {
+					user: {
+						select: { user_id: true, email: true },
+					},
+				},
+			},
+			cover_image: true,
+			album_images: {
+				take: 4,
+				include: { images: true },
+			},
+		},
+	});
 
 	if (!album) {
 		throw new NotFoundError("Album not found.");
 	}
+
+	const isOwner = album.created_by === userId;
+	const isMember = album.album_members?.some((m) => m.user_id === userId);
+
+	if (!isOwner && !isMember) {
+		throw new NotFoundError("Album not found.");
+	}
+
 	return album;
 };
 

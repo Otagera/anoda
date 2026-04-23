@@ -4,15 +4,20 @@ import { checkAlbumPermissions } from "../../../../packages/utils/src/permission
 import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
 import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
+import { deleteInviteService } from "../services/albums/deleteInvite.service.ts";
 import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
 import { fetchAlbumsService } from "../services/albums/fetchAlbums.service.ts";
 import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum.service.ts";
 import { generateInviteService } from "../services/albums/generateInvite.service.ts";
+import { getAlbumForUser } from "../services/albums/albums.lib";
 import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
 import { moderateImagesService } from "../services/albums/moderateImages.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
 import { removeAlbumsService } from "../services/albums/removeAlbums.service.ts";
 import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlbum.service.ts";
+import { removeMemberService } from "../services/albums/removeMember.service.ts";
+import { resendInviteService } from "../services/albums/resendInvite.service.ts";
+import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
 
 import { authDerivation } from "./middleware/auth.plugin.ts";
 
@@ -103,7 +108,18 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			try {
 				const albumId = params.albumId;
 
-				const data = await fetchAlbumService({ userId, albumId });
+				const album = await getAlbumForUser(albumId, userId);
+
+				const data = {
+					id: album.album_id,
+					albumName: album.album_name,
+					userId: album.created_by,
+					creationDate: album.creation_date,
+					sharedLink: album.shared_link,
+					shareToken: album.share_token,
+					settings: album.settings,
+					members: album.album_members,
+				};
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -202,6 +218,134 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			body: t.Object({
 				role: t.Optional(t.String()),
 			}),
+		},
+	)
+	.delete(
+		"/:albumId/invites/:memberId",
+		async ({ params, set, userId }) => {
+			try {
+				const { albumId, memberId } = params;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await deleteInviteService({
+					albumId,
+					memberId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Invite deleted.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String(), memberId: t.String() }),
+		},
+	)
+	.post(
+		"/:albumId/invites/:memberId/resend",
+		async ({ params, set, userId }) => {
+			try {
+				const { albumId, memberId } = params;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await resendInviteService({
+					albumId,
+					memberId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Invite resent.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String(), memberId: t.String() }),
+		},
+	)
+	.patch(
+		"/:albumId/members/:memberId",
+		async ({ params, body, set, userId }) => {
+			try {
+				const { albumId, memberId } = params;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await updateMemberRoleService({
+					albumId,
+					memberId,
+					role: body.role,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Member role updated.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String(), memberId: t.String() }),
+			body: t.Object({
+				role: t.String(),
+			}),
+		},
+	)
+	.delete(
+		"/:albumId/members/:memberId",
+		async ({ params, set, userId }) => {
+			try {
+				const { albumId, memberId } = params;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await removeMemberService({
+					albumId,
+					memberId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Member removed.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ albumId: t.String(), memberId: t.String() }),
 		},
 	)
 	.post(
@@ -405,12 +549,11 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					"../../../worker/src/queue/queue.service.ts"
 				);
 
-				if (!localQueueServices) {
+if (!localQueueServices) {
 					throw new Error("Queue services not initialized");
 				}
 
-				// We first verify the album exists and belongs to the user
-				await fetchAlbumService({ userId, albumId });
+				await getAlbumForUser(albumId, userId);
 
 				await localQueueServices.faceClusteringQueueLib.addJob(
 					"faceClustering",

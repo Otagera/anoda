@@ -4,6 +4,7 @@ import App, { ErrorBoundary as AppErrorBoundary } from "./root";
 import Album from "./routes/album";
 import ForgotPassword from "./routes/forgot-password";
 import Home from "./routes/home";
+import JoinAlbum from "./routes/joinAlbum";
 import Login from "./routes/login";
 import People from "./routes/people";
 import ResetPassword from "./routes/reset-password";
@@ -44,6 +45,10 @@ export default [
 			{
 				path: "share/:token",
 				element: <SharedAlbum />,
+			},
+			{
+				path: "join/:token",
+				element: <JoinAlbum />,
 			},
 			{
 				element: <PrivateRoute />,

@@ -26,6 +26,7 @@ import {
 	publicRateLimit,
 	strictPublicRateLimit,
 } from "./middleware/rate-limit.plugin.ts";
+import { getInviteDetailsService } from "../services/albums/getInviteDetails.service.ts";
 
 const publicRoutes = new Elysia({ prefix: "/public" })
 	.use(guestPlugin)
@@ -781,6 +782,33 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					bodyLimit: 500 * 1024 * 1024,
 				},
 			),
+	)
+	.get(
+		"/invite/:token",
+		async ({ params, set }) => {
+			try {
+				const data = await getInviteDetailsService({
+					inviteToken: params.token,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Invite details fetched.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ token: t.String() }),
+		}
 	);
 
 export default publicRoutes;
