@@ -103,7 +103,9 @@ export const UsageIndicator = () => {
 							Store
 						</span>
 						<span className="text-[9px] sm:text-[10px] font-bold text-zinc-900 dark:text-zinc-100">
-							{Math.round(storageUsedMB / 1024) || "<1"}GB
+							{storageUsedMB >= 1024
+								? `${(storageUsedMB / 1024).toFixed(1)}GB`
+								: `${storageUsedMB}MB`}
 						</span>
 					</div>
 					<div className="w-12 sm:w-16 h-0.5 sm:h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">

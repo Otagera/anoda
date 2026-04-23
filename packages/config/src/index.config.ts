@@ -158,6 +158,18 @@ const config = {
 		},
 		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
 		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
+
+		// Plan limits
+		plans: {
+			free: {
+				storage_mb: 5 * 1024, // 5GB
+				compute_units_per_month: 100,
+			},
+			pro: {
+				storage_mb: 50 * 1024, // 50GB
+				compute_units_per_month: -1, // unlimited
+			},
+		},
 	},
 };
 

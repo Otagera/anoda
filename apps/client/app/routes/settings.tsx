@@ -265,8 +265,8 @@ const Settings = () => {
 						</div>
 						<div className="space-y-4">
 							<UsageBar
-								used={settingsData?.data?.usage?.imagesUsed || 0}
-								limit={settingsData?.data?.usage?.imagesLimit || 50}
+								used={settingsData?.data?.usage?.computeUnitsUsed || 0}
+								limit={settingsData?.data?.usage?.computeUnitsLimit || 100}
 								label="Images processed this month"
 								color="sage"
 							/>
@@ -287,7 +287,9 @@ const Settings = () => {
 								</p>
 								<p className="text-2xl font-black text-zinc-900 dark:text-white">
 									{formatBytes(
-										(settingsData?.data?.usage?.storageUsedMB || 0) * 1024,
+										(settingsData?.data?.usage?.storageUsedMB || 0) *
+											1024 *
+											1024,
 									)}
 								</p>
 							</div>
@@ -295,12 +297,15 @@ const Settings = () => {
 						<div className="space-y-4">
 							<UsageBar
 								used={settingsData?.data?.usage?.storageUsedMB || 0}
-								limit={settingsData?.data?.usage?.storageLimitMB || 1024}
+								limit={settingsData?.data?.usage?.storageLimitMB || 5120}
 								label="Storage this month"
 								color="plum"
 							/>
 							<p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-								1 GB included on Free plan
+								{settingsData?.data?.usage?.storageLimitMB >= 1024
+									? `${Math.round(settingsData.data.usage.storageLimitMB / 1024)} GB`
+									: `${settingsData?.data?.usage?.storageLimitMB} MB`}{" "}
+								included on {settingsData?.data?.usage?.plan || "Free"} plan
 							</p>
 						</div>
 					</Card>

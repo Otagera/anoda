@@ -36,6 +36,7 @@ const service = async (data: any) => {
 		where: { uploaded_by: params.userId },
 		select: {
 			size: true,
+			optimized_size: true,
 			image_id: true,
 			album_images: {
 				select: { album_id: true },
@@ -43,12 +44,12 @@ const service = async (data: any) => {
 		},
 	});
 
-	// Calculate total storage used (using 'size' field which tracks file size)
+	// Calculate total storage used (sum of size and optimized_size)
 	let totalStorageBytes = 0;
 	const storageByAlbumMap = new Map<string, number>();
 
 	for (const img of userImages) {
-		const imgSize = img.size || 0;
+		const imgSize = (img.size || 0) + (img.optimized_size || 0);
 		totalStorageBytes += imgSize;
 
 		// Group by album

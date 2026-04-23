@@ -98,18 +98,17 @@ export const getUserUsageStats = async (userId: string) => {
 			0,
 		);
 
-		// Get total storage used (all time, positive deltas only)
-		const storageLogs = await prisma.usage_logs.findMany({
-			where: {
-				user_id: userId,
-				resource: "storage",
+		// Get total storage used by scanning the images table (more accurate current state)
+		const userImages = await prisma.images.findMany({
+			where: { uploaded_by: userId },
+			select: {
+				size: true,
+				optimized_size: true,
 			},
 		});
 
-		// Calculate net storage: sum of all storage operations
-		// Positive = uploads, Negative = deletions
-		const storageUsedBytes = storageLogs.reduce(
-			(acc, log) => acc + log.quantity,
+		const storageUsedBytes = userImages.reduce(
+			(acc, img) => acc + (img.size || 0) + (img.optimized_size || 0),
 			0,
 		);
 

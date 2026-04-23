@@ -114,6 +114,7 @@ model images {
   original_width   Int
   original_height  Int
   size             Int            @default(0)
+  optimized_size   Int            @default(0)
   uploaded_by      String?        @db.Uuid
   guest_session_id String?        @db.Uuid
   users            users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)

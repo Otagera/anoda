@@ -155,10 +155,12 @@ const run = async (jobData) => {
 			.toFile(tempPath);
 
 		let optimizedPathOrKey;
+		let optimizedSize = 0;
 		if (!isLocal && storageProviderInstance) {
 			console.log(`Uploading optimized image to ${image.storage_provider}`);
 			const optimizedBuffer = await fs.readFile(tempPath);
 			const optimizedKey = `optimized/${optimizedFilename}`;
+			optimizedSize = optimizedBuffer.length;
 			await storageProviderInstance.upload(optimizedBuffer, {
 				key: optimizedKey,
 				contentType: "image/webp",
@@ -167,12 +169,7 @@ const run = async (jobData) => {
 			optimizedPathOrKey = optimizedKey;
 
 			if (image.uploaded_by) {
-				await logUsage(
-					image.uploaded_by,
-					"storage",
-					"optimize",
-					optimizedBuffer.length,
-				);
+				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
 			}
 		} else {
 			const optimizedLocalPath = path.join(
@@ -184,11 +181,15 @@ const run = async (jobData) => {
 
 			if (image.uploaded_by) {
 				const size = (await fs.stat(optimizedLocalPath)).size;
+				optimizedSize = size;
 				await logUsage(image.uploaded_by, "storage", "optimize", size);
 			}
 		}
 
-		const imageUpdateData = { optimized_path: optimizedPathOrKey };
+		const imageUpdateData = {
+			optimized_path: optimizedPathOrKey,
+			optimized_size: optimizedSize,
+		};
 		// DO NOT overwrite storage_key here! storage_key must point to the original high-res image
 		// so that the AI service (and future workers) process the correct original file.
 

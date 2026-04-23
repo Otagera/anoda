@@ -179,10 +179,16 @@ export default function UsageDashboard() {
 							)}
 						</div>
 						<div className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
-							{Math.round(storageUsedMB / 1024)} GB
+							{storageUsedMB >= 1024
+								? `${(storageUsedMB / 1024).toFixed(2)} GB`
+								: `${storageUsedMB} MB`}
 						</div>
 						<div className="text-sm text-zinc-500 mb-4">
-							of {Math.round(storageLimitMB / 1024)} GB limit
+							of{" "}
+							{storageLimitMB >= 1024
+								? `${(storageLimitMB / 1024).toFixed(0)} GB`
+								: `${storageLimitMB} MB`}{" "}
+							limit
 						</div>
 						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 							<div
