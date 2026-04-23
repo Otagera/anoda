@@ -33,7 +33,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 	.use(publicRateLimit)
 	.get("/plans", async () => {
 		const plans = await prisma.plans.findMany({
-			orderBy: { compute_units_per_month: "asc" },
+			orderBy: { order: "asc" },
 		});
 		return {
 			status: "completed",

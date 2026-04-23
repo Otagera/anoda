@@ -573,7 +573,7 @@ const Settings = () => {
 										</div>
 									)}
 									<h3 className="text-xl font-black text-zinc-900 dark:text-white capitalize">
-										{plan.name} Tier
+										{plan.name === "byos" ? "BYOS" : plan.name} Tier
 									</h3>
 									<div className="mt-4 mb-6">
 										<span className="text-3xl font-black text-zinc-900 dark:text-white">

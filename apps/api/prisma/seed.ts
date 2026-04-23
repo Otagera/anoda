@@ -14,6 +14,7 @@ async function main() {
 			price_usd: "Free",
 			price_ngn: "Free",
 			is_highlighted: false,
+			order: 1,
 			features: [
 				"5 GB Storage",
 				"100 AI Images / mo",
@@ -29,6 +30,7 @@ async function main() {
 			price_usd: "$9.99",
 			price_ngn: "₦12,500",
 			is_highlighted: true,
+			order: 2,
 			features: [
 				"50 GB Storage",
 				"Unlimited AI Processing",
@@ -44,6 +46,7 @@ async function main() {
 			price_usd: "$14.99",
 			price_ngn: "₦19,500",
 			is_highlighted: false,
+			order: 3,
 			features: [
 				"Unlimited Local Storage",
 				"Unlimited AI Processing",
