@@ -57,9 +57,6 @@ const Welcome = () => {
 			<div className="relative mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-14 sm:px-10 lg:py-20">
 				<section className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
 					<div className="space-y-8">
-						<div className="inline-flex items-center gap-2 rounded-full border border-sage/30 bg-sage/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-sage">
-							The AI Intelligence Layer for Photos
-						</div>
 						<div className="space-y-5">
 							<h1 className="text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
 								Collect, Organize & <br />
@@ -156,7 +153,7 @@ const Welcome = () => {
 							Transparent Pricing
 						</h2>
 						<p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-400 font-medium">
-							Start free with 50 AI-processed images per month.{" "}
+							Start free with 100 AI-processed images per month.{" "}
 							<br className="hidden md:block" />
 							Scale as you grow with Bring Your Own Storage.
 						</p>

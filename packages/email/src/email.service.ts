@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Resend } from "resend";
+import config from "../../config/src/index.config.ts";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const envConfig = config[config.env || "development"];
+
+const resend = new Resend(envConfig.resend_api_key);
 const prisma = new PrismaClient();
 
 const FROM_EMAIL = "Lumina <noreply@lumina.io>";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL = envConfig.frontend_url;
 
 const getUnsubscribeLink = (email: string, type: string) => {
 	return `${FRONTEND_URL}/unsubscribe?email=${encodeURIComponent(email)}&type=${type}`;
@@ -24,6 +27,8 @@ const EMAIL_TYPE_MAP = {
 	welcome: "welcome",
 	photoApproved: "photoApproved",
 	clustering: "clustering",
+	albumShared: "albumShared",
+	newPhotos: "newPhotos",
 } as const;
 
 type EmailType = keyof typeof EMAIL_TYPE_MAP;
@@ -153,5 +158,61 @@ export const sendClusteringCompleteEmail = async (
 		});
 	} catch (error) {
 		console.error("Failed to send clustering complete email:", error);
+	}
+};
+
+export const sendAlbumSharedEmail = async (
+	email: string,
+	albumName: string,
+	sharedBy: string,
+	token: string,
+) => {
+	const allowed = await checkEmailPreference(email, "albumShared");
+	if (!allowed) return;
+
+	const albumLink = `${FRONTEND_URL}/albums/${token}`;
+
+	try {
+		await resend.emails.send({
+			from: FROM_EMAIL,
+			to: [email],
+			subject: `${sharedBy} shared an album with you: ${albumName}`,
+			html: `
+        <p>${sharedBy} has invited you to view the album <strong>${albumName}</strong>.</p>
+        <p>Click the link below to view the photos:</p>
+        <a href="${albumLink}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background: #007AFF; color: white; text-decoration: none; border-radius: 6px;">View Album</a>
+        ${emailFooter(email, "albumShared")}
+      `,
+		});
+	} catch (error) {
+		console.error("Failed to send album shared email:", error);
+	}
+};
+
+export const sendNewPhotosEmail = async (
+	email: string,
+	albumName: string,
+	photoCount: number,
+	token: string,
+) => {
+	const allowed = await checkEmailPreference(email, "newPhotos");
+	if (!allowed) return;
+
+	const albumLink = `${FRONTEND_URL}/albums/${token}`;
+
+	try {
+		await resend.emails.send({
+			from: FROM_EMAIL,
+			to: [email],
+			subject: `${photoCount} new photos added to ${albumName}`,
+			html: `
+        <p>${photoCount} new photos have been added to the album <strong>${albumName}</strong> since your last visit.</p>
+        <p>Click the link below to see what's new:</p>
+        <a href="${albumLink}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background: #007AFF; color: white; text-decoration: none; border-radius: 6px;">See New Photos</a>
+        ${emailFooter(email, "newPhotos")}
+      `,
+		});
+	} catch (error) {
+		console.error("Failed to send new photos email:", error);
 	}
 };

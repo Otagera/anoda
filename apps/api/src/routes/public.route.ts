@@ -747,6 +747,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						let uploadResult = { images: [] };
 						if (newFiles.length > 0) {
 							uploadResult = await uploadPicturesService({
+								albumId: album.album_id,
 								files: newFiles,
 								status,
 								guestSessionId,

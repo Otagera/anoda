@@ -1,5 +1,8 @@
 import crypto from "node:crypto";
 import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
+
+const envConfig = config[config.env || "development"];
 
 /**
  * Triggers a webhook for a given album if a webhook URL is configured.
@@ -47,7 +50,7 @@ const sendWebhook = async (
 		const body = JSON.stringify(payload);
 
 		// Generate HMAC signature (assuming an env var WEBHOOK_SECRET exists, or using albumId as a salt)
-		const secret = process.env.WEBHOOK_SECRET || "default_secret";
+		const secret = envConfig.webhook_secret;
 		const signature = crypto
 			.createHmac("sha256", secret)
 			.update(body)

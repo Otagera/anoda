@@ -37,7 +37,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				const images = await prisma.images.findMany({
 					where: {
 						image_id: { in: imageIds },
-						created_by: userId,
+						uploaded_by: userId,
 					},
 					select: { image_id: true },
 				});
@@ -309,6 +309,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				}
 
 				const data = await uploadPicturesService({
+					albumId: body.albumId,
 					userId: userId,
 					guestSessionId,
 					files: convertedFiles,

@@ -17,8 +17,10 @@ import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts"
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
 import { csrfPlugin } from "./routes/middleware/csrf.plugin.ts";
 
+const envConfig = config[config.env || "development"];
+
 Sentry.init({
-	dsn: process.env.SENTRY_DSN,
+	dsn: envConfig.sentry_dsn,
 	environment: config.env,
 	serverName: "api",
 });
@@ -95,8 +97,8 @@ export const createElysiaApp = async () => {
 				origin:
 					config.env === "development"
 						? true
-						: process.env.CORS_ORIGIN
-							? process.env.CORS_ORIGIN.split(",")
+						: envConfig.cors_origin
+							? envConfig.cors_origin.split(",")
 							: false,
 			}),
 		)

@@ -8,6 +8,7 @@ import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { queueServices } from "../../../../worker/src/queue/queue.service.ts";
 
 const spec = joi.object({
 	user_id: joi.string().required(),
@@ -59,11 +60,19 @@ const service = async (data: unknown) => {
 
 	const album = await prisma.albums.findUnique({
 		where: { album_id: member.album_id },
+		include: {
+			users: { select: { email: true } },
+		},
 	});
 
 	if (album?.created_by === params.user_id) {
 		throw new BadRequestError("You are the owner of this album");
 	}
+
+	const user = await prisma.users.findUnique({
+		where: { user_id: params.user_id },
+		select: { email: true },
+	});
 
 	const updatedMember = await prisma.album_members.update({
 		where: { id: member.id },
@@ -72,6 +81,20 @@ const service = async (data: unknown) => {
 			invite_token: null, // Token is consumed
 		},
 	});
+
+	// Trigger "Album shared with you" email (confirmation of joining)
+	if (user?.email && album) {
+		await queueServices.emailQueueLib.addJob("email", {
+			worker: "email",
+			type: "album_shared",
+			data: {
+				email: user.email,
+				albumName: album.album_name || "a shared album",
+				sharedBy: album.users?.email || "Someone",
+				token: album.share_token,
+			},
+		});
+	}
 
 	return aliaserSpec(aliasSpec.response, {
 		albumId: updatedMember.album_id,

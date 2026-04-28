@@ -50,6 +50,7 @@ export const NotificationDropdown = () => {
 		switch (type) {
 			case "CLUSTERING_COMPLETE":
 				return `Face clustering finished for "${metadata?.albumName}". Found ${metadata?.newPeople} new people and tagged ${metadata?.taggedFaces} faces.`;
+			case "PHOTO_APPROVED":
 			case "IMAGE_APPROVED":
 				return `Your photo was approved in "${metadata?.albumName}".`;
 			case "IMAGE_REJECTED":

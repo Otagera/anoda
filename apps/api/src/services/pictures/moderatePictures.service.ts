@@ -56,6 +56,18 @@ const service = async (data: any) => {
 							albumName,
 						},
 					});
+
+					// Add in-app notification
+					await prisma.notifications.create({
+						data: {
+							user_id: img.uploaded_by!,
+							type: "PHOTO_APPROVED",
+							metadata: {
+								imageId: img.image_id,
+								albumName,
+							},
+						},
+					});
 				}
 			}
 		} catch (error) {

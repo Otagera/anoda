@@ -1,3 +1,4 @@
+import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	deleteImage,
 	fetchFaces,
@@ -31,8 +32,20 @@ const validateImageData = (imageData) => {
 };
 
 export const createImage = async (imageData) => {
-	validateImageData(imageData);
-	return await uploadImage(imageData);
+	const { album_id, ...rest } = imageData;
+	validateImageData(rest);
+	const image = await uploadImage(rest);
+
+	if (album_id) {
+		await prisma.album_images.create({
+			data: {
+				album_id,
+				image_id: image.image_id,
+			},
+		});
+	}
+
+	return image;
 };
 
 export const createImages = async (imagesData) => {

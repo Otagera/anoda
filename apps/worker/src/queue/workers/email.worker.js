@@ -1,9 +1,11 @@
-const {
+import {
+	sendAlbumSharedEmail,
+	sendClusteringCompleteEmail,
+	sendNewPhotosEmail,
+	sendPhotoApprovedEmail,
 	sendResetPasswordEmail,
 	sendWelcomeEmail,
-	sendPhotoApprovedEmail,
-	sendClusteringCompleteEmail,
-} = require("@email/email.service.ts");
+} from "../../../../../packages/email/src/email.service.ts";
 
 const run = async (jobData) => {
 	const { type, data } = jobData;
@@ -23,9 +25,25 @@ const run = async (jobData) => {
 		case "clustering_complete":
 			await sendClusteringCompleteEmail(data.email, data.albumName);
 			break;
+		case "album_shared":
+			await sendAlbumSharedEmail(
+				data.email,
+				data.albumName,
+				data.sharedBy,
+				data.token,
+			);
+			break;
+		case "new_photos":
+			await sendNewPhotosEmail(
+				data.email,
+				data.albumName,
+				data.photoCount,
+				data.token,
+			);
+			break;
 		default:
 			console.warn(`[EMAIL WORKER] Unknown email type: ${type}`);
 	}
 };
 
-module.exports = run;
+export default run;

@@ -1,4 +1,5 @@
 import Joi from "joi";
+import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	getUserPlanLimits,
 	getUserUsage,
@@ -33,6 +34,7 @@ const fileSchema = Joi.object({
 });
 
 const spec = Joi.object({
+	album_id: Joi.string().uuid().optional(),
 	uploaded_by: Joi.string().uuid().optional(),
 	guest_session_id: Joi.string().uuid().optional(),
 	status: Joi.string()
@@ -43,6 +45,7 @@ const spec = Joi.object({
 
 const aliasSpec = {
 	request: {
+		albumId: "album_id",
 		files: "files",
 		userId: "uploaded_by",
 		guestSessionId: "guest_session_id",
@@ -64,7 +67,13 @@ const aliasSpec = {
 	},
 };
 
-const storeImage = async (file, uploaded_by, guest_session_id, status) => {
+const storeImage = async (
+	file,
+	uploaded_by,
+	guest_session_id,
+	status,
+	album_id,
+) => {
 	const imagePath = file.path;
 	const imageSize = await getImageSize(imagePath);
 	const isCorrupted = await isImageCorrupted(imagePath);
@@ -81,6 +90,7 @@ const storeImage = async (file, uploaded_by, guest_session_id, status) => {
 		guest_session_id,
 		status,
 		file_hash: file.file_hash,
+		album_id,
 	};
 
 	if (file.storage_provider && file.storage_key) {
@@ -105,7 +115,28 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	// Quota Check
+	// 1. Per-member/guest rate limiting (100 images per album)
+	if (params.album_id && (params.uploaded_by || params.guest_session_id)) {
+		const currentCount = await prisma.album_images.count({
+			where: {
+				album_id: params.album_id,
+				images: {
+					OR: [
+						{ uploaded_by: params.uploaded_by || undefined },
+						{ guest_session_id: params.guest_session_id || undefined },
+					].filter((c) => c.uploaded_by || c.guest_session_id),
+				},
+			},
+		});
+
+		if (currentCount + params.files.length > 100) {
+			throw new Error(
+				"Album upload limit reached for your session (max 100 photos).",
+			);
+		}
+	}
+
+	// 2. Host Quota Check
 	let hasQuota = true;
 	if (params.uploaded_by) {
 		const startOfMonth = new Date();
@@ -133,6 +164,7 @@ const service = async (data) => {
 				params.uploaded_by,
 				params.guest_session_id,
 				hasQuota ? params.status : "QUOTA_EXCEEDED",
+				params.album_id,
 			),
 		);
 	}
@@ -146,6 +178,7 @@ const service = async (data) => {
 					imagePath: imageInfo.imagePath,
 					storageProvider: imageInfo.storageProvider,
 					storageKey: imageInfo.storageKey,
+					albumId: params.album_id,
 					worker: "imageOptimization",
 				},
 				{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
@@ -172,6 +205,32 @@ const service = async (data) => {
 	});
 
 	const images = await getImagesByIds(imageIds);
+
+	// Trigger "New photos in shared album" notification for owner if uploaded by guest
+	if (params.album_id && params.guest_session_id && images.length > 0) {
+		try {
+			const album = await prisma.albums.findUnique({
+				where: { album_id: params.album_id },
+				include: { users: { select: { email: true } } },
+			});
+
+			if (album?.users?.email) {
+				await queueServices.emailQueueLib.addJob("email", {
+					worker: "email",
+					type: "new_photos",
+					data: {
+						email: album.users.email,
+						albumName: album.album_name || "your album",
+						photoCount: images.length,
+						token: album.share_token,
+					},
+				});
+			}
+		} catch (error) {
+			console.error("Failed to enqueue new photos notification:", error);
+		}
+	}
+
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		images: images.map((image) => {
 			return aliaserSpec(aliasSpec.image, {

@@ -18,6 +18,7 @@ import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlb
 import { removeMemberService } from "../services/albums/removeMember.service.ts";
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
+import { findDuplicatesService } from "../services/pictures/findDuplicates.service.ts";
 
 import { authDerivation } from "./middleware/auth.plugin.ts";
 
@@ -604,6 +605,40 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				data: null,
 			};
 		}
-	});
+	})
+	.get(
+		"/:albumId/duplicates",
+		async ({ params, query, userId, set }) => {
+			try {
+				const data = await findDuplicatesService({
+					albumId: params.albumId,
+					userId,
+					threshold: query.threshold ? Number.parseInt(query.threshold) : 5,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Duplicates identified successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				albumId: t.String(),
+			}),
+			query: t.Object({
+				threshold: t.Optional(t.String()),
+			}),
+		},
+	);
 
 export default albumsRoutes;

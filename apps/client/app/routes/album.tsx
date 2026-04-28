@@ -4,7 +4,14 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { CheckCircle, Settings2, Trash2, Upload, XCircle } from "lucide-react";
+import {
+	CheckCircle,
+	Copy,
+	Settings2,
+	Trash2,
+	Upload,
+	XCircle,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
@@ -15,6 +22,7 @@ import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
 import { ConfirmModal } from "~/components/ConfirmModal";
+import { DuplicateReview } from "~/components/DuplicateReview";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
@@ -57,7 +65,9 @@ const AlbumPage = () => {
 	const [editAlbumName, setEditAlbumName] = useState("");
 	const [files, setFiles] = useState<FileList | null>(null);
 
-	const [view, setView] = useState<"gallery" | "moderation">("gallery");
+	const [view, setView] = useState<"gallery" | "moderation" | "duplicates">(
+		"gallery",
+	);
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [isAddToAlbumOpen, setIsAddToAlbumOpen] = useState(false);
@@ -546,6 +556,17 @@ const AlbumPage = () => {
 							>
 								Moderation
 							</button>
+							<button
+								type="button"
+								onClick={() => setView("duplicates")}
+								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+									view === "duplicates"
+										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
+							>
+								Duplicates
+							</button>
 						</div>
 					)}
 
@@ -657,90 +678,100 @@ const AlbumPage = () => {
 			</div>
 
 			<div className="mt-8">
-				{view === "moderation" && (
-					<div className="mb-6">
-						<AlbumFilters
-							filters={moderationFilters}
-							onFilterChange={setModerationFilters}
-							members={albumData?.data?.members}
-						/>
-					</div>
-				)}
-
-				{(isImagesDataLoading || isPendingImagesLoading) &&
-				isAlbumDataLoading ? (
-					<div className="flex justify-center py-20">
-						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
-					</div>
-				) : images.length === 0 ? (
-					<div className="text-center py-32">
-						<p className="text-zinc-500 font-medium">
-							{view === "moderation"
-								? "No pending photos to moderate. You're all caught up!"
-								: "No photos in this album yet. Start by uploading some!"}
-						</p>
-					</div>
-				) : viewMode === "grid" ? (
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
-						{images.map((image: any, index: number) => {
-							const width = image.originalSize?.width || 0;
-							const height = image.originalSize?.height || 0;
-
-							const area = width * height;
-							const isFeatured = area > 2000000;
-
-							const spanClass = getBentoSpanClass(
-								width,
-								height,
-								index,
-								isFeatured,
-							);
-
-							return (
-								<div
-									key={image.imageId}
-									className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
-									style={{ animationDelay: `${index * 50}ms` }}
-								>
-									{view === "moderation" ? (
-										<ModerationGridItem
-											image={{
-												...image,
-												id: image.imageId,
-												url: image.imagePath,
-												alt: image.imagePath,
-											}}
-											onClick={() => setSelectedImage(image)}
-											isSelected={selectedIds.has(image.imageId)}
-											onToggleSelect={() => handleToggleSelect(image.imageId)}
-										/>
-									) : (
-										<ImageGridItem
-											image={{
-												id: image.imageId,
-												width: width,
-												height: height,
-												url: image.imagePath,
-												alt: image.imagePath,
-											}}
-											onClick={() => setSelectedImage(image)}
-											isSelected={selectedIds.has(image.imageId)}
-											onToggleSelect={() => handleToggleSelect(image.imageId)}
-											onDelete={handleDeleteImage}
-											selectionMode={selectedIds.size > 0}
-										/>
-									)}
-								</div>
-							);
-						})}
-					</div>
+				{view === "duplicates" ? (
+					<DuplicateReview albumId={albumId!} />
 				) : (
-					<CompactListView
-						images={images}
-						onImageClick={setSelectedImage}
-						selectedIds={selectedIds}
-						onToggleSelect={handleToggleSelect}
-					/>
+					<>
+						{view === "moderation" && (
+							<div className="mb-6">
+								<AlbumFilters
+									filters={moderationFilters}
+									onFilterChange={setModerationFilters}
+									members={albumData?.data?.members}
+								/>
+							</div>
+						)}
+
+						{(isImagesDataLoading || isPendingImagesLoading) &&
+						isAlbumDataLoading ? (
+							<div className="flex justify-center py-20">
+								<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
+							</div>
+						) : images.length === 0 ? (
+							<div className="text-center py-32">
+								<p className="text-zinc-500 font-medium">
+									{view === "moderation"
+										? "No pending photos to moderate. You're all caught up!"
+										: "No photos in this album yet. Start by uploading some!"}
+								</p>
+							</div>
+						) : viewMode === "grid" ? (
+							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
+								{images.map((image: any, index: number) => {
+									const width = image.originalSize?.width || 0;
+									const height = image.originalSize?.height || 0;
+
+									const area = width * height;
+									const isFeatured = area > 2000000;
+
+									const spanClass = getBentoSpanClass(
+										width,
+										height,
+										index,
+										isFeatured,
+									);
+
+									return (
+										<div
+											key={image.imageId}
+											className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+											style={{ animationDelay: `${index * 50}ms` }}
+										>
+											{view === "moderation" ? (
+												<ModerationGridItem
+													image={{
+														...image,
+														id: image.imageId,
+														url: image.imagePath,
+														alt: image.imagePath,
+													}}
+													onClick={() => setSelectedImage(image)}
+													isSelected={selectedIds.has(image.imageId)}
+													onToggleSelect={() =>
+														handleToggleSelect(image.imageId)
+													}
+												/>
+											) : (
+												<ImageGridItem
+													image={{
+														id: image.imageId,
+														width: width,
+														height: height,
+														url: image.imagePath,
+														alt: image.imagePath,
+													}}
+													onClick={() => setSelectedImage(image)}
+													isSelected={selectedIds.has(image.imageId)}
+													onToggleSelect={() =>
+														handleToggleSelect(image.imageId)
+													}
+													onDelete={handleDeleteImage}
+													selectionMode={selectedIds.size > 0}
+												/>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						) : (
+							<CompactListView
+								images={images}
+								onImageClick={setSelectedImage}
+								selectedIds={selectedIds}
+								onToggleSelect={handleToggleSelect}
+							/>
+						)}
+					</>
 				)}
 			</div>
 
@@ -821,7 +852,7 @@ const AlbumPage = () => {
 					onSelectAll={toggleSelectAll}
 					onDelete={handleBatchDelete}
 					onDownload={handleBulkDownload}
-					onMove={() => setIsAddToAlbumOpen(true)}
+					onAddToAlbum={() => setIsAddToAlbumOpen(true)}
 				/>
 			)}
 
